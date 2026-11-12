@@ -136,7 +136,8 @@ test('unaudited developer submission is explicitly flagged for independent PR sc
    last_handoff:{at:date,summary:'Draft PR pending scope validation.'}};
  const result=await fixture([entry(submissionKey(r,24),developer)]).run();
  assert.equal(result.tasks[2].status,'needs-scope-audit');
- assert.ok(result.alerts.some(a=>a.reason.includes('no verified CLI scope audit')));
+ assert.ok(result.alerts.some(a=>a.reason.includes('no usable PR number')));
+ assert.ok(result.tasks[2].review_gates.blockers.includes('DELIVERY_PR_NOT_RECORDED'));
 });
 
 
