@@ -90,3 +90,7 @@ When someone requests to explore this public repository **without established ow
 ## Private destination preflight does not grant migration authority
 
 The read-only `check-private-destination OWNER/REPO` command is a planning aid only. It must never be used to create a new issue/resource lock on this **public** orchestrator or to bypass the legacy public-ledger guard. It does not read private claim contents, never publishes private paths and cannot approve migration. A separate owner-controlled private-store cutover is still required; see [PRIVATE_LEDGER_PREFLIGHT.md](docs/PRIVATE_LEDGER_PREFLIGHT.md) and issue #19. This feature is developed as a separate draft PR from the current orchestrator PR #1 because new confidential coordination records must not be created on the old public branch.
+
+## Public-to-private cutover planning is read-only
+
+The `plan-private-cutover OWNER/PRIVATE-REPO` command is a **metadata-only** planning aid under issue #24, stacked on the private-destination preflight PR. It may be run only with locally managed read access and must never copy or expose private claim contents, create destination branches or bypass the public legacy-ledger guard. Every output is `ready_to_migrate:false`, `writes_enabled:false`. Do not claim migration is authorized or complete. See [docs/PRIVATE_CUTOVER_PLAN.md](docs/PRIVATE_CUTOVER_PLAN.md) and owner migration issue #19.

@@ -58,3 +58,7 @@ This guard protects **only the Node CLI**. GitHub connector agents or direct RES
 ## Owner-selected private destination preflight (issue #22)
 
 A new strictly GET-only `node bin/vs-agent.mjs check-private-destination OWNER/REPO` command verifies that a proposed **different** GitHub ledger repository is actually private, checks the `coordination/claims` branch and counts existing private records using Git **tree metadata only**. It returns no private blob contents or paths and never authorizes writes or migration; every outcome requires human reconciliation. This provides a safe step toward issue #19, not a solution for historical public visibility. See [PRIVATE_LEDGER_PREFLIGHT.md](PRIVATE_LEDGER_PREFLIGHT.md).
+
+## Public/private cutover dry-run checks (issue #24)
+
+A read-only `plan-private-cutover OWNER/PRIVATE-REPO` command now compares **aggregate Git tree metadata** between the fixed public historical `coordination/claims` branch and an owner-selected verified private destination. It rechecks both repositories' visibility and Git branch refs, reports active-lock/existing-record/missing-branch blockers, does not read any blob contents or print private paths and always denies automatic migration. Public CI uses mocks only. See [PRIVATE_CUTOVER_PLAN.md](PRIVATE_CUTOVER_PLAN.md). This is **not** a transfer, privacy remediation of Git history or the approval to set up the destination.

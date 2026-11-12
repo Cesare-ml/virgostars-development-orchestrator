@@ -203,3 +203,12 @@ No deploy, production mutation, release, automatic merge, or license change is i
 - [x] Add mock-based Node test coverage and public CI syntax validation.
 - [ ] Owner must select/provision a private store and approve migration; old public records remain publicly visible and must not receive new confidential claims.
 - [ ] Independently test a real private destination using locally controlled GitHub read access; do not put that result into public logs.
+
+## Read-only cutover comparison — issue #24 (2026-11-12)
+
+- [x] Implement `plan-private-cutover OWNER/PRIVATE-REPO` independently of legacy public-ledger writing commands; compare public source and verified private target using metadata-only GitHub REST requests.
+- [x] Reject malformed tree objects and any observed source/destination ref movement; recheck branch absence before declaring uninitialized private destination.
+- [x] Report only neutral aggregate record counts and blocker codes: source active locks, unknown blobs, existing target records, absent branch and required owner approval.
+- [x] Add mocked Node tests for races, visibility drift, permissions and no-token CLI plus docs; exercise on public GitHub Actions Node 20/22 without secrets.
+- [ ] Select/provision the private store and validate it locally under owner's private access. No real private destination is assumed by this plan.
+- [ ] Freeze and reconcile source/destination records under a separately reviewed migration design; never auto-copy, delete, merge or deploy based on this report.

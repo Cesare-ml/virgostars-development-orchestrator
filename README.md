@@ -84,3 +84,7 @@ The historical `coordination/claims` branch lives in this now-**public** reposit
 ## Read-only private ledger destination check
 
 For the owner-controlled migration, `node bin/vs-agent.mjs check-private-destination OWNER/PRIVATE-REPO` validates an independently selected private GitHub repository through read-only metadata **without** reading claim contents or enabling any writes. It always reports `ready_to_migrate:false`; the legacy public claim store remains blocked. See [private destination preflight](docs/PRIVATE_LEDGER_PREFLIGHT.md).
+
+## Public-to-private ledger cutover dry run
+
+An owner can now run `node bin/vs-agent.mjs plan-private-cutover OWNER/PRIVATE-REPO` on a trusted local checkout. It compares aggregate historical public-ledger counts with a **separately verified private** destination, detects branch movement and lists non-authorizing blocker codes. It does not fetch record contents, migrate data or enable writes. See [PRIVATE_CUTOVER_PLAN.md](docs/PRIVATE_CUTOVER_PLAN.md). The public CI runs only synthetic tests, never private credentials.
