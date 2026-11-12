@@ -31,6 +31,24 @@ export function makeGitHubClient({ token, fetchImpl = fetch, baseUrl = 'https://
         throw new Error('Invalid GitHub repository identifier.');
       return request('GET','/repos/'+repo);
     },
+    async getBranchRef(repo,branch) {
+      if(typeof repo!=='string'|| !/^[A-Za-z0-9][A-Za-z0-9_.-]*\/[A-Za-z0-9][A-Za-z0-9_.-]*$/.test(repo)||
+         branch!=='coordination/claims')
+        throw new Error('Invalid private destination branch request.');
+      return request('GET','/repos/'+repo+'/git/ref/heads/'+branch);
+    },
+    async getGitCommit(repo,sha) {
+      if(typeof repo!=='string'|| !/^[A-Za-z0-9][A-Za-z0-9_.-]*\/[A-Za-z0-9][A-Za-z0-9_.-]*$/.test(repo)||
+         !/^[a-f0-9]{40}$/i.test(sha))
+        throw new Error('Invalid private destination commit request.');
+      return request('GET','/repos/'+repo+'/git/commits/'+sha);
+    },
+    async getGitTree(repo,sha) {
+      if(typeof repo!=='string'|| !/^[A-Za-z0-9][A-Za-z0-9_.-]*\/[A-Za-z0-9][A-Za-z0-9_.-]*$/.test(repo)||
+         !/^[a-f0-9]{40}$/i.test(sha))
+        throw new Error('Invalid private destination tree request.');
+      return request('GET','/repos/'+repo+'/git/trees/'+sha+'?recursive=1');
+    },
     async getLedgerSnapshot(repo, branch) {
       // Pin every file to ONE Git tree; separate Contents branch reads can be stale.
       const ref=await request('GET','/repos/'+repo+'/git/ref/heads/'+branch);
