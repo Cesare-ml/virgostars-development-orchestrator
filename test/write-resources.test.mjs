@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {claim, handoff, release, status, newSession, taskKey} from '../src/claims.mjs';
+import {claim, handoff, release, status, discover, newSession, taskKey} from '../src/claims.mjs';
 import {resourceKey} from '../src/resources.mjs';
 import {GitHubError} from '../src/github.mjs';
 
@@ -111,4 +111,15 @@ test('unknown claim result is fail-closed, keeping the resource for recovery',as
  await assert.rejects(()=>claim(options(api,a,10)),/outcome uncertain/);
  assert.ok(api.files.has(resource('render')));
  assert.equal((await claim(options(api,newSession(),11))).result,'busy');
+});
+
+test('discovery does not advertise an orphan-locked write resource as free',async()=>{
+ const api=mock(),owner=newSession();
+ await api.createClaim('ledger',resource('render'),'branch',{kind:'write-resource',
+   target_repository:repo,resource_scope_id:'render',resource_roots:['src/render/'],
+   issue_number:10,session_id:owner});
+ const rows=await discover({api,config,tasks});
+ assert.equal(rows.find(x=>x.issue===10).availability,'resource-busy');
+ assert.equal(rows.find(x=>x.issue===11).availability,'resource-busy');
+ assert.equal(rows.find(x=>x.issue===12).availability,'unclaimed');
 });
