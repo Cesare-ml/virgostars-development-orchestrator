@@ -51,7 +51,7 @@ test('submission blocks reassignment without pretending human approval',async()=
  const after=await status(common(api,session));
  assert.equal(after.status,'submitted');
  assert.equal(after.submission.state,'submitted');
- assert.equal(after.submission.handoff.summary,'Documented code review on GitHub issue.');
+ assert.equal(after.submission.last_handoff.summary,'Documented code review on GitHub issue.');
  const catalog=await discover({api,config,tasks});
  assert.equal(catalog[0].availability,'submitted');
  assert.equal(catalog[1].availability,'unclaimed');
