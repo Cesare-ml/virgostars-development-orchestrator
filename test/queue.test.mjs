@@ -8,9 +8,9 @@ const repo='Cesare-ml/astrological-charts';
 const secondRepo='Cesare-ml/VirgoStars-Ephemeris';
 const config={active_repositories:[{full_name:repo,pilot_enabled:true},{full_name:secondRepo,pilot_enabled:true}],
  claim_store:{repo:'Cesare-ml/virgostars-development-orchestrator',branch:'coordination/claims'}};
-const tasks=[{repository:repo,issue:12,role:'reviewer',status:'ready'},
- {repository:repo,issue:13,role:'reviewer',status:'ready'},
- {repository:secondRepo,issue:14,role:'developer',status:'ready'}];
+const tasks=[{repository:repo,issue:12,role:'reviewer',access:'read',status:'ready'},
+ {repository:repo,issue:13,role:'reviewer',access:'read',status:'ready'},
+ {repository:secondRepo,issue:14,role:'developer',access:'write',resource_scope:{id:'core',roots:['src/core/']},status:'ready'}];
 function fake({closed=[]}={}) {
   const files=new Map(); let rev=0;
   return {
