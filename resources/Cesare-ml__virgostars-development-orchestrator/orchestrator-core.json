@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "kind": "write-resource",
+  "target_repository": "Cesare-ml/virgostars-development-orchestrator",
+  "issue_number": 9,
+  "session_id": "chat-0b366803-635f-4fc5-9324-40d63662b3d9",
+  "resource_scope_id": "orchestrator-core",
+  "resource_roots": [
+    "bin/",
+    "config/",
+    "docs/",
+    "src/",
+    "test/"
+  ],
+  "claimed_at": "2026-11-12T13:50:00+01:00"
+}
