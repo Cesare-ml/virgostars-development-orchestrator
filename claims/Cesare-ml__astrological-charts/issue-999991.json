@@ -6,8 +6,12 @@
   "role": "developer",
   "access": "write",
   "resource_scope_id": "pilot-race-20261112",
-  "state": "claimed",
+  "state": "in_progress",
   "claimed_at": "2026-11-12T11:30:38.462Z",
   "branch": null,
-  "last_handoff": null
+  "last_handoff": {
+    "at": "2026-11-12T11:30:41.032Z",
+    "summary": "Synthetic resource-lock pilot only; no code changed",
+    "head_sha": null
+  }
 }
