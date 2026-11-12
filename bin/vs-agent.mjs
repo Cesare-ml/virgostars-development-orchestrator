@@ -2,6 +2,7 @@
 import { makeGitHubClient } from '../src/github.mjs';
 import { loadPilotConfig, loadPilotTasks } from '../src/registry.mjs';
 import {loadPublicDiscovery} from '../src/public-discovery.mjs';
+import {assertPrivateLedger,guardLegacyLedgerClient} from '../src/ledger-visibility.mjs';
 import { newSession, claim, status, release, handoff, discover } from '../src/claims.mjs';
 import { claimNext } from '../src/queue.mjs';
 import { submit } from '../src/submissions.mjs';
@@ -56,10 +57,12 @@ async function main() {
     process.stdout.write(JSON.stringify(discovery,null,2)+'\n');
     return;
   }
-  // Legacy pilot workflows below remain owner-operated and authenticated.
-  // Public discovery deliberately never loads this catalog or token.
+  // Fail closed BEFORE any legacy ledger reads or writes. The historical
+  // branch is PUBLIC; config labels never prove private GitHub visibility.
   const config=await loadPilotConfig();
-  const api=makeGitHubClient({token:process.env.GITHUB_TOKEN});
+  const baseApi=makeGitHubClient({token:process.env.GITHUB_TOKEN});
+  await assertPrivateLedger({api:baseApi,config});
+  const api=guardLegacyLedgerClient({api:baseApi,config});
   let result;
   if(command==='discover') {
     if(positionals.length) throw new Error('Discover takes no target.');
