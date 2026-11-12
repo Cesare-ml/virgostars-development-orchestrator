@@ -72,3 +72,7 @@ The **complete Node test suite** has now been executed on a local, hash-verified
 ## Public GitHub Actions — Node.js CI
 
 The public feature-branch PR is now checked automatically by [GitHub Actions](https://github.com/Cesare-ml/virgostars-development-orchestrator/actions) on push and pull request. The [workflow](.github/workflows/node-ci.yml) uses read-only permissions and pinned Node 24-runtime official Actions, while validating `npm run check` on application Node **20** and **22**. The latest verified workflow run passed **127/127 tests on each Node version** with no failures. This is **not** authorization to merge or deploy. See [public transition and operational privacy](docs/PUBLIC_TRANSITION.md).
+
+## Public-only discovery (no token)
+
+External readers can run `node bin/vs-agent.mjs public-discover` **without GitHub credentials**. It reads only the strict public catalog `config/fleet.json` and outputs a read-only preview of projects awaiting owner approval. It cannot acquire tasks, expose private-pilot claim data, deploy, or merge. The older `discover` / `claim` / `submit` commands remain part of the owner-operated legacy workflow and **must not be used as public onboarding**. See [Public Discovery](docs/PUBLIC_DISCOVERY.md) and the [public/private migration plan](docs/PUBLIC_TRANSITION.md).

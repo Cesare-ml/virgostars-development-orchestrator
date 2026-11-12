@@ -24,3 +24,7 @@ The private `scripts/verify-pilot.mjs` supports a manual operator workflow with 
 ## Unsigned local test evidence
 
 The pinned private native verifier may optionally write a bounded local JSON receipt using `--receipt`. The receipt is an **allowlisted, UNSIGNED, SELF-REPORTED** record containing only commit/tree SHA, counts, runtime version and native npm exit outcome; it excludes tokens, arbitrary environment variables and downloaded blob contents. The writer rejects overwrite and the offline reader limits input to 4 KiB. Do not treat a receipt as an authenticated signature, third-party review, GitHub CI result or permission to merge. See [VALIDATION_RECEIPTS.md](VALIDATION_RECEIPTS.md).
+
+## Read-only public discovery
+
+The public CLI command `public-discover` is isolated from the legacy owner-pilot registry and claim store. It requires no GitHub token, consumes only `config/fleet.json`, strictly validates public-only project fields and rejects automatic claim/merge/deploy policy. It displays pending-owner-approval projects only and never issues write claims. See [PUBLIC_DISCOVERY.md](PUBLIC_DISCOVERY.md). Do not run owner-pilot claim commands to onboard untrusted public participants; the historical public Git ledger is not private. A public discovery listing is not a grant of source licenses or repository permissions.

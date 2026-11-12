@@ -177,3 +177,12 @@ No deploy, production mutation, release, automatic merge, or license change is i
 - [ ] Audit all public refs/history for nonpublic data and move owner-only coordination to a suitable private service with explicit migration safeguards. Do not assume existing history can be made private by deleting a new version of a file.
 - [ ] Choose and review a LICENSE and contributor terms; publication alone does not grant open-source reuse rights.
 - [ ] Complete independent review of the draft PR; no automatic merge, production deploy or public agent write onboarding.
+
+## Public-only discovery preview — issue #20 (2026-11-12)
+
+- [x] Add `src/public-discovery.mjs` with strict safe field projection, fail-closed public project validation and owner-approval-required policy.
+- [x] Add tokenless `node bin/vs-agent.mjs public-discover` command, isolated before legacy authenticated pilot registry loading.
+- [x] Keep `config/fleet.json` explicitly read-only discovery; record public repository status and owner-approved test-only GitHub Actions.
+- [x] Add `test/public-discovery.test.mjs` with 7 test cases covering no-token subprocess, malformed/nonpublic records, duplicate projects, unsafe policies and rejected flags; add the module to the native syntax check.
+- [ ] Move legacy owner-only claims/submissions to an explicitly private store after maintainer decision and migration tests (issue #19). Public discovery **does not** enable work claiming or external contributor registration.
+- [ ] Select license and contribution rules independently; public visibility is not an open-source license.

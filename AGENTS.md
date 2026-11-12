@@ -78,3 +78,7 @@ Before claiming that the private coordinator itself has passed `npm run check`, 
 ## Do not confuse unsigned native receipts with independent acceptance
 
 When checking the private coordinator, consult [docs/VALIDATION_RECEIPTS.md](docs/VALIDATION_RECEIPTS.md). The manual `scripts/verify-pilot.mjs --sha HEAD --receipt FILE.json` command records a *local, unsigned* `npm run check` exit result and SHA. An independent reviewer may run `--verify-receipt FILE.json --sha HEAD` without a token, but structural receipt verification **does not authenticate its author or prove native tests were reproduced**. Keep private tokens out of receipts, issues and chat. New commits invalidate an earlier SHA receipt. Continue to require independent source review, native test evidence, scoped PR checks and an explicit decision before any merge.
+
+## Safe public agent entry point
+
+When someone requests to explore this public repository **without established owner authority**, use `node bin/vs-agent.mjs public-discover` or inspect [docs/PUBLIC_DISCOVERY.md](docs/PUBLIC_DISCOVERY.md). This preview requires no token and intentionally does not read old private-pilot task catalogs, claims or submissions. It grants **no permission** to claim an issue, access a private repository, modify GitHub state or merge code. Owner-operated pilot agents must still follow explicit approval and the resource-first lock protocol. Do not treat the public `coordination/claims` branch as confidential; a separate private ledger migration is pending.
