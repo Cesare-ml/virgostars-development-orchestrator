@@ -5,7 +5,7 @@ import { GitHubError } from '../src/github.mjs';
 
 const target='Cesare-ml/astrological-charts';
 const config={active_repositories:[{full_name:target,pilot_enabled:true}],claim_store:{repo:'Cesare-ml/virgostars-development-orchestrator',branch:'coordination/claims'}};
-const tasks=[{repository:target,issue:42,status:'ready',role:'reviewer'}];
+const tasks=[{repository:target,issue:42,status:'ready',role:'reviewer',access:'read'}];
 function mock() {
  const claims=new Map();
  return {
