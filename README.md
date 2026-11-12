@@ -68,3 +68,7 @@ The manual private snapshot CLI now supports `--receipt ./result.json` to record
 ## Native coordinator test status — 2026-11-12
 
 The **complete Node test suite** has now been executed on a local, hash-verified mirror of **all 36 current runtime/test/config/CLI files** from private commit `f3736003b01af0ab5e12f21283719bd1412cf25d`: `npm run check` **120/120 PASS** with Node 22.16.0. One incorrectly ordered release-guard test assertion was corrected and a missing-resource-after-handoff regression was added. The mirror intentionally omitted docs/templates, so this is not a full-tree `verify:private` run; see [native validation evidence](docs/NATIVE_VALIDATION.md). PR #1 stays draft, without merge approval.
+
+## Public GitHub Actions — Node.js CI
+
+The public feature-branch PR is now checked automatically by [GitHub Actions](https://github.com/Cesare-ml/virgostars-development-orchestrator/actions) on push and pull request. The [workflow](.github/workflows/node-ci.yml) uses read-only permissions and pinned Node 24-runtime official Actions, while validating `npm run check` on application Node **20** and **22**. The latest verified workflow run passed **127/127 tests on each Node version** with no failures. This is **not** authorization to merge or deploy. See [public transition and operational privacy](docs/PUBLIC_TRANSITION.md).

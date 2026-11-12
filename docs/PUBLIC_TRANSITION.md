@@ -36,3 +36,9 @@ The repository's `config/fleet.private.json` and `docs/PRIVATE_PILOT.md` are **l
 Public GitHub Actions for test-only workflows are permitted. The permission **does not** extend to other private repositories without a separate explicit decision. The working rules remain: separate feature branches, bounded changes, independent tests, human review, and **no automatic merge, release, secret exposure or production deployment**.
 
 A PR is not merge-ready solely because both Node matrix jobs are green. Recheck file scope, concurrency claims and public/private metadata before any integration.
+
+## Verified public CI checkpoint — 2026-11-12
+
+GitHub Actions run [43297389118](https://github.com/Cesare-ml/virgostars-development-orchestrator/actions/runs/43297389118), for feature commit `90ab31c32b46e3a7c965705b86df0cf1f9edd6e8`, completed successfully for both Node 20 and Node 22 jobs: **127 tests passed, 0 failed** per version. The log no longer reports deprecated Node 20 **Actions runtime** warnings after upgrading both pinned official Actions to v6 (their own runtime is Node 24). The repository's app/test compatibility matrix deliberately remains Node 20/22.
+
+The CI-only scope is independently protected by `test/ci-policy.test.mjs`; `test/public-registry.test.mjs` checks that public discovery metadata cannot include entries marked nonpublic in the legacy catalog. These checks do not retroactively hide existing git branches/history. The private-state migration in [issue #19](https://github.com/Cesare-ml/virgostars-development-orchestrator/issues/19) is still required before general public multi-agent onboarding.

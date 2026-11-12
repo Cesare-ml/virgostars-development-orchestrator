@@ -165,3 +165,15 @@ No deploy, production mutation, release, automatic merge, or license change is i
 - [x] Fix a real pre-existing false-negative assertion in `test/write-resources.test.mjs`; add independent regression for missing resource **after** an owner handoff (blob `3018e540928a0b19b39958e66ff80c2dfcda1ad6`).
 - [ ] Run `npm run verify:private -- --sha CURRENT_HEAD` on an authenticated network-connected machine, including the entire GitHub tree of **57 tracked files**, not just the 36 test-relevant files. Until then no claim of full-snapshot validation.
 - [ ] Before any integration decision, independently validate the actual two wave-2 target PRs and resolve competing Charts drafts; no automatic merge or GitHub Actions.
+
+## Public test-only GitHub Actions and privacy transition — issue #18 (2026-11-12)
+
+- [x] Verify this repository is **public**; preserve the existing draft PR and avoid merging into `main`.
+- [x] Add [public Node CI](../.github/workflows/node-ci.yml) for push, pull requests and manual workflow dispatch; validate `npm run check` on Node **20** and **22** without project secrets or access to nonpublic target repositories.
+- [x] Pin official `actions/checkout` and `actions/setup-node` **v6** to fixed GitHub commit SHAs (both use supported Node 24 Actions runtime); keep workflow `contents:read` and `persist-credentials:false`.
+- [x] Add four policy regression tests for workflow privileges and three public-registry separation tests. **Actual GitHub Actions run #43297389118 passed 127/127 Node 20 tests and 127/127 Node 22 tests, zero failures and no runtime deprecation warning**.
+- [x] Update README, AGENTS and legacy pilot/security docs to identify the repository's public visibility and the limited public test-only Actions authorization.
+- [x] Document the publicly visible legacy operational records and owner-controlled migration requirements in [PUBLIC_TRANSITION.md](PUBLIC_TRANSITION.md) and [issue #19](https://github.com/Cesare-ml/virgostars-development-orchestrator/issues/19).
+- [ ] Audit all public refs/history for nonpublic data and move owner-only coordination to a suitable private service with explicit migration safeguards. Do not assume existing history can be made private by deleting a new version of a file.
+- [ ] Choose and review a LICENSE and contributor terms; publication alone does not grant open-source reuse rights.
+- [ ] Complete independent review of the draft PR; no automatic merge, production deploy or public agent write onboarding.
