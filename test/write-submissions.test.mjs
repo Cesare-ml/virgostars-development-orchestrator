@@ -79,3 +79,11 @@ test('audited head must match saved handoff HEAD and blocks stale delivery',asyn
  await assert.rejects(()=>submit({...args,prNumber:6,confirm:true}),/Handoff head SHA/);
  assert.equal((await status(args)).status,'claimed');
 });
+
+
+test('write submission refuses handoff without an exact PR HEAD SHA',async()=>{
+ const api=mock(),session=newSession(),args=await assigned(api,session,null);
+ await assert.rejects(()=>submit({...args,prNumber:6,confirm:true}),/Handoff head SHA is missing/);
+ assert.equal((await status(args)).status,'claimed');
+ assert.ok(api.store.has(resourceKey(target,task.resource_scope.id)));
+});
