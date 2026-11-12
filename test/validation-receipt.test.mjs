@@ -4,6 +4,7 @@ import {mkdtemp,mkdir,readFile,readdir,rm,writeFile,stat} from 'node:fs/promises
 import {spawnSync} from 'node:child_process';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
+import {fileURLToPath} from 'node:url';
 import {
   RECEIPT_SCHEMA,buildNativeValidationReceipt,inspectNativeValidationReceipt,
   readNativeValidationReceipt,saveNativeValidationReceipt
@@ -105,12 +106,12 @@ test('bad destination, missing directory and invalid contents cannot produce a s
 test('offline CLI reads receipt with no GitHub token or network requests',async()=>{
   const directory=await mkdtemp(join(tmpdir(),'vs-receipt-cli-'));
   const path=join(directory,'operator.json');
-  const script=new URL('../scripts/verify-pilot.mjs',import.meta.url);
+  const script=fileURLToPath(new URL('../scripts/verify-pilot.mjs',import.meta.url));
   try {
     await saveNativeValidationReceipt(path,build());
     const env={...process.env};
     delete env.GITHUB_TOKEN;
-    const result=spawnSync(process.execPath,[script.pathname,
+    const result=spawnSync(process.execPath,[script,
       '--verify-receipt',path,'--sha',HEAD],{
       encoding:'utf8',env,timeout:15000
     });
@@ -118,7 +119,7 @@ test('offline CLI reads receipt with no GitHub token or network requests',async(
     const reviewed=JSON.parse(result.stdout);
     assert.equal(reviewed.recorded_head_sha,HEAD);
     assert.equal(reviewed.independently_authenticated,false);
-    const wrong=spawnSync(process.execPath,[script.pathname,
+    const wrong=spawnSync(process.execPath,[script,
       '--verify-receipt',path,'--sha','c'.repeat(40)],{
       encoding:'utf8',env,timeout:15000
     });
@@ -133,8 +134,8 @@ test('offline CLI treats a failing native test receipt as exit code 1',async()=>
     await saveNativeValidationReceipt(path,build(specimen({tests:{
       command:'npm run check',exit_code:2,passed:false,native:true
     }})));
-    const script=new URL('../scripts/verify-pilot.mjs',import.meta.url);
-    const result=spawnSync(process.execPath,[script.pathname,
+    const script=fileURLToPath(new URL('../scripts/verify-pilot.mjs',import.meta.url));
+    const result=spawnSync(process.execPath,[script,
       '--verify-receipt',path,'--sha',HEAD],{
       encoding:'utf8',timeout:15000
     });
@@ -146,10 +147,10 @@ test('CLI rejects writing a receipt without GitHub auth and never creates the fi
   const directory=await mkdtemp(join(tmpdir(),'vs-receipt-auth-'));
   const file=join(directory,'must-not-appear.json');
   try {
-    const script=new URL('../scripts/verify-pilot.mjs',import.meta.url);
+    const script=fileURLToPath(new URL('../scripts/verify-pilot.mjs',import.meta.url));
     const env={...process.env};
     delete env.GITHUB_TOKEN;
-    const result=spawnSync(process.execPath,[script.pathname,
+    const result=spawnSync(process.execPath,[script,
       '--sha',HEAD,'--receipt',file],{
       encoding:'utf8',env,timeout:15000
     });
