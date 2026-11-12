@@ -48,9 +48,9 @@ test('no access inference, malformed paths, and multiple IDs are rejected',()=>{
 });
 
 test('resource matching checks both owner and task, not only session',()=>{
- const claim={target_repository:repo,issue_number:2,session_id:'chat-a',resource_scope_id:'core'};
+ const claim={target_repository:repo,issue_number:2,session_id:'chat-a',resource_scope_id:'core',resource_roots:['src/']};
  const resource={data:{kind:'write-resource',target_repository:repo,issue_number:2,
-    session_id:'chat-a',resource_scope_id:'core'}};
+    session_id:'chat-a',resource_scope_id:'core',resource_roots:['src/']}};
  assert.ok(resourceMatches(resource,claim));
  assert.equal(resourceMatches(resource,{...claim,issue_number:3}),false);
  assert.equal(resourceMatches(resource,{...claim,session_id:'chat-b'}),false);
