@@ -2,7 +2,7 @@
   "schema_version": "0.1-draft",
   "status": "discovery_only",
   "coordinator_endpoint": null,
-  "visibility_note": "Orchestrator itself is private at bootstrap; only list public repo metadata in public registry.",
+  "visibility_note": "Orchestrator repository is public. Public discovery is read-only and requires owner approval before any external contribution or task claim.",
   "repos": [
     {
       "full_name": "Cesare-ml/VirgoStars-Ephemeris",
@@ -39,7 +39,7 @@
     "automatic_claims": false,
     "allow_automerge": false,
     "allow_deploy": false,
-    "allow_github_actions": false,
+    "allow_github_actions": true,
     "outsider_contribution": "fork_pr_only",
     "ready_task_source": "GitHub Issues (after manual triage)"
   }
