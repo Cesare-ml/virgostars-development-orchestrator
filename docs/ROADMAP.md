@@ -4,7 +4,8 @@
 - [x] Specify five initial repositories in `config/fleet.private.json`; no public/private registry mixing.
 - [x] Document sessions, roles, pilot startup prompt, and GitHub-native task claims.
 - [x] One real two-client create-file collision test in a separate test branch: one succeeded, one rejected.
-- [ ] Verify complete claim -> renew/hand-off -> release -> re-claim lifecycle with two distinct agent sessions.
+- [x] Verified GitHub test-branch claim collision, owner-checked release, and subsequent re-claim by a second session (2026-11-12). Renewal, handoff and automated lifecycle still pending.
+- [ ] Verify full claim -> handoff/renew -> release lifecycle during real work with independently active chat sessions.
 - [ ] Create an explicitly triaged small task queue in each repo, avoiding scope overlap with active PRs.
 - [ ] Ensure AGENTS.md in each target repo references the coordinator without replacing local agent rules (separate reviewable PRs).
 - [ ] Test with 5–10 disjoint real tasks; assess rate limits, branch conflicts, interrupted sessions and manual recovery.
