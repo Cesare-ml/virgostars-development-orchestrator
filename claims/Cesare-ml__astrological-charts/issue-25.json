@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "target_repository": "Cesare-ml/astrological-charts",
+  "issue_number": 25,
+  "session_id": "chat-b0dbee66-6a0d-470c-929c-1b094888b453",
+  "resource_scope_id": "axis-canvas-pilot",
+  "resource_roots": [
+    "tests/pilot-axis-canvas.browser.test.mjs"
+  ],
+  "role": "developer",
+  "access": "write",
+  "state": "claimed",
+  "claimed_at": "2026-11-12T16:30:28.637Z",
+  "branch": null,
+  "last_handoff": null
+}
