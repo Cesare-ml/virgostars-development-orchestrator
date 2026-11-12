@@ -138,3 +138,60 @@ test('unaudited developer submission is explicitly flagged for independent PR sc
  assert.equal(result.tasks[2].status,'needs-scope-audit');
  assert.ok(result.alerts.some(a=>a.reason.includes('no verified CLI scope audit')));
 });
+
+
+test('fleet monitor reports live stale developer PR without altering submitted ledger',async()=>{
+ const task={repository:r,issue:24,status:'ready',role:'developer',access:'write',
+   title:'Canvas smoke',pilot_wave:2,upstream_pr:22,upstream_branch:'feat/interactions',
+   resource_scope:{id:'renderer',roots:['tests/pilot.test.mjs']}};
+ const submitted={schema_version:1,state:'submitted',target_repository:r,issue_number:24,
+   role:'developer',access:'write',session_id:session,pull_request:26,
+   scope_verdict:'scope-clean',audited_head_sha:'a'.repeat(40),
+   audited_base_sha:'b'.repeat(40),
+   last_handoff:{head_sha:'a'.repeat(40),summary:'Published stacked draft PR and tests'}};
+ const api={
+   async getLedgerSnapshot(){return {head:'f'.repeat(40),
+     entries:[entry(submissionKey(r,24),submitted)]};},
+   async getIssue(){return {state:'open'};},
+   async getPullRequest(_repo,n){return n===22?
+     {state:'open',head:{ref:'feat/interactions',sha:'b'.repeat(40)}}:
+     {number:26,state:'open',draft:true,changed_files:1,
+       head:{ref:'pilot/axis',sha:'c'.repeat(40),repo:{full_name:r}},
+       base:{ref:'feat/interactions',sha:'b'.repeat(40),repo:{full_name:r}}};},
+   async getPullRequestFiles(){return [{filename:'tests/pilot.test.mjs',status:'added'}];}
+ };
+ const result=await auditFleet({api,config,tasks:[task]});
+ assert.equal(result.summary['stale-submission'],1);
+ assert.equal(result.tasks[0].pr_check.current_head,'c'.repeat(40));
+ assert.equal(result.tasks[0].review,'pending');
+ assert.ok(result.alerts.some(a=>a.reason.includes('HEAD changed')));
+});
+test('a stale PR warning remains visible when submission has not released its owner claim',async()=>{
+ const task={repository:r,issue:24,status:'ready',role:'developer',access:'write',
+   title:'Canvas smoke',pilot_wave:2,upstream_pr:22,upstream_branch:'feat/interactions',
+   resource_scope:{id:'renderer',roots:['tests/pilot.test.mjs']}};
+ const c={...issueClaim(r,24,'developer','write'),resource_roots:['tests/pilot.test.mjs']};
+ const resource={kind:'write-resource',target_repository:r,resource_scope_id:'renderer',
+   resource_roots:['tests/pilot.test.mjs'],issue_number:24,session_id:session};
+ const s={state:'submitted',target_repository:r,issue_number:24,role:'developer',access:'write',
+   session_id:session,pull_request:26,scope_verdict:'scope-clean',
+   audited_head_sha:'a'.repeat(40),audited_base_sha:'b'.repeat(40),
+   last_handoff:{head_sha:'a'.repeat(40),summary:'Draft PR submitted'}};
+ const api={
+   async getLedgerSnapshot(){return {head:'f'.repeat(40),entries:[
+     entry(submissionKey(r,24),s),entry(taskKey(r,24),c),
+     entry(resourceKey(r,'renderer'),resource)
+   ]};},
+   async getIssue(){return {state:'open'};},
+   async getPullRequest(_r,n){return n===22?
+     {state:'open',head:{ref:'feat/interactions',sha:'b'.repeat(40)}}:
+     {number:26,state:'open',draft:true,changed_files:1,
+       head:{ref:'pilot/axis',sha:'c'.repeat(40),repo:{full_name:r}},
+       base:{ref:'feat/interactions',sha:'b'.repeat(40),repo:{full_name:r}}};},
+   async getPullRequestFiles(){return [{filename:'tests/pilot.test.mjs',status:'added'}];}
+ };
+ const result=await auditFleet({api,config,tasks:[task]});
+ assert.equal(result.tasks[0].status,'stale-submission');
+ assert.match(result.tasks[0].warning,/finish releasing claim/);
+ assert.match(result.tasks[0].warning,/HEAD changed/);
+});
