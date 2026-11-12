@@ -30,7 +30,7 @@ export async function submit({api,config,repo,issue,session,confirm=false,now=()
   const marker={
     schema_version:1,state:'submitted',target_repository:repo,issue_number:issue,
     session_id:session,role:claim.role,access:claim.access,resource_scope_id:claim.resource_scope_id,
-    submitted_at:now(),handoff:claim.last_handoff,
+    submitted_at:now(),last_handoff:claim.last_handoff,
     note:'Awaiting independent review; not automatically approved or DONE'
   };
   if(!prior) {
