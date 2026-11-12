@@ -46,7 +46,7 @@ There are no new npm dependencies, GitHub Actions, background processes, write r
 
 ## Validation evidence and remaining gate
 
-**Executed 2026-11-12 in this environment:** Node.js 22.16.0 ran `node --test test/native-check.test.mjs` on copies whose Git blob SHAs **exactly match** `src/native-check.mjs` and `test/native-check.test.mjs` in the private feature branch. **8/8 tests passed**, including a nested real `npm run check` invocation on an intentionally tiny signed fixture snapshot. An initial test assertion used `assert.rejects` incorrectly for a synchronous throw; it was fixed, then the entire suite was rerun and passed.
+**Executed 2026-11-12 in this environment:** Node.js 22.16.0 ran `node --test test/native-check.test.mjs` on copies whose Git blob SHAs **exactly match** `src/native-check.mjs` and `test/native-check.test.mjs` in the private feature branch. **11/11 tests passed**, including a nested real `npm run check` invocation on an intentionally tiny signed fixture snapshot. The final 11 cases also cover Windows npm.cmd execution, failure cleanup and GitHub GET-only requests. An initial test assertion used `assert.rejects` incorrectly for a synchronous throw; it was fixed, then the entire suite was rerun and passed.
 
 **Still unexecuted:** the full `npm run check` test suite of the real private repository snapshot. This environment cannot resolve GitHub's DNS outside the authorized GitHub connector, which does not directly mount a clone into the Node execution environment. The new script can be run from an authenticated Windows/macOS/Linux machine with network access to GitHub; report its exact command, SHA and exit status before treating the private coordinator's implementation as fully native-validated.
 
