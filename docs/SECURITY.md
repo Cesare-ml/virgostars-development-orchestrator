@@ -28,3 +28,9 @@ The pinned private native verifier may optionally write a bounded local JSON rec
 ## Read-only public discovery
 
 The public CLI command `public-discover` is isolated from the legacy owner-pilot registry and claim store. It requires no GitHub token, consumes only `config/fleet.json`, strictly validates public-only project fields and rejects automatic claim/merge/deploy policy. It displays pending-owner-approval projects only and never issues write claims. See [PUBLIC_DISCOVERY.md](PUBLIC_DISCOVERY.md). Do not run owner-pilot claim commands to onboard untrusted public participants; the historical public Git ledger is not private. A public discovery listing is not a grant of source licenses or repository permissions.
+
+## CLI refuses legacy coordination on a public ledger
+
+The owner-only Node CLI now requires a **live GitHub visibility preflight** before any legacy pilot command and before each ledger read/write. The configured ledger currently resides in this **public** repository, so these commands intentionally fail closed until a separate **verified private** ledger is selected and its records and clients are reconciled. A YAML/JSON setting that says "private" does not prove GitHub repository visibility. The `public-discover`, `session` and help commands remain independent and tokenless.
+
+This gate does **not** hide historical Git data or prevent a ChatGPT connector/third-party client from writing directly to the public branch. Agents must not create new confidential claims there. Migration is tracked under [issue #19](https://github.com/Cesare-ml/virgostars-development-orchestrator/issues/19); never publish credentials or detailed old operational records as part of that work.

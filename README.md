@@ -76,3 +76,7 @@ The public feature-branch PR is now checked automatically by [GitHub Actions](ht
 ## Public-only discovery (no token)
 
 External readers can run `node bin/vs-agent.mjs public-discover` **without GitHub credentials**. It reads only the strict public catalog `config/fleet.json` and outputs a read-only preview of projects awaiting owner approval. It cannot acquire tasks, expose private-pilot claim data, deploy, or merge. The older `discover` / `claim` / `submit` commands remain part of the owner-operated legacy workflow and **must not be used as public onboarding**. See [Public Discovery](docs/PUBLIC_DISCOVERY.md) and the [public/private migration plan](docs/PUBLIC_TRANSITION.md).
+
+## Security gate: legacy owner-only coordination is paused
+
+The historical `coordination/claims` branch lives in this now-**public** repository. The Node CLI therefore **refuses legacy owner-only commands by default**, using live GitHub private-visibility verification and a fresh preflight for every ledger read/write. The old claim store must be migrated to a private repository/backend with owner approval before these commands can safely be re-enabled. Do not put new private task records into the public branch via ChatGPT connectors either: the CLI guard cannot stop direct API writes. `public-discover`, `session` and `--help` remain tokenless and usable. See [PUBLIC_TRANSITION.md](docs/PUBLIC_TRANSITION.md).

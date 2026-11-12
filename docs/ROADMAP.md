@@ -186,3 +186,12 @@ No deploy, production mutation, release, automatic merge, or license change is i
 - [x] Add `test/public-discovery.test.mjs` with 7 test cases covering no-token subprocess, malformed/nonpublic records, duplicate projects, unsafe policies and rejected flags; add the module to the native syntax check.
 - [ ] Move legacy owner-only claims/submissions to an explicitly private store after maintainer decision and migration tests (issue #19). Public discovery **does not** enable work claiming or external contributor registration.
 - [ ] Select license and contribution rules independently; public visibility is not an open-source license.
+
+## Public legacy ledger CLI fail-closed preflight — issue #21 (2026-11-12)
+
+- [x] Require live GitHub repository metadata (`private:true`, `visibility:private`, exact full_name) before legacy owner-only Node CLI commands; reject public/internal/malformed/unavailable results.
+- [x] Guard each subsequent `getLedgerSnapshot`, `getClaim`, `createClaim`, `updateClaim`, `deleteClaim` with a fresh verified-visibility check.
+- [x] Keep public `public-discover`, `session` and help commands independent of GitHub credentials and private pilot task data.
+- [x] Add `test/ledger-visibility.test.mjs` for public/private/403/404/metadata mismatch, per-operation visibility drift and CLI wiring; validate via public GitHub Actions.
+- [ ] Migrate existing owner-only ledgers to a separately provisioned **private** store and reconcile history, claims and clients under issue #19, with explicit maintainer approval. The public historical branch remains public; no automatic migration or deletion.
+- [ ] Independently review PR #1 and choose LICENSE/contributor terms. Green CI does not authorize merge or public write access.

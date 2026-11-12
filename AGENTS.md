@@ -82,3 +82,7 @@ When checking the private coordinator, consult [docs/VALIDATION_RECEIPTS.md](doc
 ## Safe public agent entry point
 
 When someone requests to explore this public repository **without established owner authority**, use `node bin/vs-agent.mjs public-discover` or inspect [docs/PUBLIC_DISCOVERY.md](docs/PUBLIC_DISCOVERY.md). This preview requires no token and intentionally does not read old private-pilot task catalogs, claims or submissions. It grants **no permission** to claim an issue, access a private repository, modify GitHub state or merge code. Owner-operated pilot agents must still follow explicit approval and the resource-first lock protocol. Do not treat the public `coordination/claims` branch as confidential; a separate private ledger migration is pending.
+
+## Public-visibility gate on legacy coordination
+
+**Do not create new owner-only claims, resource locks or submission markers in this public repository.** The Node CLI checks the configured coordination repository's live GitHub visibility and refuses the historical public branch before any legacy operation; it rechecks before each read/write. The old GitHub connector create-only protocol remains documented for historical reproducibility but **must not be used for new private tasks** until the owner completes an approved, private-ledger migration under issue #19. The guard does not prevent direct connector/API writes or erase old public history. Public-only discovery via `public-discover` remains available. No unsafe override, deployment or merge authorization is implied.

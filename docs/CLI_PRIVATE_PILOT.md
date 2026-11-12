@@ -93,3 +93,9 @@ The manual `npm run verify:private -- --sha FULL_FEATURE_HEAD_SHA` script can ma
 ## Persist the local native test result against an exact SHA
 
 The manually invoked `node scripts/verify-pilot.mjs --sha FULL_SHA --receipt ./pilot-validation.json` writes a minimal, **unsigned** result after a real native check, atomically without overwriting existing evidence. `--verify-receipt ./pilot-validation.json --sha FULL_SHA` examines its schema and recorded status **offline**, requiring neither GitHub access nor a token; it does not prove the original tests really ran or authorize merge. Keep private receipts and credentials out of public issues. See [VALIDATION_RECEIPTS.md](VALIDATION_RECEIPTS.md).
+
+## Public repository safety gate — legacy commands now fail closed
+
+The current repository and its historical `coordination/claims` branch are **public**. Legacy authenticated CLI commands **must not** be used for new private-owner coordination, even when `GITHUB_TOKEN` has write access. The CLI now queries GitHub's live repository metadata before any owner-only operation, requires the configured ledger to be private and rejects public/unknown visibility; each actual ledger access rechecks again. This intentionally blocks the legacy command examples elsewhere in this historical document until issue #19's independently reviewed private-ledger migration.
+
+Use `node bin/vs-agent.mjs public-discover` for anonymous public-only discovery. `node bin/vs-agent.mjs session` and `--help` remain offline. No alternate ledger override or unsafe "force" flag exists. Connector-only agents are **not** automatically protected by this Node guard: they must avoid writing new owner-only metadata to the public branch. [PUBLIC_TRANSITION.md](PUBLIC_TRANSITION.md) describes limits.
