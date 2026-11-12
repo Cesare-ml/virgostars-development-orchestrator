@@ -1,0 +1,14 @@
+{
+  "schema_version": 2,
+  "target_repository": "Cesare-ml/VirgoStars-Ephemeris",
+  "issue_number": 85,
+  "session_id": "chat-2b83b374-393f-4734-b90b-da438517ace8",
+  "role": "reviewer",
+  "access": "read",
+  "resource_scope_id": null,
+  "resource_roots": null,
+  "state": "claimed",
+  "claimed_at": "2026-11-12T13:10:11.293Z",
+  "branch": null,
+  "last_handoff": null
+}
