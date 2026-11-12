@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import { validateTaskCatalog } from './resources.mjs';
 
 export async function loadPilotConfig() {
   const data = JSON.parse(await readFile(new URL('../config/fleet.private.json',import.meta.url),'utf8'));
@@ -10,6 +11,5 @@ export async function loadPilotConfig() {
 }
 export async function loadPilotTasks() {
   const data = JSON.parse(await readFile(new URL('../config/pilot-tasks.json',import.meta.url),'utf8'));
-  if (!Array.isArray(data.tasks)) throw new Error('Invalid curated task registry.');
-  return data.tasks;
+  return validateTaskCatalog(data.tasks);
 }
