@@ -58,3 +58,7 @@ Read `docs/LAUNCH_DEVELOPERS_WAVE2.md` before selecting a developer task. Only t
 ## Required PR scope gate for write tasks
 
 Before handoff or submission of a write task, inspect `docs/PR_SCOPE_AUDIT.md`. Check every changed file on the new stacked draft PR against the **exact curated resource roots** and verify the PR's base/upstream HEAD. Local agents must run `node bin/vs-agent.mjs audit-pr OWNER/REPO ISSUE PR_NUMBER`; the CLI's `submit` requires `--pr` and rechecks this evidence automatically. GitHub-connector-only chat agents must manually inspect the actual changed-file metadata and report that the machine audit was not run. Never record an unaudited manual check as `scope-clean`. A new PR commit invalidates the previous audit snapshot. No scope audit is PR approval, runtime validation or authorization to merge.
+
+## Detecting PR changes after developer handoff
+
+Before recommending integration of a write submission, run private `fleet-status` and `audit-pr` on the **current** PR HEAD. `submitted` is only the state recorded at handoff. A subsequent PR or upstream commit can make it `stale-submission`, even when the stored SHA was scope-clean. Stop and obtain a fresh audit/evidence on drift; never edit immutable submission markers merely to conceal an outdated PR. Connector-only manual submissions without executable CLI evidence continue to require independent review. No automatic approval or merge.

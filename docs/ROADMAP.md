@@ -105,3 +105,12 @@ No deploy, Actions, production mutation, release, automatic merge, or license/vi
 - [x] Run 7 isolated local Node 22 tests for the exact `src/pr-audit.mjs` blob (same Git SHA as committed file); these passed. This does not validate the whole orchestrator checkout.
 - [ ] Run full `npm run check` on a fresh authenticated Git checkout, including new pagination and write-submission integration tests.
 - [ ] Audit both real developer stacked PRs and independently execute required target tests before deciding on acceptance.
+
+## Submission freshness checkpoint — issue #12 (2026-11-12)
+
+- [x] Add read-only `src/submission-freshness.mjs`, comparing current stacked PR and upstream HEAD with immutable recorded submission evidence.
+- [x] Enhance `fleet-status` to show `stale-submission`, `needs-scope-audit` and per-PR recorded/live HEAD/SHA checks; preserve risk states when an issue claim also remains active.
+- [x] Re-fetch the PR and its upstream HEAD after changed-file pagination, refusing checks that raced with a push/rebase.
+- [x] Add targeted Node test cases for PR HEAD drift, upstream movement, scope violations, manual handoffs, API denial, claim release overlap and concurrent PR updates.
+- [ ] Run `npm run check` on a fresh checkout of the latest branch; these new regression tests have been committed but not executed in this runtime.
+- [ ] Observe real developer stacked PRs from two independent chats and verify scope, commit freshness and actual target test evidence before any integration decision.

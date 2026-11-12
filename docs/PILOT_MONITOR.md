@@ -56,3 +56,15 @@ The ledger retains the five wave-1 submitted reviewer markers. Two new curated d
 ## Scope verification for wave-2 write submissions
 
 A write-task submission lacking a verified CLI audit is displayed as `needs-scope-audit`, with a maintainer alert. This includes connector-only agent handoffs marked `scope_verdict:"manual-reviewed"`. After an agent opens a stacked draft PR, run `node bin/vs-agent.mjs audit-pr OWNER/REPO ISSUE ACTUAL_PR_NUMBER` using the latest PR HEAD, then independently review content and actual tests. `scope-clean` is only a file-path/branch metadata gate, **not** approval or scientific validation. A later commit changes the inspected HEAD and requires a fresh audit.
+
+## Live developer submission freshness (2026-11-12)
+
+For every submitted `access:write` task that names a PR, `fleet-status` now fetches the current draft PR and upstream PR (including their changed-file list), verifies the present file/branch scope, and compares current HEAD SHAs against the marker's `audited_head_sha` and `audited_base_sha`. Its additional `pr_check` object reports recorded/current SHAs and the live scope verdict. It **never rewrites** submission evidence.
+
+| Status | Maintainer action |
+| --- | --- |
+| `stale-submission` | PR HEAD changed, upstream moved or current file/branch scope is blocked; run a fresh audit and independently review new commits |
+| `needs-scope-audit` | Manual/legacy marker has insufficient CLI evidence; inspect actual PR before considering integration |
+| `submitted` | Recorded and live scope evidence currently agrees, but code/tests still require independent review |
+
+If the same issue claim remains present, `fleet-status` keeps a more serious `stale-submission` or `needs-scope-audit` status and **also** reports that the owner must finish releasing the claim. Permission errors, inconsistent PR metadata or a commit changing during file pagination stop the read-only audit rather than yielding a false clean verdict. The Git ledger is pinned to one commit, but live PR refs are **not** transactionally pinned across repositories: always recheck before merge decisions. No automated merge or approval exists.

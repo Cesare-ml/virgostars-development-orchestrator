@@ -44,3 +44,7 @@ The first five reviewer tasks are submitted (pending independent review). **Two 
 ## Audit developers' stacked PRs before accepting handoff
 
 The private Node CLI now supports `audit-pr OWNER/REPO ISSUE PR_NUMBER`. It reads the actual GitHub PR changed-file list, verifies the submitted draft is stacked onto the approved upstream PR branch, and rejects out-of-scope, renamed, missing, or modified files in wave 2. For a developer (`access:write`), `submit --pr PR_NUMBER --confirm` **re-runs the scope audit** and saves the audited head SHA before releasing the task. Submitted work still awaits independent code and test review; no auto-merge is authorized. See [PR scope audit](docs/PR_SCOPE_AUDIT.md).
+
+## Submission freshness monitoring
+
+The private `fleet-status` command now **rechecks live developer PR metadata and file scope** against the immutable `submitted` record. If a developer pushes after handoff, the upstream branch moves or the current changed files violate the curated scope, it reports `stale-submission` rather than continuing to present the recorded audit as current. Historical/manual write markers remain `needs-scope-audit`; reviewer-only submissions are unaffected. The monitor is GET-only and does not approve or merge PRs. See [pilot monitor](docs/PILOT_MONITOR.md).
