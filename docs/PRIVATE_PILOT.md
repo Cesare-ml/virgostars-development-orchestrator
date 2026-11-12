@@ -77,3 +77,7 @@ Use the [private MVP launch guide](LAUNCH_PRIVATE_MVP.md). All five initial revi
 ## First five chat submissions observed
 
 The first five reviewer chats submitted their curated tasks, with each handoff pointing to a GitHub issue review comment. This is a successful coordination signal, **not** approval of their technical conclusions. Do not launch additional reviewer chats expecting the same five tasks to be free. Use the private `fleet-status` command and [PILOT_MONITOR.md](PILOT_MONITOR.md) to inspect submitted reviews and any stale/orphaned resources before opening a new task wave.
+
+## Wave 2 after completed reviewer submissions
+
+The first five reviewer submissions are persisted and must not be automatically reassigned. The next approved pilot experiment is **two developer sessions on two different repositories**, constrained to new, non-overlapping files. Read `docs/LAUNCH_DEVELOPERS_WAVE2.md` and `config/pilot-tasks.json`. The developer prompt takes precedence over the initial read-only reviewer-only launch prompt for these two tasks. Do not silently extend the resource scopes if source changes would be required.

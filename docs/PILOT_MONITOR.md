@@ -48,3 +48,7 @@ These are **reviewers' reported findings**, not maintainer-approved conclusions 
 - Only curated task statuses are summarized; unfamiliar claim/submission files are flagged as untracked rather than ignored. Resource locks without an associated active claim are flagged for manual inspection.
 - No GitHub Actions, merges, deployments, API key publication, automatic task approvals or changes to the five target repositories.
 - Tests added for the monitor use a mocked API. A complete `npm run check` from a fresh checkout remains necessary before claiming a native integration gate.
+
+## Wave 2 work queue
+
+The ledger retains the five wave-1 submitted reviewer markers. Two new curated developer tasks are ready: `astrological-functions#5` and `astrological-charts#25`, each with a single explicit partition and a new-file-only write scope. `fleet-status` now lists seven task records (five submitted, two available before a wave-2 claim) plus any alerts. The live status may change as agents work. Use `docs/LAUNCH_DEVELOPERS_WAVE2.md` for startup prompts, required resource-first claims and stacked-PR rules.

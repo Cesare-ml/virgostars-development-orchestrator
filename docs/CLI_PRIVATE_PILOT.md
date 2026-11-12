@@ -69,3 +69,7 @@ For connector-only ChatGPT chats, follow [LAUNCH_PRIVATE_MVP.md](LAUNCH_PRIVATE_
 ## Read-only monitoring of the whole private fleet
 
 Run `node bin/vs-agent.mjs fleet-status` from the feature branch with a private `GITHUB_TOKEN`. This command performs only GitHub reads; it produces structured JSON with an immutable ledger commit, five task states, pending review links, and alerts for mismatched or orphaned locks. It is intended for the maintainer and doesn't autonomously claim, approve, merge or restart work. Full status definitions and first-wave reviewer comments are in [PILOT_MONITOR.md](PILOT_MONITOR.md).
+
+## Two supervised write tasks now available
+
+After the first five reviewer tasks were submitted, the private catalog gained two `pilot_wave:2` developer tasks. Local Codex may run `node bin/vs-agent.mjs claim-next --session YOUR_SESSION --role developer`; it will try the two curated tasks and require a resource lock before the task claim. Follow `docs/LAUNCH_DEVELOPERS_WAVE2.md` for exact branch/PR rules, permitted paths and handoff/submit procedure. These are **stacked draft PRs**, not updates to main or the existing active PR branches.

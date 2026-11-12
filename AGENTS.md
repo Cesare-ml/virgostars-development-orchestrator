@@ -50,3 +50,7 @@ For the first ChatGPT pilot, use `docs/LAUNCH_PRIVATE_MVP.md` (feature branch) a
 ## Central monitoring and evidence review
 
 Before a new wave of chats, run `fleet-status` or inspect the immutable private `coordination/claims` branch. Use [docs/PILOT_MONITOR.md](docs/PILOT_MONITOR.md) for state definitions. `submitted` means a review was handed off, not that defects are fixed or code approved. Do not reassign submitted work to a new agent without a maintainer decision. Investigate `inconsistent`, `resource-busy` and `submitted-pending-release` states before scheduling new code-writing tasks. Never expose the private monitor output on a public repository.
+
+## Supervised developer pilot, wave 2
+
+Read `docs/LAUNCH_DEVELOPERS_WAVE2.md` before selecting a developer task. Only two curated `pilot_wave:2`, `access:write` issues currently qualify. Each requires a verified **resource-first** lock, then issue claim, exact file-root scope compliance, new feature branch from the latest upstream PR head and a **draft stacked PR** against that PR's branch. No direct writes to active PR branches. Stop rather than expanding file scope. Existing five submitted reviewer findings remain pending independent review.

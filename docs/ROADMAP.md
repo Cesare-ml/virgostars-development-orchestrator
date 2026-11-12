@@ -85,3 +85,13 @@ No deploy, Actions, production mutation, release, automatic merge, or license/vi
 - [x] Validate the live GitHub REST ref → commit → tree → blobs path and confirm each of the five submissions references an issue comment.
 - [ ] Run `npm run check` against a fresh checkout of this latest feature branch; newly committed monitor tests have not been executed in this tool runtime.
 - [ ] Independent maintainer review of the five submitted findings before converting them into scoped coding tasks; no automatic task approval or merging.
+
+## Wave 2 kickoff — two disjoint real developer tasks
+
+- [x] Reviewed five original reviewer comments and checked updated open PR status; recognized that PR heads have advanced since original review evidence.
+- [x] Created test-scoped issues `Cesare-ml/astrological-functions#5` (provider ESM consumer import) and `Cesare-ml/astrological-charts#25` (axis canvas browser smoke).
+- [x] Verified all three intended new file paths are absent on the source PR branches at selection time; no source files in existing PRs are authorized to change under these tasks.
+- [x] Added both `access:write`, `pilot_wave:2` tasks to the private curated catalog with exact resource roots and upstream PR metadata; first five `submitted` reviews retained.
+- [x] Authored `docs/LAUNCH_DEVELOPERS_WAVE2.md` with a shared two-chat prompt, resource-first claim format, stacked draft PR requirement and honest test/handoff reporting.
+- [ ] Observe both agents independently acquire disjoint resource+issue locks and open draft PRs without writing outside declared paths.
+- [ ] Verify their tests and target PR heads, then decide whether to approve work or expand toward additional repos.

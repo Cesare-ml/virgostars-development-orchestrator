@@ -36,3 +36,7 @@ Private pilot write tasks now require a **single approved resource partition**, 
 ## Fleet monitoring after the first five chats
 
 The first five curated reviewer assignments have submitted technical findings. Use `node bin/vs-agent.mjs fleet-status` on a private, authenticated checkout to see a read-only, Git-commit-pinned snapshot of assignments, submitted reviews, mismatches and orphaned resource locks. See [pilot monitor](docs/PILOT_MONITOR.md). Submitted reviews await independent approval; the monitor does not merge PRs or create new development tasks.
+
+## Wave 2: two first developer agents
+
+The first five reviewer tasks are submitted (pending independent review). **Two supervised write tasks** are now in the curated queue: `astrological-functions#5` (ESM provider consumer smoke) and `astrological-charts#25` (axis canvas browser smoke). They are restricted to exact new files and each uses a separate exclusive resource partition. Use [docs/LAUNCH_DEVELOPERS_WAVE2.md](docs/LAUNCH_DEVELOPERS_WAVE2.md) to launch two independent GitHub-connected developer chats; never have either agent push to an existing active PR branch or modify production.
