@@ -7,8 +7,12 @@
   "access": "read",
   "resource_scope_id": null,
   "resource_roots": null,
-  "state": "claimed",
+  "state": "in_progress",
   "claimed_at": "2026-11-12T13:13:13.964Z",
   "branch": null,
-  "last_handoff": null
+  "last_handoff": {
+    "at": "2026-11-12T13:18:21.768Z",
+    "summary": "Read-only review of PR #3 head 9ba696c5510e7d76a16e8856b7ef87c51c74125e: runtime/type entrypoint mismatch, HouseCuspContextInput discriminant weakened by Omit (reduced TypeScript 5.8.3 reproduction), and provider rejection typing gap. Native npm/tsc suite and astronomical validation not run. Published findings: https://github.com/Cesare-ml/astrological-functions/issues/4#issuecomment-6824690904",
+    "head_sha": null
+  }
 }
