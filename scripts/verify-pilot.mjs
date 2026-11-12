@@ -2,50 +2,82 @@
 import {
   PILOT_BRANCH,PILOT_REPO,createReadOnlyGitHubApi,validatePinnedSnapshot
 } from '../src/native-check.mjs';
+import {
+  buildNativeValidationReceipt,saveNativeValidationReceipt,readNativeValidationReceipt
+} from '../src/validation-receipt.mjs';
 
-function options(args) {
-  let expectedSha=null,keep=false;
+export function parseVerificationArgs(args) {
+  let expectedSha=null,keep=false,receiptPath=null,reviewPath=null;
   for(let i=0;i<args.length;i++) {
-    if(args[i]==='--keep'){keep=true;continue;}
-    if(args[i]==='--sha') {
-      if(expectedSha!==null||!args[i+1])throw new Error('--sha needs one commit SHA.');
-      expectedSha=args[++i];continue;
+    const arg=args[i];
+    if(arg==='--help'||arg==='-h')return {help:true};
+    if(arg==='--keep'){keep=true;continue;}
+    if(['--sha','--receipt','--verify-receipt'].includes(arg)) {
+      const value=args[i+1];
+      if(!value||value.startsWith('--'))throw new Error(arg+' requires a value.');
+      if(arg==='--sha') {
+        if(expectedSha!==null)throw new Error('--sha provided twice.');
+        expectedSha=value;
+      } else if(arg==='--receipt') {
+        if(receiptPath!==null)throw new Error('--receipt provided twice.');
+        receiptPath=value;
+      } else {
+        if(reviewPath!==null)throw new Error('--verify-receipt provided twice.');
+        reviewPath=value;
+      }
+      i++;continue;
     }
-    if(args[i]==='--help' || args[i]==='-h')return {help:true};
-    throw new Error('Unexpected argument: '+args[i]);
+    throw new Error('Unexpected argument: '+arg);
   }
-  if(expectedSha!==null && !/^[0-9a-f]{40}$/i.test(expectedSha))
+  if(expectedSha!==null&&!/^[0-9a-f]{40}$/i.test(expectedSha))
     throw new Error('--sha expects a full 40-character Git SHA.');
-  return {expectedSha,keep};
+  if(reviewPath!==null) {
+    if(expectedSha===null)throw new Error('--verify-receipt requires --sha COMMIT_SHA.');
+    if(receiptPath!==null||keep)
+      throw new Error('Offline receipt review cannot download or retain snapshots.');
+  }
+  return {expectedSha,keep,receiptPath,reviewPath};
 }
 
 const usage=[
   'Manual private GitHub snapshot validation (no Git clone, no GitHub Actions)',
   '',
-  'Set GITHUB_TOKEN in your current shell, then run:',
-  '  node scripts/verify-pilot.mjs --sha YOUR_CURRENT_FEATURE_HEAD_SHA',
-  '  node scripts/verify-pilot.mjs --keep   # optional debug checkout',
+  'Run with locally configured GITHUB_TOKEN (Contents: read):',
+  '  node scripts/verify-pilot.mjs --sha HEAD_SHA --receipt ./pilot-result.json',
+  'Offline examination of an UNSIGNED receipt (no GitHub token needed):',
+  '  node scripts/verify-pilot.mjs --verify-receipt ./pilot-result.json --sha HEAD_SHA',
+  'Use --keep only to retain a local test checkout for debugging.',
   '',
-  'The fixed source is '+PILOT_REPO+' at '+PILOT_BRANCH+'.',
-  'Every blob is hash-verified before npm run check executes.',
-  'The auth token is never forwarded to the npm child process.'
+  'Fixed source: '+PILOT_REPO+' at '+PILOT_BRANCH+'.',
+  'The auth token is never forwarded to npm or written into the receipt.',
+  'Receipts are unsigned/self-reported and never authorize merging.'
 ].join('\n');
 
 try {
-  const parsed=options(process.argv.slice(2));
+  const parsed=parseVerificationArgs(process.argv.slice(2));
   if(parsed.help) {
     process.stdout.write(usage+'\n');
+  } else if(parsed.reviewPath!==null) {
+    // Offline metadata check: no GitHub requests and no token needed.
+    const reviewed=await readNativeValidationReceipt(parsed.reviewPath,{
+      expectedSha:parsed.expectedSha});
+    process.stdout.write(JSON.stringify(reviewed,null,2)+'\n');
+    if(!reviewed.recorded_tests_passed)process.exitCode=1;
   } else {
     const api=createReadOnlyGitHubApi({token:process.env.GITHUB_TOKEN});
     const result=await validatePinnedSnapshot({api,
       expectedSha:parsed.expectedSha,keep:parsed.keep});
+    if(parsed.receiptPath!==null) {
+      const receipt=buildNativeValidationReceipt(result);
+      result.receipt_file=await saveNativeValidationReceipt(parsed.receiptPath,receipt);
+    }
     process.stdout.write(JSON.stringify(result,null,2)+'\n');
     if(!result.tests.passed)process.exitCode=1;
   }
 } catch(error) {
   const raw=error instanceof Error?error.message:String(error);
   const token=process.env.GITHUB_TOKEN||'';
-  // A final defense even for unexpected errors returned by external adapters.
+  // Defense-in-depth: redact the exact local token even on unexpected errors.
   const safe=token?raw.split(token).join('[REDACTED]'):raw;
   process.stderr.write('Native snapshot validation failed: '+safe+'\n');
   process.exitCode=1;
