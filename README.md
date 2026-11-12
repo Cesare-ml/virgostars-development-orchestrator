@@ -28,3 +28,7 @@ The CLI now supports `claim-next --session chat-UUID --role reviewer [--repo OWN
 ## Cooperative write-resource locks
 
 Private pilot write tasks now require a **single approved resource partition**, acquired before the issue claim. Different issues sharing that partition cannot both become writers; disjoint declared partitions may be worked on concurrently. Catalog scopes are validated for overlapping paths. The five initial eligible tasks remain read-only reviews; this does not automatically authorize new coding work. See [resource lock protocol](docs/RESOURCE_LOCKS.md). There is no multi-resource transaction, automatic stale lock recovery or enforcement of actual file edits outside the declared scope.
+
+## Ready to launch the first private chats
+
+**[Open the single-prompt pilot launch guide](docs/LAUNCH_PRIVATE_MVP.md).** Start with 3–5 ChatGPT chats using their connected GitHub tools. All five initial tasks are read-only reviews. Each agent claims one task via `coordination/claims`, posts its findings in the target issue, stores its handoff and creates a private `submissions/OWNER__REPO/issue-N.json` marker **before** releasing the issue claim. Submitted work is not automatically reassigned and is *not* considered approved. The executable Node CLI supports `claim-next`, `handoff`, and `submit --confirm`. Do not confuse the feature branch with `main`.

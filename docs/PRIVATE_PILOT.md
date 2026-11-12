@@ -69,3 +69,7 @@ The pilot CLI supports `claim-next --session SESSION --role reviewer [--repo OWN
 ## Write task resource coordination
 
 The original issue-level claim method remains appropriate for initial read-only reviewer tasks. **For any curated write task**, use the two-stage exclusive-resource protocol in [RESOURCE_LOCKS.md](RESOURCE_LOCKS.md): acquire one approved resource partition before the issue. Write task roots must not overlap across different partition IDs within the same repository; the CLI validates the catalog and checks the matching resource on resume, handoff and release. A failed, incomplete or orphaned reservation is not available work. We have a tested single-partition model, **not** general multi-resource atomicity, automatic expiry, scope enforcement on GitHub pushes, or protection from out-of-catalog editing.
+
+## How to actually launch 3–5 ChatGPT chats
+
+Use the [private MVP launch guide](LAUNCH_PRIVATE_MVP.md). All five initial reviewer assignments are verified open as of 2026-11-12. Copy the same prompt into separate GitHub-connected ChatGPT chats. The instructions include UUID session isolation, create-only task locking, a real PR/issue review, handoff, and a persistent **submitted / awaiting-review** marker that prevents duplicate assignment. The main branch has not yet absorbed this feature branch. `submit` is not merge or approval.

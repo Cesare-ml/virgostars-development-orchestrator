@@ -62,3 +62,13 @@ No deploy, Actions, production mutation, release, automatic merge, or license/vi
 - [ ] Prove multi-partition atomicity via PostgreSQL backend before allowing tasks spanning independent partitions. No 40-agent scalability claim yet.
 
 - [x] Detect orphaned resource locks during task discovery, returning `resource-busy` instead of falsely advertising unclaimed write tasks.
+
+## First-chat launch gate (2026-11-12)
+
+- [x] Verified the five initial reviewer issues remain open; private lock ledger was empty before first-chat preparation.
+- [x] Add `docs/LAUNCH_PRIVATE_MVP.md`: a single copy/paste chat prompt and clear 3–5-chat launch instructions.
+- [x] Add immutable `submissions/` terminal queue markers: `submit --confirm` records work submitted for independent review before releasing the claim. `discover` and `claim-next` skip submitted tasks.
+- [x] Add submission tests for owner-only delivery, retries, interrupted release, duplicate prevention, and queue exhaustion; checked into PR #1.
+- [ ] Run `npm run check` on a fresh checkout of the feature branch on Windows/Codex; this environment has no direct network checkout of the private repository.
+- [ ] Test with 3–5 actual independent ChatGPT conversations and inspect their technical issue-review comments.
+- [ ] Only then curate two disjoint code-writing tasks with explicit scope/PR review before wider parallel development.
