@@ -81,3 +81,12 @@ test('a resumed write task is blocked if curated partition changes',async()=>{
  const changed=[{...original[0],resource_scope:{id:'other',roots:['src/other/']}}];
  await assert.rejects(()=>claimNext({api,config,tasks:changed,session,role:'developer'}),/resource scope changed/);
 });
+
+test('a resumed write task rejects changing roots under same resource ID',async()=>{
+ const api=fake(),session=newSession();
+ const original=[{repository:repo,issue:78,role:'developer',access:'write',
+  resource_scope:{id:'render',roots:['src/render/']},status:'ready'}];
+ await claimNext({api,config,tasks:original,session,role:'developer'});
+ const changed=[{...original[0],resource_scope:{id:'render',roots:['src/other/']}}];
+ await assert.rejects(()=>claimNext({api,config,tasks:changed,session,role:'developer'}),/resource scope changed/);
+});
