@@ -15,3 +15,7 @@ The initial objective is to let many independent ChatGPT and Codex conversations
 - [Public-safe example registry](config/fleet.json). **Do not publish the private pilot registry or private repository data.**
 
 The current pilot uses GitHub tools available to authorized agents. No network service, database, hosted API, automatic merges, CI changes or deployment has been implemented.
+
+## First runnable private-agent pilot
+
+The initial Node.js 20+ CLI is in `bin/vs-agent.mjs`, with no external runtime packages. Read `docs/CLI_PRIVATE_PILOT.md` for local Codex commands and GitHub-connected ChatGPT equivalent actions. `config/pilot-tasks.json` curates exactly five initial **read-only PR review tasks**, one for each target repository. The CLI supports session creation, discovery, issue claim, status, factual handoff and explicit owner-controlled release. It is not a hosted API; other task types will be opened only after scope review.
