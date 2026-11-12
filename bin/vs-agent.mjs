@@ -4,11 +4,13 @@ import { loadPilotConfig, loadPilotTasks } from '../src/registry.mjs';
 import { newSession, claim, status, release, handoff, discover } from '../src/claims.mjs';
 import { claimNext } from '../src/queue.mjs';
 import { submit } from '../src/submissions.mjs';
+import { auditFleet } from '../src/fleet-status.mjs';
 
 const usage = [
   'VirgoStars private pilot — Node.js 20+',
   'node bin/vs-agent.mjs session [--kind chat|codex]',
   'node bin/vs-agent.mjs discover',
+  'node bin/vs-agent.mjs fleet-status  # read-only, all five repositories',
   'node bin/vs-agent.mjs claim-next --session chat-UUID --role reviewer [--repo OWNER/REPO]',
   'node bin/vs-agent.mjs status OWNER/REPO ISSUE',
   'node bin/vs-agent.mjs claim OWNER/REPO ISSUE --session chat-UUID --role reviewer',
@@ -47,6 +49,9 @@ async function main() {
   if(command==='discover') {
     if(positionals.length) throw new Error('Discover takes no target.');
     result=await discover({api,config,tasks:await loadPilotTasks()});
+  } else if(command==='fleet-status') {
+    if(positionals.length) throw new Error('Fleet-status takes no positional target.');
+    result=await auditFleet({api,config,tasks:await loadPilotTasks()});
   } else if(command==='claim-next') {
     if(positionals.length) throw new Error('Claim-next takes no positional target.');
     result=await claimNext({api,config,tasks:await loadPilotTasks(),
