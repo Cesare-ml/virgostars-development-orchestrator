@@ -29,3 +29,7 @@ Target-repository rules always apply. No direct push to main, automatic merge, p
 
 ## Future work
 `docs/START_HERE.md`, `docs/PROTOCOL.md`, and `docs/API.md` specify a **future public and 1,000-agent architecture**. They do not authorize public volunteers in the current pilot and no scheduler/API is yet deployed.
+
+## Executable private task queue
+
+Read `config/pilot-tasks.json` and `docs/CLI_PRIVATE_PILOT.md`. Every pilot reviewer must claim their issue before a review, just as developers must claim before code edits. The five initial tasks are reviewer-only and **do not authorize source changes**. `claim` requires a task explicitly marked `ready`; do not work on arbitrary issues. Local Codex may use the Node CLI; a GitHub-connected ChatGPT must use the exact same claim path and ownership rules through connector actions. A task claim is exclusive per issue key only, not across modules or files shared by different issues.
