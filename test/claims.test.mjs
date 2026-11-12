@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { newSession, claim, release, status, taskKey } from '../src/claims.mjs';
+import { newSession, claim, release, handoff, status, taskKey } from '../src/claims.mjs';
 import { GitHubError } from '../src/github.mjs';
 
 const target='Cesare-ml/astrological-charts';
@@ -15,6 +15,10 @@ function mock() {
    if(claims.has(path)) throw new GitHubError(422);
    claims.set(path,{sha:'sha-'+claims.size,data});
   },
+  async updateClaim(_r,path,_b,sha,data){
+   if(claims.get(path)?.sha!==sha) throw new GitHubError(409);
+   claims.set(path,{sha:'handoff-'+sha,data:structuredClone(data)});
+  },
   async deleteClaim(_r,path,_b,sha){
    if(claims.get(path)?.sha!==sha) throw new GitHubError(409);
    claims.delete(path);
@@ -28,6 +32,7 @@ test('concurrent claim and release',async()=>{
  assert.deepEqual(both.map(x=>x.result).sort(),['acquired','busy']);
  assert.equal((await status(args)).claim.session_id,a);
  await assert.rejects(()=>release({...args,session:b,confirm:true}),/Not the current owner/);
+ await handoff({...args,session:a,summary:'Review evidence posted on the issue.'});
  await release({...args,session:a,confirm:true});
  assert.equal((await claim({...args,session:b})).result,'acquired');
 });
