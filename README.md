@@ -64,3 +64,7 @@ On a **trusted local** Windows/macOS/Linux machine with Node.js 20+, use an auth
 ## Record native validation evidence without sharing tokens
 
 The manual private snapshot CLI now supports `--receipt ./result.json` to record an **unsigned, SHA-pinned** JSON result after real `npm run check`; its `--verify-receipt ./result.json --sha COMMIT_SHA` mode checks that report offline without GitHub or credentials. Receipts never overwrite an existing file and **do not prove an independent reviewer reran the tests or authorize a merge**. See [validation receipts](docs/VALIDATION_RECEIPTS.md). Exact-source Node 22 tests passed 9/9 for receipts and 11/11 for the native snapshot verifier (20/20 total). The **full orchestrator branch** is still awaiting authenticated native `npm run check`.
+
+## Native coordinator test status — 2026-11-12
+
+The **complete Node test suite** has now been executed on a local, hash-verified mirror of **all 36 current runtime/test/config/CLI files** from private commit `f3736003b01af0ab5e12f21283719bd1412cf25d`: `npm run check` **120/120 PASS** with Node 22.16.0. One incorrectly ordered release-guard test assertion was corrected and a missing-resource-after-handoff regression was added. The mirror intentionally omitted docs/templates, so this is not a full-tree `verify:private` run; see [native validation evidence](docs/NATIVE_VALIDATION.md). PR #1 stays draft, without merge approval.

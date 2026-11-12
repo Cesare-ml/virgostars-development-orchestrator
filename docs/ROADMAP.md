@@ -156,3 +156,12 @@ No deploy, Actions, production mutation, release, automatic merge, or license/vi
 - [x] Add syntax-check gating for the receipt module and document the unsigned record/human validation boundary in [VALIDATION_RECEIPTS.md](VALIDATION_RECEIPTS.md).
 - [ ] Perform the **full real private orchestrator checkout's** authenticated `npm run check`; native tests of the verifier and receipt are not a substitute.
 - [ ] Independently reproduce submitted developer PR tests and resolve competing Charts PRs before any integration/merge decision.
+
+## Entire coordinator native test suite on a pinned runtime mirror — issue #17 (2026-11-12)
+
+- [x] Read immutable private feature commit `f3736003b01af0ab5e12f21283719bd1412cf25d` and Git tree `262a08d51a91a7fd2c00dc5c6a7c83e313d73ce1` using authorized GitHub reads; respect coordination lock order.
+- [x] Independently reconstruct and SHA-verify **all 36 runtime, CLI, configuration and Node test blobs** (171,781 bytes) in a local Node 22.16.0 test mirror, with FNV-1a-64 manifest checksum `40dcc945464b179f`.
+- [x] Execute actual **`npm run check`: 120/120 tests passed, no failures, syntax checks green**. This includes the full current `node --test` suite, not a V8 assertion shim.
+- [x] Fix a real pre-existing false-negative assertion in `test/write-resources.test.mjs`; add independent regression for missing resource **after** an owner handoff (blob `3018e540928a0b19b39958e66ff80c2dfcda1ad6`).
+- [ ] Run `npm run verify:private -- --sha CURRENT_HEAD` on an authenticated network-connected machine, including the entire GitHub tree of **57 tracked files**, not just the 36 test-relevant files. Until then no claim of full-snapshot validation.
+- [ ] Before any integration decision, independently validate the actual two wave-2 target PRs and resolve competing Charts drafts; no automatic merge or GitHub Actions.
