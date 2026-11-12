@@ -30,3 +30,12 @@
 - [ ] Document measured concurrency, costs and resilience; do not claim throughput before tests.
 
 No deploy, Actions, production mutation, release, automatic merge, or license/visibility change is implied.
+
+## Checkpoint: first executable private queue (2026-11-12)
+
+- [x] Register five triaged read-only QA issues in `config/pilot-tasks.json`, one per target repository.
+- [x] Add local Node CLI with exclusive create, status, owner handoff, manual release and curated discovery.
+- [x] Add mock regression tests and observe real GitHub collision / handoff / SHA-safe release on `coordination/claims`.
+- [x] Pin claim reads to a concrete Git commit SHA to avoid stale branch-path responses observed in testing.
+- [ ] Run the committed CLI suite in a full checkout, including Windows 11 Codex shell; local implementation tests passed, but the remote commit was not executed in this environment.
+- [ ] Review the five QA handoffs, triage nonoverlapping coding tasks, and test 5–10 independent working chats before targeting 40.
