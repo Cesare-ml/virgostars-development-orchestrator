@@ -1,6 +1,6 @@
 import {taskKey,submissionKey} from './claims.mjs';
 import {resourceKey,resourceMatches,validateTaskCatalog} from './resources.mjs';
-import {verifySubmissionFreshness} from './submission-freshness.mjs';
+import {assessSubmittedDeveloper} from './review-gates.mjs';
 
 function matches(item,task) {
   const d=item?.data;
@@ -49,6 +49,7 @@ export async function auditFleet({api,config,tasks}) {
     const resourcePath=task.access==='write'?resourceKey(task.repository,task.resource_scope.id):null;
     const resource=resourcePath?files.get(resourcePath):null;
     let state='available',warning=null,owner=null,evidence_url=null,pr_check=null;
+    let collision_check=null,review_gates=null;
     if(submitted) {
       const d=submitted.data;
       const handoff=handoffOf(d);
@@ -61,10 +62,13 @@ export async function auditFleet({api,config,tasks}) {
         evidence_url=commentLink(handoff.summary,task);
         if(!evidence_url) warning='Handoff has no matching GitHub issue-comment link';
         if(task.access==='write') {
-          const check=await verifySubmissionFreshness({api,task,marker:d});
-          state=check.state;
+          const check=await assessSubmittedDeveloper({api,task,marker:d});
+          state=check.status;
           pr_check=check.pr_check;
-          if(check.reason) warning=check.reason;
+          collision_check=check.collisions;
+          review_gates=check.review_gates;
+          if(check.warning)
+            warning=[warning,check.warning].filter(Boolean).join('; ');
         }
       }
     }
@@ -82,6 +86,7 @@ export async function auditFleet({api,config,tasks}) {
           // Keep risk states visible even if submission and claim coexist.
           // A pending release is a separate alert, not evidence of a clean PR.
           if(state==='submitted') state='submitted-pending-release';
+          if(review_gates) review_gates.blockers.push('CLAIM_RELEASE_PENDING');
           warning=[warning,'Owner must finish releasing claim after submission']
             .filter(Boolean).join('; ');
           owner=d.session_id;
@@ -101,7 +106,8 @@ export async function auditFleet({api,config,tasks}) {
     output.push({
       repository:task.repository,issue:task.issue,title:task.title,
       mode:task.access,role:task.role,issue_state:issue.state,status:state,
-      session_id:owner,evidence_url,review:submitted?'pending':null,pr_check,warning
+      session_id:owner,evidence_url,review:submitted?'pending':null,
+      pr_check,collision_check,review_gates,warning
     });
   }
   const claimedIds=new Set(snapshot.entries.filter(e=>e.path.startsWith('claims/'))
