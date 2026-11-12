@@ -84,6 +84,24 @@ export function makeGitHubClient({ token, fetchImpl = fetch, baseUrl = 'https://
     },
     async getIssue(repo,number) {
       return request('GET','/repos/' + repo + '/issues/' + number);
+    },
+    async getPullRequest(repo,number) {
+      if (!Number.isSafeInteger(number) || number < 1) throw new Error('Invalid PR number.');
+      return request('GET','/repos/' + repo + '/pulls/' + number);
+    },
+    async getPullRequestFiles(repo,number) {
+      if (!Number.isSafeInteger(number) || number < 1) throw new Error('Invalid PR number.');
+      const files=[];
+      for(let page=1;page<=3;page++) {
+        const next=await request('GET','/repos/' + repo + '/pulls/' + number +
+          '/files?per_page=100&page=' + page);
+        if (!Array.isArray(next) || next.length>100)
+          throw new Error('Malformed GitHub PR changed-file response.');
+        files.push(...next);
+        if (files.length>200) throw new Error('Too many changed files for pilot scope audit.');
+        if (next.length<100) return files;
+      }
+      throw new Error('Changed-file pagination did not end within the private pilot limit.');
     }
   };
 }
