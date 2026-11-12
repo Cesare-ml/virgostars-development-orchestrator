@@ -35,3 +35,8 @@ test('claim reads are pinned to a concrete branch commit',async()=>{
  assert.equal(urls.length,2);
  assert.ok(urls[1].includes('ref='+('a'.repeat(40))));
 });
+
+test('missing claim branch is a hard error, not available work',async()=>{
+ const api=makeGitHubClient({token:'unit-test',fetchImpl:async()=>({ok:false,status:404})});
+ await assert.rejects(()=>api.getClaim('a/b','claims/x.json','coordination/claims'),GitHubError);
+});
