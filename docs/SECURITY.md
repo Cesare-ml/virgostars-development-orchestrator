@@ -20,3 +20,7 @@ The orchestrator starts PRIVATE. Before it becomes public the owner must approve
 ## Pinned native test execution (manual only)
 
 The private `scripts/verify-pilot.mjs` supports a manual operator workflow with authenticated GitHub Contents:read access. It pins the exact GitHub branch commit, validates blob hashes and file paths before writing a temporary checkout, and removes credentials from the spawned `npm run check` process. Run only trusted commits from the fixed private repository: Git object integrity is not a sandbox and npm scripts may execute arbitrary code. No GitHub Actions, background scheduler, automatic merge or public disclosure. Never put tokens in prompts, issue comments, logs or repository files. [Native validation procedure](NATIVE_VALIDATION.md).
+
+## Unsigned local test evidence
+
+The pinned private native verifier may optionally write a bounded local JSON receipt using `--receipt`. The receipt is an **allowlisted, UNSIGNED, SELF-REPORTED** record containing only commit/tree SHA, counts, runtime version and native npm exit outcome; it excludes tokens, arbitrary environment variables and downloaded blob contents. The writer rejects overwrite and the offline reader limits input to 4 KiB. Do not treat a receipt as an authenticated signature, third-party review, GitHub CI result or permission to merge. See [VALIDATION_RECEIPTS.md](VALIDATION_RECEIPTS.md).

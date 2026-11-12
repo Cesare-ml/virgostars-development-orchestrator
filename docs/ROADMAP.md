@@ -146,3 +146,13 @@ No deploy, Actions, production mutation, release, automatic merge, or license/vi
 - [x] Wrote [docs/NATIVE_VALIDATION.md](NATIVE_VALIDATION.md) with offline checkout and authenticated snapshot validation options; neither makes GitHub Actions calls or merges PRs.
 - [ ] On a trusted network-connected environment with GitHub repo read access, execute `npm run verify:private -- --sha CURRENT_BRANCH_SHA` and independently record the **complete** `npm run check` output. This remains unexecuted on the full private repo in this runtime because DNS/network is unavailable.
 - [ ] Review the complete native suite before considering coordinator PR #1 for a non-draft merge decision; do not confuse verifier's own 11 tests with whole-branch acceptance.
+
+## Unsigned native validation receipts — issue #16 (2026-11-12)
+
+- [x] Add `src/validation-receipt.mjs` with a strict versioned schema, explicitly **unsigned** evidence and a deterministic native exit-status/commit integrity check.
+- [x] Extend `scripts/verify-pilot.mjs` to write `--receipt NEW_FILE.json` only after native execution returns, and to inspect `--verify-receipt FILE.json --sha SHA` completely offline without a token.
+- [x] Atomically publish using an exclusive same-directory hard link; reject existing outputs and malformed/too-large inputs. Read at most 4097 bytes to reject oversized receipts without loading large files into memory.
+- [x] Add `test/validation-receipt.test.mjs` and validate using **real Node.js 22.16.0** on exact Git-blob-identical files: receipt tests **9/9**, existing native snapshot tests **11/11** (**20/20 total**). CLI subprocesses were executed in offline mode, covering successful and failed receipts, missing GitHub authorization and secret omission.
+- [x] Add syntax-check gating for the receipt module and document the unsigned record/human validation boundary in [VALIDATION_RECEIPTS.md](VALIDATION_RECEIPTS.md).
+- [ ] Perform the **full real private orchestrator checkout's** authenticated `npm run check`; native tests of the verifier and receipt are not a substitute.
+- [ ] Independently reproduce submitted developer PR tests and resolve competing Charts PRs before any integration/merge decision.

@@ -89,3 +89,7 @@ Run `node bin/vs-agent.mjs fleet-status` with the existing read credentials. The
 ## Reproduce full native Node checks without an existing clone
 
 The manual `npm run verify:private -- --sha FULL_FEATURE_HEAD_SHA` script can materialize a trusted, pinned private coordinator commit from GitHub read-only APIs and execute actual `npm run check` in a temporary isolated checkout. It requires a locally configured `GITHUB_TOKEN` with Contents: read access. All downloaded blobs are verified against Git SHA-1 IDs; unsafe paths, symlinks, incomplete listings and credential propagation to child npm are prohibited. See [NATIVE_VALIDATION.md](NATIVE_VALIDATION.md). No Actions or unattended runtime; the full real repository test remains pending until actually executed.
+
+## Persist the local native test result against an exact SHA
+
+The manually invoked `node scripts/verify-pilot.mjs --sha FULL_SHA --receipt ./pilot-validation.json` writes a minimal, **unsigned** result after a real native check, atomically without overwriting existing evidence. `--verify-receipt ./pilot-validation.json --sha FULL_SHA` examines its schema and recorded status **offline**, requiring neither GitHub access nor a token; it does not prove the original tests really ran or authorize merge. Keep private receipts and credentials out of public issues. See [VALIDATION_RECEIPTS.md](VALIDATION_RECEIPTS.md).

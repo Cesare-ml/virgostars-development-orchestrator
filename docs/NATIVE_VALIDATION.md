@@ -55,3 +55,9 @@ There are no new npm dependencies, GitHub Actions, background processes, write r
 The verifier runs the repository's actual npm scripts. Run it only against **your trusted private repository**; a remote commit could itself contain executable code. A hash-verified download proves the bytes match GitHub's tree, not that arbitrary code inside is safe. The script deliberately pins the only allowed repository and branch and does not clone arbitrary outside projects.
 
 A successful native `npm run check` does **not** authorize merging any feature branch. The two wave-2 projects still require their own native/browser tests and independent reviewer approval. The private coordinator and all associated repository credentials must remain private.
+
+## Optional unsigned JSON receipt and offline SHA check
+
+To retain reproducible local metadata after a full native run, add `--receipt ./validation-COMMIT.json` to `node scripts/verify-pilot.mjs --sha FULL_COMMIT_SHA`. This writes a **new**, atomic no-overwrite JSON receipt containing only commit/tree SHA, verified byte/file counts, Node version, `npm run check` exit status, completion time and explicit `unsigned:true` / `merge_authorized:false` fields. GitHub tokens and the native child environment are omitted. For offline validation without GitHub or a token, run `node scripts/verify-pilot.mjs --verify-receipt ./validation-COMMIT.json --sha FULL_COMMIT_SHA`. The verifier rejects malformed/oversized or SHA-mismatched receipts but cannot independently authenticate who ran the test. Details: [VALIDATION_RECEIPTS.md](VALIDATION_RECEIPTS.md).
+
+**Additional native verification:** 9/9 new receipt tests plus the existing 11/11 snapshot verifier tests succeeded using exact Git blob-matching Node.js 22.16.0 sources. The **full real private repository** `npm run check` remains unexecuted; no receipt claiming whole-repository acceptance has been produced.
