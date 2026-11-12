@@ -1,0 +1,14 @@
+{
+  "schema_version": 2,
+  "target_repository": "Cesare-ml/astrological-charts",
+  "issue_number": 23,
+  "session_id": "chat-f7d12095-3dcd-4fb2-be4d-031460fe2cce",
+  "role": "reviewer",
+  "access": "read",
+  "resource_scope_id": null,
+  "resource_roots": null,
+  "state": "claimed",
+  "claimed_at": "2026-11-12T13:12:49.818Z",
+  "branch": null,
+  "last_handoff": null
+}
