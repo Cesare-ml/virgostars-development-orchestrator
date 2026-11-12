@@ -54,3 +54,10 @@ test('wrong repo or task scope is rejected',async()=>{
   await assert.rejects(()=>auditTaskPullRequest({api,tasks:[task],repo:R,issue:4,prNumber:6}),/not a curated/);
   assert.throws(()=>inspectTaskPullRequest({...task,access:'read'},pr,upstream,files),/not configured/);
 });
+
+
+test('authorized tester write task uses the same scoped stacked PR checks',()=>{
+  const result=inspectTaskPullRequest({...task,role:'tester'},pr,upstream,files);
+  assert.equal(result.verdict,'scope-clean');
+  assert.equal(result.approved,false);
+});
