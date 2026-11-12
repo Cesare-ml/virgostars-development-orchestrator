@@ -29,8 +29,8 @@ test('CI uses least privilege and does not give checkout persistent credentials'
 
 test('public workflow pins trusted actions to exact upstream commit hashes',async()=>{
   const y=await readWorkflow();
-  assert.match(y,/uses: actions\/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4/);
-  assert.match(y,/uses: actions\/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4/);
+  assert.match(y,/uses: actions\/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6/);
+  assert.match(y,/uses: actions\/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6/);
   const actions=[...y.matchAll(/^\s+uses:\s+(\S+)/gm)].map(x=>x[1]);
   assert.equal(actions.length,2);
   for(const spec of actions)
