@@ -1,8 +1,8 @@
 # VirgoStars Development Orchestrator
 
-**Current priority: PRIVATE, owner-only pilot across five VirgoStars repositories.** The repository is private. External volunteers and public registration are deferred until explicitly approved.
+**Status: PUBLIC repository, owner-operated pilot.** GitHub visibility changed on 2026-11-12; external write-task enrollment remains disabled. Legacy private-pilot records are still present and require owner-controlled review/migration before broad public onboarding. See [public transition and CI safety](docs/PUBLIC_TRANSITION.md).
 
-**Start here:** [Private pilot instructions](docs/PRIVATE_PILOT.md), [agent instructions](AGENTS.md), [five-repository registry](config/fleet.private.json).
+**Start here:** [public transition](docs/PUBLIC_TRANSITION.md), [agent instructions](AGENTS.md) and [legacy owner-only pilot instructions](docs/PRIVATE_PILOT.md). The old pilot catalog is not a public contributor registry.
 
 The initial objective is to let many independent ChatGPT and Codex conversations coordinate via a shared GitHub-backed task/claim ledger. Roles are dynamically chosen from planner, developer, tester, reviewer, auditor and integrator. GitHub task claims use exclusive creation of one file per issue in the separate `coordination/claims` branch. This is a **limited pilot mechanism**: it does not yet provide cross-task resource locks, automatic expiration or transactionally fenced code writes.
 
@@ -12,9 +12,9 @@ The initial objective is to let many independent ChatGPT and Codex conversations
 - [Coordination protocol](docs/PROTOCOL.md) — proposed long-term workflow.
 - [Architecture](docs/ARCHITECTURE.md) and [API proposal](docs/API.md) — future service/backend design.
 - [Security](docs/SECURITY.md), [Roadmap](docs/ROADMAP.md).
-- [Public-safe example registry](config/fleet.json). **Do not publish the private pilot registry or private repository data.**
+- [Public-safe example registry](config/fleet.json). The legacy pilot catalog is already in this repository's public history; **do not replicate or export its nonpublic project details**. See [migration guidance](docs/PUBLIC_TRANSITION.md).
 
-The current pilot uses GitHub tools available to authorized agents. No network service, database, hosted API, automatic merges, CI changes or deployment has been implemented.
+The pilot uses authorized GitHub tools. **Test-only GitHub Actions CI is enabled for this public repository**; there is no hosted scheduler/API, automatic merge or deployment.
 
 ## First runnable private-agent pilot
 
@@ -35,7 +35,7 @@ Private pilot write tasks now require a **single approved resource partition**, 
 
 ## Fleet monitoring after the first five chats
 
-The first five curated reviewer assignments have submitted technical findings. Use `node bin/vs-agent.mjs fleet-status` on a private, authenticated checkout to see a read-only, Git-commit-pinned snapshot of assignments, submitted reviews, mismatches and orphaned resource locks. See [pilot monitor](docs/PILOT_MONITOR.md). Submitted reviews await independent approval; the monitor does not merge PRs or create new development tasks.
+The first five curated reviewer assignments have submitted technical findings. Use `node bin/vs-agent.mjs fleet-status` on an authorized local checkout (do not publish its operational output) to see a read-only, Git-commit-pinned snapshot of assignments, submitted reviews, mismatches and orphaned resource locks. See [pilot monitor](docs/PILOT_MONITOR.md). Submitted reviews await independent approval; the monitor does not merge PRs or create new development tasks.
 
 ## Wave 2: two first developer agents
 
@@ -59,11 +59,11 @@ The `fleet-status` CLI now combines the live PR scope/head audit with a scan of 
 
 ## Run the full native private-pilot checks without git clone
 
-On a **trusted local** Windows/macOS/Linux machine with Node.js 20+, use an authenticated GitHub **Contents: read** token to execute `npm run verify:private -- --sha CURRENT_FEATURE_BRANCH_SHA`. The new [pinned native validation guide](docs/NATIVE_VALIDATION.md) explains how the read-only CLI resolves one private branch commit, checks all Git blob SHA-1 hashes, rejects unsafe paths/truncated snapshots, builds an isolated temporary directory and then runs **actual** `npm run check` with GitHub tokens removed from the npm child environment. No GitHub Actions, merge or deploy. The full private repository's suite is **still awaiting** this operator run; only 11/11 native tests of the new verifier (including a tiny native npm fixture) have been executed here.
+On a **trusted local** Windows/macOS/Linux machine with Node.js 20+, use an authenticated GitHub **Contents: read** token to execute `npm run verify:private -- --sha CURRENT_FEATURE_BRANCH_SHA`. The new [pinned native validation guide](docs/NATIVE_VALIDATION.md) explains how the read-only CLI resolves one private branch commit, checks all Git blob SHA-1 hashes, rejects unsafe paths/truncated snapshots, builds an isolated temporary directory and then runs **actual** `npm run check` with GitHub tokens removed from the npm child environment. Public GitHub Actions now run the complete Node suite without project secrets; manual SHA-pinned snapshot validation remains an optional additional check. No merge or deploy.
 
 ## Record native validation evidence without sharing tokens
 
-The manual private snapshot CLI now supports `--receipt ./result.json` to record an **unsigned, SHA-pinned** JSON result after real `npm run check`; its `--verify-receipt ./result.json --sha COMMIT_SHA` mode checks that report offline without GitHub or credentials. Receipts never overwrite an existing file and **do not prove an independent reviewer reran the tests or authorize a merge**. See [validation receipts](docs/VALIDATION_RECEIPTS.md). Exact-source Node 22 tests passed 9/9 for receipts and 11/11 for the native snapshot verifier (20/20 total). The **full orchestrator branch** is still awaiting authenticated native `npm run check`.
+The manual private snapshot CLI now supports `--receipt ./result.json` to record an **unsigned, SHA-pinned** JSON result after real `npm run check`; its `--verify-receipt ./result.json --sha COMMIT_SHA` mode checks that report offline without GitHub or credentials. Receipts never overwrite an existing file and **do not prove an independent reviewer reran the tests or authorize a merge**. See [validation receipts](docs/VALIDATION_RECEIPTS.md). Exact-source Node 22 tests passed 9/9 for receipts and 11/11 for the native snapshot verifier (20/20 total). The current feature branch has also passed full Node tests on GitHub Actions; unsigned local receipts remain optional evidence, not approval.
 
 ## Native coordinator test status — 2026-11-12
 

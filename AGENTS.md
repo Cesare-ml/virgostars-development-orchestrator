@@ -1,8 +1,8 @@
 # AGENTS.md — VirgoStars agent coordination
 
-## Current mode: private pilot
+## Current mode: public repository, owner-operated pilot
 
-Read `README.md`, `docs/PRIVATE_PILOT.md`, `config/fleet.private.json`, `docs/SECURITY.md` and the selected target repository's `AGENTS.md`, roadmap, issue/PR list and relevant source before any work. The pilot currently covers five specific repositories with mixed public/private visibility; the orchestrator itself remains PRIVATE.
+Read `README.md`, `docs/PRIVATE_PILOT.md`, `config/fleet.private.json`, `docs/SECURITY.md` and the selected target repository's `AGENTS.md`, roadmap, issue/PR list and relevant source before any work. The legacy pilot catalogs refer to targets with mixed visibility. **This orchestrator repository is now PUBLIC**; review [docs/PUBLIC_TRANSITION.md](docs/PUBLIC_TRANSITION.md) before handling any coordination files or inviting external agents.
 
 Agents may be independent ChatGPT/Codex conversations but share authorized GitHub access. A unique session ID identifies each chat independently; different chats on the same GitHub account MUST NOT share a session ID.
 
@@ -25,7 +25,7 @@ Agents may be independent ChatGPT/Codex conversations but share authorized GitHu
 8. Planner roles may propose tasks without claims but cannot bypass code-write rules. No eligible safe tasks -> stop and propose one.
 
 ## Repository safeguards
-Target-repository rules always apply. No direct push to main, automatic merge, production change, unapproved GitHub Actions, release, access change, publication or license alteration. No shared token in prompts/issues, no private information in public repository issues or PRs. Do not overwrite another agent's branch or uncommitted local work. Cross-repository work requires explicit dependency management and independent scoped PRs.
+Target-repository rules always apply. No direct push to main, automatic merge, production change, release, access change, unapproved publication or license alteration. **Read-only test GitHub Actions are authorized on public VirgoStars repositories**; private-repository workflows still require explicit authorization. No shared token in prompts/issues, no private information in public repository issues or PRs. Do not overwrite another agent's branch or uncommitted local work. Cross-repository work requires explicit dependency management and independent scoped PRs.
 
 ## Future work
 `docs/START_HERE.md`, `docs/PROTOCOL.md`, and `docs/API.md` specify a **future public and 1,000-agent architecture**. They do not authorize public volunteers in the current pilot and no scheduler/API is yet deployed.
@@ -49,7 +49,7 @@ For the first ChatGPT pilot, use `docs/LAUNCH_PRIVATE_MVP.md` (feature branch) a
 
 ## Central monitoring and evidence review
 
-Before a new wave of chats, run `fleet-status` or inspect the immutable private `coordination/claims` branch. Use [docs/PILOT_MONITOR.md](docs/PILOT_MONITOR.md) for state definitions. `submitted` means a review was handed off, not that defects are fixed or code approved. Do not reassign submitted work to a new agent without a maintainer decision. Investigate `inconsistent`, `resource-busy` and `submitted-pending-release` states before scheduling new code-writing tasks. Never expose the private monitor output on a public repository.
+Before a new wave of chats, run `fleet-status` or inspect the immutable private `coordination/claims` branch. Use [docs/PILOT_MONITOR.md](docs/PILOT_MONITOR.md) for state definitions. `submitted` means a review was handed off, not that defects are fixed or code approved. Do not reassign submitted work to a new agent without a maintainer decision. Investigate `inconsistent`, `resource-busy` and `submitted-pending-release` states before scheduling new code-writing tasks. The repository is now public: never post operational claim or monitor output to public logs, workflow artifacts, issues or PRs. The legacy coordinator requires privacy migration.
 
 ## Supervised developer pilot, wave 2
 

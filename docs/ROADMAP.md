@@ -20,7 +20,7 @@
 
 ## M1 — Optional future public collaboration
 - [ ] Owner chooses license/contributor policy; audits history, secrets, private data and asset rights.
-- [ ] Owner explicitly authorizes orchestrator visibility change to public.
+- [x] Owner made orchestrator repository public (verified 2026-11-12). This does NOT complete the required history/privacy/license audit.
 - [ ] Separate public registry and role/task policies; never leak private repo metadata.
 - [ ] External volunteers use their own identities, forks and pull requests, with no privileged writes.
 - [ ] MCP/CLI adapters and secure auth for external AI vendors.
@@ -29,7 +29,7 @@
 - [ ] Simulate 1,000+ agents, workload fairness, database/transport capacity, GitHub rate limits and review backpressure.
 - [ ] Document measured concurrency, costs and resilience; do not claim throughput before tests.
 
-No deploy, Actions, production mutation, release, automatic merge, or license/visibility change is implied.
+No deploy, production mutation, release, automatic merge, or license change is implied. Public test-only GitHub Actions are now explicitly allowed.
 
 ## Checkpoint: first executable private queue (2026-11-12)
 

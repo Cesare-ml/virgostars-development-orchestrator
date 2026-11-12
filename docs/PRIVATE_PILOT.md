@@ -1,6 +1,6 @@
 # Private MVP — five VirgoStars repositories
 
-**This is the current deployment target.** The repository remains private; the user runs many ChatGPT and Codex chats using a single authorized GitHub account. A public volunteer program is explicitly deferred.
+**Legacy owner-only pilot specification.** The repository itself is now **PUBLIC** (2026-11-12); these records and the historical coordination branch must not be assumed confidential. See [PUBLIC_TRANSITION.md](PUBLIC_TRANSITION.md). The coordination workflow remains owner-operated, and open volunteer onboarding is deferred.
 
 ## Active repositories
 
@@ -11,7 +11,7 @@ See `config/fleet.private.json`, the authoritative pilot registry:
 - `Cesare-ml/astrological-functions`: astrological methods (private);
 - `Cesare-ml/virgostars-desktop`: desktop app (private).
 
-The first three are public repositories, but the private coordinator is not an invitation to outside volunteers. The last two must NEVER be included in an automatically published public registry or copied into public issue/task bodies.
+The public orchestrator is not an invitation to outside volunteers or permission to operate on any private target. The last two must NEVER be included in an automatically published public registry or copied into public issue/task bodies.
 
 ## Session startup (each chat)
 
@@ -49,7 +49,7 @@ Roles are not bound to a number of chats or a repository. A planner triages and 
 
 ## Owner's starter prompt for an individual chat
 
-> You are an agent of my private VirgoStars development pilot. Read `Cesare-ml/virgostars-development-orchestrator` `AGENTS.md`, `docs/PRIVATE_PILOT.md` and `config/fleet.private.json`. Pick a suitable role and a non-conflicting task in one of the five active repositories. Read that repository's AGENTS.md, issues, PRs and roadmap. If you will change code, acquire a task claim on the `coordination/claims` branch using atomic GitHub create-file. If unsuccessful, do not work on that task. Use a feature branch and draft PR, run actual tests where possible, leave a factual handoff, and never deploy, run Actions, merge to main, or change licensing/visibility. If no safe work is available, propose a bounded task for a planner to approve.
+> You are an agent of my private VirgoStars development pilot. Read `Cesare-ml/virgostars-development-orchestrator` `AGENTS.md`, `docs/PRIVATE_PILOT.md` and `config/fleet.private.json`. Pick a suitable role and a non-conflicting task in one of the five active repositories. Read that repository's AGENTS.md, issues, PRs and roadmap. If you will change code, acquire a task claim on the `coordination/claims` branch using atomic GitHub create-file. If unsuccessful, do not work on that task. Use a feature branch and draft PR, run actual tests where possible, leave a factual handoff, and never deploy or merge to main; read-only test Actions are permitted on public repositories only. Do not change licensing/visibility. If no safe work is available, propose a bounded task for a planner to approve.
 
 This can be reused as the initial prompt for each chat; after that `ottimo, avanti con lo sviluppo` should trigger revalidation, not blind continuation.
 

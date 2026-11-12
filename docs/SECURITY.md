@@ -14,12 +14,12 @@ Do not request an owner's personal access token for external volunteers. Never e
 ## Human control
 No automatic merging of external contributions. Protect main with reviews and checks where supported. Independent review for security-sensitive changes and new dependencies; perform malware, dependency provenance and license review. Report findings through repository-approved private security reporting, not public exploit details.
 
-## Public-release gate
-The orchestrator starts PRIVATE. Before it becomes public the owner must approve repository visibility, choose/verify applicable open-source license and contributor terms, scan files/history for secrets and private data, confirm safe public target registry, and approve the onboarding wording. This repository cannot make private projects open source merely by listing their names.
+## Public repository transition — outstanding security work
+The repository has already become **PUBLIC** by owner decision (2026-11-12). The prior private-release checklist was **not** a completed safety audit. Review files, refs and history for secrets/nonpublic metadata, move owner-only coordination to a private location, and choose a LICENSE before describing it as open source. Removing a file in a new commit does not remove its public history. See [PUBLIC_TRANSITION.md](PUBLIC_TRANSITION.md). Listing private targets does not make them open source.
 
 ## Pinned native test execution (manual only)
 
-The private `scripts/verify-pilot.mjs` supports a manual operator workflow with authenticated GitHub Contents:read access. It pins the exact GitHub branch commit, validates blob hashes and file paths before writing a temporary checkout, and removes credentials from the spawned `npm run check` process. Run only trusted commits from the fixed private repository: Git object integrity is not a sandbox and npm scripts may execute arbitrary code. No GitHub Actions, background scheduler, automatic merge or public disclosure. Never put tokens in prompts, issue comments, logs or repository files. [Native validation procedure](NATIVE_VALIDATION.md).
+The private `scripts/verify-pilot.mjs` supports a manual operator workflow with authenticated GitHub Contents:read access. It pins the exact GitHub branch commit, validates blob hashes and file paths before writing a temporary checkout, and removes credentials from the spawned `npm run check` process. Run only trusted commits from the fixed private repository: Git object integrity is not a sandbox and npm scripts may execute arbitrary code. Only test-only, read-only GitHub Actions in this public repository are authorized. No background agent scheduler, private fleet access, automatic merge or deployment. Never put tokens in prompts, issue comments, logs or repository files. [Native validation procedure](NATIVE_VALIDATION.md).
 
 ## Unsigned local test evidence
 
