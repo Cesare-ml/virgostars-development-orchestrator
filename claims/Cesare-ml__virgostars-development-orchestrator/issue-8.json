@@ -1,0 +1,20 @@
+{
+  "schema_version": 2,
+  "target_repository": "Cesare-ml/virgostars-development-orchestrator",
+  "issue_number": 8,
+  "session_id": "chat-3e0b6e22-e529-43a1-b7c5-57dfa9c17d53",
+  "claimed_at": "2026-11-12T13:50:00+01:00",
+  "resource_scope_id": "orchestrator-core",
+  "resource_roots": [
+    "bin/",
+    "config/",
+    "docs/",
+    "src/",
+    "test/"
+  ],
+  "role": "developer",
+  "access": "write",
+  "state": "claimed",
+  "branch": "feat/distributed-agent-coordination-v0",
+  "last_handoff": null
+}
