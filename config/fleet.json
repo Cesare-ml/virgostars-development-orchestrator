@@ -1,0 +1,46 @@
+{
+  "schema_version": "0.1-draft",
+  "status": "discovery_only",
+  "coordinator_endpoint": null,
+  "visibility_note": "Orchestrator itself is private at bootstrap; only list public repo metadata in public registry.",
+  "repos": [
+    {
+      "full_name": "Cesare-ml/VirgoStars-Ephemeris",
+      "visibility": "public",
+      "opt_in": "pending_owner_approval",
+      "domain": "Rust astronomical ephemerides",
+      "entry_point": "AGENTS.md"
+    },
+    {
+      "full_name": "Cesare-ml/VirgoStars-Event-Ephemeris",
+      "visibility": "public",
+      "opt_in": "pending_owner_approval",
+      "domain": "Astrological event ephemerides",
+      "entry_point": "AGENTS.md"
+    },
+    {
+      "full_name": "Cesare-ml/astrological-charts",
+      "visibility": "public",
+      "opt_in": "pending_owner_approval",
+      "domain": "Angular/Three.js chart rendering",
+      "entry_point": "AGENTS.md"
+    }
+  ],
+  "roles": [
+    "planner",
+    "developer",
+    "tester",
+    "reviewer",
+    "auditor",
+    "integrator"
+  ],
+  "private_repos": "Omitted from public registry; must be explicitly authorized per participant",
+  "policies": {
+    "automatic_claims": false,
+    "allow_automerge": false,
+    "allow_deploy": false,
+    "allow_github_actions": false,
+    "outsider_contribution": "fork_pr_only",
+    "ready_task_source": "GitHub Issues (after manual triage)"
+  }
+}
