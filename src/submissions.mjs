@@ -36,9 +36,8 @@ export async function submit({api,config,tasks,repo,issue,session,prNumber=null,
     if(scopedAudit.verdict!=='scope-clean')
       throw new Error('Write submission blocked by scope audit: '+
         scopedAudit.reasons.map(x=>x.code).join(','));
-    if(claim.last_handoff.head_sha &&
-       claim.last_handoff.head_sha!==scopedAudit.pull_request_head)
-      throw new Error('Handoff head SHA does not match audited PR head; revalidate work.');
+    if(claim.last_handoff.head_sha!==scopedAudit.pull_request_head)
+      throw new Error('Handoff head SHA is missing or differs from audited PR head; revalidate work.');
     if(prior && (prior.data.pull_request!==prNumber ||
        prior.data.audited_head_sha!==scopedAudit.pull_request_head))
       throw new Error('Existing submission marker refers to different PR evidence.');
