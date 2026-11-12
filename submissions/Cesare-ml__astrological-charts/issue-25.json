@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "state": "submitted",
+  "target_repository": "Cesare-ml/astrological-charts",
+  "issue_number": 25,
+  "session_id": "chat-b0dbee66-6a0d-470c-929c-1b094888b453",
+  "role": "developer",
+  "access": "write",
+  "resource_scope_id": "axis-canvas-pilot",
+  "resource_roots": [
+    "tests/pilot-axis-canvas.browser.test.mjs"
+  ],
+  "submitted_at": "2026-11-12T16:39:29.677Z",
+  "branch": "agent/wave2-axis-canvas-b0dbee66",
+  "pull_request": 27,
+  "audited_head_sha": "d49c56ad17a146bf4ec25f0694f455d4d19e1bc4",
+  "audited_base_sha": "b5d28824820ccc85318635b1e4c9ef80eee21cdb",
+  "scope_verdict": "manual-reviewed",
+  "last_handoff": {
+    "at": "2026-11-12T16:38:33.357Z",
+    "summary": "Added one independent canvas-only AS/DS/MC/IC browser smoke; syntax PASS; real browser run blocked by missing playwright-core and unavailable Angular demo.",
+    "head_sha": "d49c56ad17a146bf4ec25f0694f455d4d19e1bc4",
+    "pull_request": 27,
+    "pr_url": "https://github.com/Cesare-ml/astrological-charts/pull/27",
+    "issue_comment": "https://github.com/Cesare-ml/astrological-charts/issues/25#issuecomment-6829678560",
+    "test_evidence": {
+      "node_check": "PASS Node 22.16.0 on byte-identical blob 78bf2f1aadf57f84c53c38b4fbb6fbde7bf6f312",
+      "node_test": "BLOCKED exit 1 ERR_MODULE_NOT_FOUND playwright-core (no local full checkout or servers)",
+      "browser": "NOT RUN"
+    },
+    "scope_audit": "manual-only 1 added file; CLI audit not executed",
+    "risks": "Unvalidated WebGL/Chrome/Firefox behavior, screenshot threshold calibration and real asset visual parity require independent testing."
+  },
+  "note": "Awaiting independent automated PR scope audit, real local browser test execution and maintainer review; no automatic approval/merge."
+}
