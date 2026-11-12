@@ -17,10 +17,15 @@ export async function claimNext({ api, config, tasks, session, role, repository 
   const inFleet = tasks.filter(t => config.active_repositories.some(
     r => r.full_name === t.repository && r.pilot_enabled));
 
+  const submitted = new Set();
   // Resume a previously acquired task before considering new claims; even
   // tasks removed from READY remain owned until explicitly released.
   for (const task of inFleet) {
     const current = await status({ api, config, repo: task.repository, issue: task.issue });
+    if (current.status === 'submitted' || current.submitted) {
+      submitted.add(task.repository+'#'+task.issue);
+      continue;
+    }
     if (current.status === 'inconsistent')
       throw new Error('Inconsistent active task claim; manual recovery required.');
     if (current.status === 'claimed' && current.claim.session_id === session) {
@@ -34,10 +39,15 @@ export async function claimNext({ api, config, tasks, session, role, repository 
 
   let contended = 0;
   let closed = 0;
+  let alreadySubmitted = 0;
   const candidates = inFleet.filter(t => t.status === 'ready'
     && t.role === role && (repository === null || t.repository === repository));
 
   for (const task of candidates) {
+    if (submitted.has(task.repository+'#'+task.issue)) {
+      alreadySubmitted++;
+      continue;
+    }
     const issue = await api.getIssue(task.repository, task.issue);
     if (!issue || issue.pull_request) throw new Error('Invalid curated target issue.');
     if (issue.state !== 'open') { closed++; continue; }
@@ -46,8 +56,9 @@ export async function claimNext({ api, config, tasks, session, role, repository 
     if (attempt.result === 'acquired' || attempt.result === 'already-owned')
       return attempt;
     if (attempt.result === 'busy') { contended++; continue; }
+    if (attempt.result === 'submitted') { alreadySubmitted++; continue; }
     throw new Error('Unrecognized claim result; stopping for safety.');
   }
   return { result: 'no-task', role, repository, eligible: candidates.length,
-    contended, closed };
+    contended, closed, submitted: alreadySubmitted };
 }
