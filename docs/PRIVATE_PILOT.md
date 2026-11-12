@@ -89,3 +89,7 @@ The latest private CLI includes `audit-pr` and a mandatory `--pr PR_NUMBER` for 
 ## Review overlapping developer PRs
 
 The second wave uncovered two distinct open draft PRs (#27/#28) adding the same file for Charts issue #25. Each individually respected the scoped paths, but they cannot be automatically accepted together. `audit-collisions` now checks all current open PRs for path overlaps; local CLI write submissions require exactly one candidate matching the selected PR, in addition to `audit-pr` and recorded test evidence. See [PR_COLLISIONS.md](PR_COLLISIONS.md). Original manual developer submissions remain submitted for independent review and are never silently rewritten.
+
+## Pinned native test reproduction
+
+For the complete private coordinator's independent Node test evidence, see [NATIVE_VALIDATION.md](NATIVE_VALIDATION.md). The manually run `scripts/verify-pilot.mjs` can verify every GitHub blob against a pinned feature HEAD SHA before running `npm run check` without Git clone. Token is read-only and excluded from npm child environment. The validator's own exact source/test/CLI Git blobs passed 8/8 native Node 22.16.0 tests in a small isolated mirror; that is **not** the full branch test suite or approval to merge.

@@ -70,3 +70,7 @@ Run `audit-collisions OWNER/REPO ISSUE` as well as `audit-pr` before final write
 ## Human integration gate after task submission
 
 Review [docs/REVIEW_GATES.md](docs/REVIEW_GATES.md) and run private `fleet-status` before recommending a developer PR for integration. A task can have a correctly filed `submitted` marker and still have stale PR evidence, competing open PRs, unrun native/visual tests and outstanding review. Inspect `review_gates.blockers`; never infer `approved` or `merge ready` from a scope-clean diff. The readiness flag is deliberately `false` in this private pilot. The monitor is read-only and cannot independently validate tests, merge or clean up another agent's branches.
+
+## Native checks from pinned private GitHub snapshots
+
+Before claiming that the private coordinator itself has passed `npm run check`, use [docs/NATIVE_VALIDATION.md](docs/NATIVE_VALIDATION.md). The Node-only `scripts/verify-pilot.mjs` is a **manually invoked** read-only downloader/validator for this exact private repo and feature branch, not an unattended agent or GitHub Action. It requires a read-scoped token in the operator's local environment and refuses unsafe/truncated Git snapshots. Never paste API credentials into chat/PRs or forward them to arbitrary test code. A native unit test of this downloader is not proof that the entire coordinator branch passed its full suite. A passing result is still NOT PR approval or merge authorization.

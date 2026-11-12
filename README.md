@@ -56,3 +56,7 @@ Use `node bin/vs-agent.mjs audit-collisions OWNER/REPO ISSUE` to find multiple o
 ## Private review gates for submitted developer PRs
 
 The `fleet-status` CLI now combines the live PR scope/head audit with a scan of open PRs touching the same approved resource partition. For each submitted write task it reports `pr_check`, `collision_check`, and explicit `review_gates.blockers`; the monitored `integration_ready` and `merge_authorized` values remain `false` until independent test evidence and human review are completed. The command is GET-only and does not alter existing submissions. See [review gates](docs/REVIEW_GATES.md).
+
+## Run the full native private-pilot checks without git clone
+
+On a **trusted local** Windows/macOS/Linux machine with Node.js 20+, use an authenticated GitHub **Contents: read** token to execute `npm run verify:private -- --sha CURRENT_FEATURE_BRANCH_SHA`. The new [pinned native validation guide](docs/NATIVE_VALIDATION.md) explains how the read-only CLI resolves one private branch commit, checks all Git blob SHA-1 hashes, rejects unsafe paths/truncated snapshots, builds an isolated temporary directory and then runs **actual** `npm run check` with GitHub tokens removed from the npm child environment. No GitHub Actions, merge or deploy. The full private repository's suite is **still awaiting** this operator run; only 8/8 native tests of the new verifier (including a tiny native npm fixture) have been executed here.

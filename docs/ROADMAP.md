@@ -136,3 +136,13 @@ No deploy, Actions, production mutation, release, automatic merge, or license/vi
 - [x] Preserve GitHub privacy and existing submitted ledger; do not modify target branches or PRs. Our own private coordinator claim is held only during the implementation.
 - [ ] Run full **native** `npm run check` on an authenticated checkout and independently verify complete live fleet report before claiming production-grade monitoring.
 - [ ] Run wave-2 Functions Node/npm and Charts actual browser tests; resolve duplicate Charts PR #27/#28 by explicit maintainer selection, not automated merge.
+
+## Pinned private native test reproducer — issue #15 (2026-11-12)
+
+- [x] Added dependency-free Node `src/native-check.mjs` to retrieve one pinned private coordinator GitHub branch commit/tree/blob snapshot, reject symlinks, unsafe/case-colliding paths, oversized/truncated results and SHA mismatches, and isolate all files in a temporary directory.
+- [x] Added `scripts/verify-pilot.mjs` and `npm run verify:private -- --sha SHA` for explicit operator execution of actual `npm run check` with a strict child environment allowlist excluding GitHub tokens.
+- [x] Added `test/native-check.test.mjs` and ran it with **real Node.js 22.16.0**: **8/8 passing**, including a nested **real npm** test run against a three-file synthetic snapshot; corrected two erroneous `assert.rejects` expectations for synchronous argument validation.
+- [x] Verified exact Git blob SHA equality for test and module: `src/native-check.mjs` `ee2826ea88b20f30c42b742da6af97a41807b707`; `test/native-check.test.mjs` `de443acc5e1714528acab6ffb94d6b1bdf57a538`; CLI `scripts/verify-pilot.mjs` `5eff28b0da3c663ce72708621c5cc45d3a6a6365`. Manual CLI help/invalid SHA/missing token errors also tested successfully.
+- [x] Wrote [docs/NATIVE_VALIDATION.md](NATIVE_VALIDATION.md) with offline checkout and authenticated snapshot validation options; neither makes GitHub Actions calls or merges PRs.
+- [ ] On a trusted network-connected environment with GitHub repo read access, execute `npm run verify:private -- --sha CURRENT_BRANCH_SHA` and independently record the **complete** `npm run check` output. This remains unexecuted on the full private repo in this runtime because DNS/network is unavailable.
+- [ ] Review the complete native suite before considering coordinator PR #1 for a non-draft merge decision; do not confuse verifier's own 8 tests with whole-branch acceptance.

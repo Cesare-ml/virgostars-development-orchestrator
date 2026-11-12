@@ -16,3 +16,7 @@ No automatic merging of external contributions. Protect main with reviews and ch
 
 ## Public-release gate
 The orchestrator starts PRIVATE. Before it becomes public the owner must approve repository visibility, choose/verify applicable open-source license and contributor terms, scan files/history for secrets and private data, confirm safe public target registry, and approve the onboarding wording. This repository cannot make private projects open source merely by listing their names.
+
+## Pinned native test execution (manual only)
+
+The private `scripts/verify-pilot.mjs` supports a manual operator workflow with authenticated GitHub Contents:read access. It pins the exact GitHub branch commit, validates blob hashes and file paths before writing a temporary checkout, and removes credentials from the spawned `npm run check` process. Run only trusted commits from the fixed private repository: Git object integrity is not a sandbox and npm scripts may execute arbitrary code. No GitHub Actions, background scheduler, automatic merge or public disclosure. Never put tokens in prompts, issue comments, logs or repository files. [Native validation procedure](NATIVE_VALIDATION.md).

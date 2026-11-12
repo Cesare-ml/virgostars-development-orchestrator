@@ -85,3 +85,7 @@ Run `node bin/vs-agent.mjs audit-collisions OWNER/REPO ISSUE` on an authenticate
 ## Summarize outstanding integration blockers across submissions
 
 Run `node bin/vs-agent.mjs fleet-status` with the existing read credentials. The output now combines one-commit claim/submission data, live per-PR freshness checks, overlapping open PR candidates and conservative `review_gates.blockers` for submitted write tasks. It always records native test evidence as **unverified** and keeps human approval outstanding: no `scope-clean` or absent conflict means tests passed. See [REVIEW_GATES.md](REVIEW_GATES.md). No GitHub write action is performed.
+
+## Reproduce full native Node checks without an existing clone
+
+The manual `npm run verify:private -- --sha FULL_FEATURE_HEAD_SHA` script can materialize a trusted, pinned private coordinator commit from GitHub read-only APIs and execute actual `npm run check` in a temporary isolated checkout. It requires a locally configured `GITHUB_TOKEN` with Contents: read access. All downloaded blobs are verified against Git SHA-1 IDs; unsafe paths, symlinks, incomplete listings and credential propagation to child npm are prohibited. See [NATIVE_VALIDATION.md](NATIVE_VALIDATION.md). No Actions or unattended runtime; the full real repository test remains pending until actually executed.
