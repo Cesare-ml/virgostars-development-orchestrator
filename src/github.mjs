@@ -89,6 +89,21 @@ export function makeGitHubClient({ token, fetchImpl = fetch, baseUrl = 'https://
       if (!Number.isSafeInteger(number) || number < 1) throw new Error('Invalid PR number.');
       return request('GET','/repos/' + repo + '/pulls/' + number);
     },
+    async getOpenPullRequests(repo) {
+      // Explicit finite pagination: an incomplete listing cannot certify no conflicts.
+      const output=[];
+      for(let page=1;page<=3;page++) {
+        const chunk=await request('GET','/repos/' + repo +
+          '/pulls?state=open&per_page=100&page=' + page);
+        if(!Array.isArray(chunk) || chunk.length>100)
+          throw new Error('Malformed GitHub open PR listing.');
+        output.push(...chunk);
+        if(output.length>200)
+          throw new Error('Too many open PRs for private pilot collision audit.');
+        if(chunk.length<100) return output;
+      }
+      throw new Error('Open PR pagination exceeds private pilot limit.');
+    },
     async getPullRequestFiles(repo,number) {
       if (!Number.isSafeInteger(number) || number < 1) throw new Error('Invalid PR number.');
       const files=[];
