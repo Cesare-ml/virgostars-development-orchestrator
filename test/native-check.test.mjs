@@ -157,3 +157,51 @@ test('read-only GitHub API refuses token omission, bad commit SHA and HTTP 403',
  assert.throws(()=>api.getBlob('NOT_SHA'),/Invalid Git blob SHA/);
  assert.throws(()=>api.getTree('NOT_SHA'),/Invalid Git tree SHA/);
 });
+
+
+test('Windows runs npm.cmd via the shell with no GitHub token in the child',()=>{
+  let called=false;
+  const result=runNativeSuite({
+    root:'C:\\safe\\pinned',
+    platform:'win32',
+    env:{PATH:'C:\\Program Files\\nodejs',GITHUB_TOKEN:'private'},
+    spawnImpl:(command,args,options)=>{
+      called=true;
+      assert.equal(command,'npm.cmd');
+      assert.deepEqual(args,['run','check']);
+      assert.equal(options.shell,true);
+      assert.equal(options.cwd,'C:\\safe\\pinned');
+      assert.equal(options.env.GITHUB_TOKEN,undefined);
+      return {status:0};
+    }
+  });
+  assert.equal(called,true);
+  assert.equal(result.passed,true);
+});
+test('native test failure is reported without accidentally keeping checkout',async()=>{
+  const {api}=fixture();
+  const parent=await mkdtemp(join(tmpdir(),'vs-verified-failure-'));
+  try {
+    const result=await validatePinnedSnapshot({
+      api,temporaryRoot:parent,
+      testRunner:async()=>({native:true,passed:false,exit_code:7})
+    });
+    assert.equal(result.tests.exit_code,7);
+    assert.equal(result.tests.passed,false);
+    assert.equal(result.temporary_checkout,null);
+    assert.deepEqual(await readdir(parent),[]);
+  } finally {await rm(parent,{recursive:true,force:true});}
+});
+test('GitHub reader never sends a write request or an unpinned repository path',async()=>{
+  const inspected=[];
+  const api=createReadOnlyGitHubApi({token:'fake-test-token',fetchImpl:async(url,opts)=>{
+    inspected.push({url,method:opts.method,authorization:opts.headers.Authorization});
+    return {ok:true,status:200,json:async()=>({object:{type:'commit',sha:HEAD}})};
+  }});
+  const ref=await api.getBranch();
+  assert.equal(ref.object.sha,HEAD);
+  assert.equal(inspected.length,1);
+  assert.equal(inspected[0].method,'GET');
+  assert.equal(inspected[0].authorization,'Bearer fake-test-token');
+  assert.match(inspected[0].url,/Cesare-ml\/virgostars-development-orchestrator\/git\/ref\/heads\/feat\/distributed-agent-coordination-v0$/);
+});
