@@ -1,7 +1,7 @@
 {
   "schema_version": "1-pilot-curated",
   "status": "ready-for-small-pilot",
-  "description": "Only these issue tasks are ready. Reviewer tasks are read-only. New developer tasks require a manual check for PR/file overlap.",
+  "description": "First wave: five submitted read-only reviews. Second wave: two supervised write tasks with exact file scopes and independently stacked draft PRs; do not modify source outside declared roots.",
   "tasks": [
     {
       "repository": "Cesare-ml/VirgoStars-Ephemeris",
@@ -57,6 +57,50 @@
         "read-only: PRs #31–#33, storage integrity and Windows validation"
       ],
       "access": "read"
+    },
+    {
+      "repository": "Cesare-ml/astrological-functions",
+      "issue": 5,
+      "status": "ready",
+      "role": "developer",
+      "access": "write",
+      "pilot_wave": 2,
+      "title": "Add runtime ESM consumer-import smoke for the provider contract",
+      "scope": [
+        "src/ephemeris-provider.js",
+        "test/pilot-provider-consumer-smoke.test.mjs"
+      ],
+      "resource_scope": {
+        "id": "provider-consumer-pilot",
+        "roots": [
+          "src/ephemeris-provider.js",
+          "test/pilot-provider-consumer-smoke.test.mjs"
+        ]
+      },
+      "upstream_pr": 3,
+      "upstream_branch": "agent/provider-contract-validation-20261110",
+      "instructions": "Use a new stacked branch from latest upstream PR #3 HEAD. Touch only the two declared new files. Draft PR targets upstream feature branch, never push to it."
+    },
+    {
+      "repository": "Cesare-ml/astrological-charts",
+      "issue": 25,
+      "status": "ready",
+      "role": "developer",
+      "access": "write",
+      "pilot_wave": 2,
+      "title": "Add an independent axis focus canvas browser smoke test",
+      "scope": [
+        "tests/pilot-axis-canvas.browser.test.mjs"
+      ],
+      "resource_scope": {
+        "id": "axis-canvas-pilot",
+        "roots": [
+          "tests/pilot-axis-canvas.browser.test.mjs"
+        ]
+      },
+      "upstream_pr": 22,
+      "upstream_branch": "feat/planet-interactions-transit-aspects-20261110",
+      "instructions": "Use a new stacked branch from latest upstream PR #22 HEAD. Touch only the declared test file. No demo, source, or asset edits."
     }
   ]
 }
