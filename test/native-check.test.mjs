@@ -154,6 +154,6 @@ test('read-only GitHub API refuses token omission, bad commit SHA and HTTP 403',
    fetchImpl:async()=>({ok:false,status:403})
  });
  await assert.rejects(()=>api.getBranch(),/HTTP 403/);
- await assert.rejects(()=>api.getBlob('NOT_SHA'),/Invalid Git blob SHA/);
- await assert.rejects(()=>api.getTree('NOT_SHA'),/Invalid Git tree SHA/);
+ assert.throws(()=>api.getBlob('NOT_SHA'),/Invalid Git blob SHA/);
+ assert.throws(()=>api.getTree('NOT_SHA'),/Invalid Git tree SHA/);
 });
