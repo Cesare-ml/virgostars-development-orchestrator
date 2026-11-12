@@ -7,8 +7,12 @@
   "access": "read",
   "resource_scope_id": null,
   "resource_roots": null,
-  "state": "claimed",
+  "state": "in_progress",
   "claimed_at": "2026-11-12T13:03:52.264Z",
   "branch": null,
-  "last_handoff": null
+  "last_handoff": {
+    "at": "2026-11-12T13:03:55.254Z",
+    "summary": "Synthetic submission smoke test; no target issues touched",
+    "head_sha": null
+  }
 }
