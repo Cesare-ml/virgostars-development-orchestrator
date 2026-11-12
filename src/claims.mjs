@@ -65,7 +65,8 @@ export async function claim({api,config,tasks,repo,issue,session,role='developer
     if(observed.status==='inconsistent') throw new Error('Inconsistent active claim: manual recovery required.');
     if(isOwner(existing,session,repo,issue)) {
       if(existing.data.access!==task.access ||
-        (task.access==='write' && existing.data.resource_scope_id!==task.resource_scope.id))
+        (task.access==='write' && (existing.data.resource_scope_id!==task.resource_scope.id ||
+          JSON.stringify(existing.data.resource_roots)!==JSON.stringify([...task.resource_scope.roots].sort()))))
         throw new Error('Curated task scope changed during active assignment.');
       return {result:'already-owned',claim:observed.claim};
     }
@@ -74,14 +75,15 @@ export async function claim({api,config,tasks,repo,issue,session,role='developer
 
   const claimedAt=now();
   const scopeId=task.access==='write'?task.resource_scope.id:null;
+  const resourceRoots=task.access==='write'?[...task.resource_scope.roots].sort():null;
   const data={schema_version:2,target_repository:repo,issue_number:issue,session_id:session,
-    role,access:task.access,resource_scope_id:scopeId,state:'claimed',
+    role,access:task.access,resource_scope_id:scopeId,resource_roots:resourceRoots,state:'claimed',
     claimed_at:claimedAt,branch:branchName,last_handoff:null};
   let newResource=false,resourcePath=null;
   if(task.access==='write') {
     resourcePath=resourceKey(repo,scopeId);
     const reservation={schema_version:1,kind:'write-resource',target_repository:repo,
-      resource_scope_id:scopeId,issue_number:issue,session_id:session,claimed_at:claimedAt};
+      resource_scope_id:scopeId,resource_roots:resourceRoots,issue_number:issue,session_id:session,claimed_at:claimedAt};
     let held=await api.getClaim(ledger,resourcePath,branch);
     if(held && !resourceMatches(held,data)) return {result:'busy',task:repo+'#'+issue,resource:scopeId};
     if(!held) {
