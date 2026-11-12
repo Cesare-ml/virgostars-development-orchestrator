@@ -72,3 +72,6 @@ No deploy, Actions, production mutation, release, automatic merge, or license/vi
 - [ ] Run `npm run check` on a fresh checkout of the feature branch on Windows/Codex; this environment has no direct network checkout of the private repository.
 - [ ] Test with 3–5 actual independent ChatGPT conversations and inspect their technical issue-review comments.
 - [ ] Only then curate two disjoint code-writing tasks with explicit scope/PR review before wider parallel development.
+
+- [x] Real GitHub synthetic review submission test: acquired issue claim, saved handoff, created `submitted` marker, released issue; marker still existed after release. Removed synthetic test marker and verified cleanup. This validates the GitHub write sequence, not a real ChatGPT agent performing a review.
+- [ ] On Windows or another GitHub-capable checkout run `npm run check` and record the exact result before expanding beyond review-only pilot.
