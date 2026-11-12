@@ -1,0 +1,74 @@
+{
+  "schema_version": "0.2-private-pilot",
+  "status": "PRIVATE_PILOT_NO_PUBLIC_ONBOARDING",
+  "repository_visibility_required": "private",
+  "coordinator": "github-contents-exclusive-create",
+  "claim_store": {
+    "repo": "Cesare-ml/virgostars-development-orchestrator",
+    "branch": "coordination/claims",
+    "path_template": "claims/{owner}__{repo}/issue-{number}.json",
+    "ttl_mode": "manual_recovery_only"
+  },
+  "enforcement": {
+    "task_claim_exclusive_for_issue": true,
+    "cross_task_resource_locking": false,
+    "autoscheduling": false,
+    "autodeploy": false,
+    "auto_merge": false,
+    "github_actions": false,
+    "volunteer_registration": false,
+    "allow_private_repository_metadata_in_public_exports": false
+  },
+  "task_readiness": "Must be explicitly triaged and not already covered by an open PR. Agents must check latest issue, PRs and AGENTS.md.",
+  "roles": [
+    "planner",
+    "developer",
+    "tester",
+    "reviewer",
+    "auditor",
+    "integrator"
+  ],
+  "active_repositories": [
+    {
+      "full_name": "Cesare-ml/VirgoStars-Ephemeris",
+      "visibility": "public",
+      "domain": "Rust astronomical ephemerides",
+      "entry_point": "AGENTS.md",
+      "pilot_enabled": true,
+      "priority": "P0"
+    },
+    {
+      "full_name": "Cesare-ml/VirgoStars-Event-Ephemeris",
+      "visibility": "public",
+      "domain": "Rust event-ephemerides and Python bindings",
+      "entry_point": "AGENTS.md",
+      "pilot_enabled": true,
+      "priority": "P0"
+    },
+    {
+      "full_name": "Cesare-ml/astrological-charts",
+      "visibility": "public",
+      "domain": "Angular TypeScript Three.js chart rendering",
+      "entry_point": "AGENTS.md",
+      "pilot_enabled": true,
+      "priority": "P0"
+    },
+    {
+      "full_name": "Cesare-ml/astrological-functions",
+      "visibility": "private",
+      "domain": "Typed astrological functions and ephemeris provider contracts",
+      "entry_point": "AGENTS.md",
+      "pilot_enabled": true,
+      "priority": "P0"
+    },
+    {
+      "full_name": "Cesare-ml/virgostars-desktop",
+      "visibility": "private",
+      "domain": "Angular Tauri desktop, secure offline storage and sync",
+      "entry_point": "AGENTS.md",
+      "pilot_enabled": true,
+      "priority": "P0"
+    }
+  ],
+  "future_public_registry": "config/fleet.json (not used for this private pilot)"
+}

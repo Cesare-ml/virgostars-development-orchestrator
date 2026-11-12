@@ -1,28 +1,31 @@
-# Roadmap — measurable milestones
+# Roadmap
 
-## M0 — Safe public entry (this draft)
-- [x] Agent onboarding, dynamic role model, public/fork trust model, registry and protocol specifications.
-- [ ] Owner selects license and contributor policy; repository history/security audit.
-- [ ] Owner explicitly authorizes public visibility.
-- [ ] Validate prompts with at least three AI vendors/accounts including read-only fallback.
+## M0A — Private owner-only pilot (CURRENT PRIORITY)
+- [x] Specify five initial repositories in `config/fleet.private.json`; no public/private registry mixing.
+- [x] Document sessions, roles, pilot startup prompt, and GitHub-native task claims.
+- [x] One real two-client create-file collision test in a separate test branch: one succeeded, one rejected.
+- [ ] Verify complete claim -> renew/hand-off -> release -> re-claim lifecycle with two distinct agent sessions.
+- [ ] Create an explicitly triaged small task queue in each repo, avoiding scope overlap with active PRs.
+- [ ] Ensure AGENTS.md in each target repo references the coordinator without replacing local agent rules (separate reviewable PRs).
+- [ ] Test with 5–10 disjoint real tasks; assess rate limits, branch conflicts, interrupted sessions and manual recovery.
+- [ ] Scale toward 40 simultaneous chats *after* the pilot meets its acceptance tests.
+- [ ] Integrate an optional native CLI for Codex; ChatGPT connector can use GitHub create_file directly.
 
-## M1 — Pilot scheduler implementation
-- [ ] PostgreSQL schema, migrations, transaction-safe task/resource claims with idempotency and generation fencing.
-- [ ] Minimal authenticated coordinator API, tests and MCP/CLI adapter.
-- [ ] GitHub App/webhook sync (issue/PR), per-installation least privilege and retry.
-- [ ] Verify 2-agent race tests, duplicate claims, crash/expiry/recovery, pause/restart and reviewer separation.
-- [ ] Demonstrate one public fork PR with no upstream write permission.
+## M0B — Hardened private scheduler
+- [ ] Implement atomic task/resource assignment, lease generations, idempotency and expiry/recovery; GitHub labels/comments alone are insufficient.
+- [ ] Add safeguards against cross-task file conflicts, stale agents and concurrent writes.
+- [ ] Introduce a PostgreSQL + authenticated API scheduler if GitHub-native coordination is not robust enough.
+- [ ] Build independent collision, crash, stale lease, latency and conflict tests.
 
-## M2 — Five-repository adoption
-- [ ] Owner-approved opt-in for each repo and reference to orchestrator instructions without overwriting target AGENTS.md.
-- [ ] Deduplicate existing tasks/PRs and map dependencies; create small independent tasks.
-- [ ] Verify contributor UX, resource contention, cross-repo coordination and safe handoffs.
-- [ ] Establish observability: active/idle sessions, task throughput, PR review latency, retries, conflicts, GitHub API use.
+## M1 — Optional future public collaboration
+- [ ] Owner chooses license/contributor policy; audits history, secrets, private data and asset rights.
+- [ ] Owner explicitly authorizes orchestrator visibility change to public.
+- [ ] Separate public registry and role/task policies; never leak private repo metadata.
+- [ ] External volunteers use their own identities, forks and pull requests, with no privileged writes.
+- [ ] MCP/CLI adapters and secure auth for external AI vendors.
 
-## M3 — Scaling and abuse tests
-- [ ] Simulate >=1,000 concurrent sessions across many independent identities and multiple regions/latency models.
-- [ ] Prove per-task exclusivity and resource contention guards in load/chaos tests; audit unexpected duplication.
-- [ ] Exercise GitHub outage and retry/backoff, limits, malicious agents, spam quotas and supply-chain review.
-- [ ] Document measured capacity and costs. Scale only within actual ready-task and maintainer-review capacity.
+## M2 — Scale
+- [ ] Simulate 1,000+ agents, workload fairness, database/transport capacity, GitHub rate limits and review backpressure.
+- [ ] Document measured concurrency, costs and resilience; do not claim throughput before tests.
 
-No deployment, Actions workflow, merge, target repo mutation or visibility/license change is authorized by this roadmap.
+No deploy, Actions, production mutation, release, automatic merge, or license/visibility change is implied.
