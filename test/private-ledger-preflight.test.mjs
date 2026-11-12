@@ -60,7 +60,7 @@ test('private destination with missing branch returns planning state only, never
   assert.equal(x.ready_to_migrate,false);
   assert.equal(x.write_enabled,false);
   assert.deepEqual(x.records,{claims:0,resources:0,submissions:0});
-  assert.deepEqual(c.calls,['repository','branch','repository']);
+  assert.deepEqual(c.calls,['repository','branch','branch','repository']);
 });
 test('existing private records are counted without emitting sensitive paths or blobs',async()=>{
   const c=api({records:[
@@ -75,7 +75,7 @@ test('existing private records are counted without emitting sensitive paths or b
   assert.equal(x.ready_to_migrate,false);
   assert.equal(x.write_enabled,false);
   assert.doesNotMatch(JSON.stringify(x),/owner__private|issue-10|sensitive|example-org/);
-  assert.deepEqual(c.calls,['repository','branch','commit','tree','repository']);
+  assert.deepEqual(c.calls,['repository','branch','commit','tree','branch','repository']);
 });
 test('existing empty private branch still requires explicit owner approval',async()=>{
   const x=await inspectPrivateDestination({api:api(),destination:D});
@@ -140,7 +140,7 @@ test('metadata client performs GET only, never PUT/POST/DELETE or blob downloads
   });
   const x=await inspectPrivateDestination({api:client,destination:D});
   assert.equal(x.status,'empty_branch_needs_owner_approval');
-  assert.equal(urls.length,5);
+  assert.equal(urls.length,6);
   assert.ok(urls.every(x=>x.method==='GET'));
   assert.ok(urls.every(x=>!x.url.includes('/git/blobs/')));
 });
@@ -161,4 +161,29 @@ test('CLI preflight is independently reachable without the historical pilot cata
     'check-private-destination',D,'--confirm'],{env,encoding:'utf8',timeout:15000});
   assert.equal(protectedCommand.status,1);
   assert.match(protectedCommand.stderr,/requires exactly OWNER\/REPO/);
+});
+
+test('branch moving between tree inspection and final ref read is rejected',async()=>{
+ const base=api();
+ const original=base.getBranchRef.bind(base);
+ let reads=0;
+ base.getBranchRef=async (repo,branch)=>{
+  const ref=await original(repo,branch);
+  reads++;
+  return reads===2?{object:{type:'commit',sha:'e'.repeat(40)}}:ref;
+ };
+ await assert.rejects(()=>inspectPrivateDestination({api:base,destination:D}),
+  /destination branch changed/);
+});
+test('missing branch suddenly appearing during a 404 recheck is not safe',async()=>{
+ const base=api({missing:true});
+ const original=base.getBranchRef.bind(base);
+ let reads=0;
+ base.getBranchRef=async (repo,branch)=>{
+  reads++;
+  if(reads===1)return original(repo,branch);
+  return {object:{type:'commit',sha:A}};
+ };
+ await assert.rejects(()=>inspectPrivateDestination({api:base,destination:D}),
+  /destination branch appeared/);
 });
