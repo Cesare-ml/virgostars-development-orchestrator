@@ -55,8 +55,10 @@ No deploy, Actions, production mutation, release, automatic merge, or license/vi
 - [x] Add single-partition `resource_scope` declarations and validation of disjoint write roots (case-insensitive check).
 - [x] Acquire resource lock before task lock; release task lock before resource, with explicit partial-failure handling.
 - [x] Fail closed on malformed task catalogs, path traversal-like repository IDs, missing/foreign resource locks and scope changes after a session has claimed work.
-- [x] Execute 27 local Node.js mock tests on an equivalent source mirror, including real protocol failure and concurrency cases; **not** a fresh remote checkout test.
+- [x] Execute 28 local Node.js mock tests on an equivalent source mirror, including real protocol failure and concurrency cases; **not** a fresh remote checkout test.
 - [x] Real GitHub resource-create collision test: exactly one success, one HTTP 422; synthetic task claim/handoff/release and resource release; both paths absent in final Git tree.
 - [ ] Test real developer tasks on two nonoverlapping modules in the same target repo, verifying actual diffs stay within declared roots.
 - [ ] Add maintainer-guided audit/recovery tooling for orphaned resources, with protections against stale chat sessions.
 - [ ] Prove multi-partition atomicity via PostgreSQL backend before allowing tasks spanning independent partitions. No 40-agent scalability claim yet.
+
+- [x] Detect orphaned resource locks during task discovery, returning `resource-busy` instead of falsely advertising unclaimed write tasks.
