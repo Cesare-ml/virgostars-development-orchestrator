@@ -1,5 +1,5 @@
 import {randomUUID} from 'node:crypto';
-import {readFile,writeFile,link,unlink} from 'node:fs/promises';
+import {open,writeFile,link,unlink} from 'node:fs/promises';
 import {basename,dirname,join,resolve} from 'node:path';
 import {
   PILOT_REPO,PILOT_BRANCH,MAX_SNAPSHOT_BYTES,MAX_SNAPSHOT_FILES
@@ -129,10 +129,20 @@ export async function saveNativeValidationReceipt(filename,data) {
 export async function readNativeValidationReceipt(filename,{expectedSha}={}) {
   if(!sha(expectedSha))reject('offline review requires --sha COMMIT_SHA');
   const target=receiptPath(filename);
-  const file=await readFile(target);
-  if(file.length>4096)reject('receipt exceeds size limit');
+  // Read at most 4 KiB + 1 byte. Do not load an attacker-controlled large
+  // file into memory merely to reject it after reading.
+  const handle=await open(target,'r');
+  let contents;
+  try {
+    const buffer=Buffer.alloc(4097);
+    const {bytesRead}=await handle.read(buffer,0,buffer.length,0);
+    if(bytesRead>4096)reject('receipt exceeds size limit');
+    contents=buffer.subarray(0,bytesRead).toString('utf8');
+  } finally {
+    await handle.close();
+  }
   let parsed;
-  try {parsed=JSON.parse(file.toString('utf8'));}
+  try {parsed=JSON.parse(contents);}
   catch {reject('not valid JSON');}
   return inspectNativeValidationReceipt(parsed,{expectedSha});
 }
