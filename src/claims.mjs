@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { GitHubError } from './github.mjs';
 import { resourceKey, resourceMatches, validateTaskCatalog } from './resources.mjs';
 
-const VALID_REPO = /^[a-z\d_.-]+\/[a-z\d_.-]+$/i;
+const VALID_REPO = /^[a-z\d][a-z\d_.-]*\/[a-z\d][a-z\d_.-]*$/i;
 const VALID_SESSION = /^(chat|codex)-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export function newSession(kind='chat') {
   if (!['chat','codex'].includes(kind)) throw new Error('Expected chat or codex.');
