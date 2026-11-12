@@ -131,7 +131,8 @@ No deploy, Actions, production mutation, release, automatic merge, or license/vi
 - [x] Combine exact submitted write-task PR freshness with all current overlapping open PR candidates in private `fleet-status`.
 - [x] Preserve existing `stale-submission` or `needs-scope-audit` statuses while separately recording `collision_check`, warning and explicit blocker codes.
 - [x] Require independent native test evidence and independent code review regardless of the self-submitted marker or matching HEAD; `integration_ready:false` and `merge_authorized:false` throughout the private pilot.
-- [x] Add `test/review-gates.test.mjs` (10 isolated source checks) and extend `test/fleet-status.test.mjs` (13 isolated checks) for duplicate open PRs, missing PRs, manual markers, upstream drift and API failures.
-- [x] Preserve GitHub privacy and existing submitted ledger; do not modify target branches, PRs, issues or claims.
+- [x] Add `test/review-gates.test.mjs` (11/11 isolated source checks) and extend `test/fleet-status.test.mjs` (13/13 isolated checks) for duplicate open PRs, missing PRs, manual markers, upstream drift and API failures.
+- [x] Check scoped PR audit's original regressions (8/8 isolated source checks); correct an outdated test expectation for the earlier catalog validation error and retain authorized tester-role parity.
+- [x] Preserve GitHub privacy and existing submitted ledger; do not modify target branches or PRs. Our own private coordinator claim is held only during the implementation.
 - [ ] Run full **native** `npm run check` on an authenticated checkout and independently verify complete live fleet report before claiming production-grade monitoring.
 - [ ] Run wave-2 Functions Node/npm and Charts actual browser tests; resolve duplicate Charts PR #27/#28 by explicit maintainer selection, not automated merge.
