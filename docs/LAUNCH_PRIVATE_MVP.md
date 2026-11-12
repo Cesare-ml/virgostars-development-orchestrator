@@ -62,3 +62,7 @@ Then set your own scoped `GITHUB_TOKEN` **privately** through your system's cred
 ## Current limits
 
 This pilot coordinates cooperative agents using GitHub: it does **not** run chats in the background or automatically spawn agents. The five tasks are review-only, not proof of safe concurrent code writing. GitHub metadata can be briefly stale; when uncertain, stop. An interrupted submission can leave both a submission marker and an active issue claim; the original owner or maintainer must reconcile it, not another agent. Future expansion to many developers needs an audited assignment/approval process and actual validation under load.
+
+## Verified smoke test and readiness boundary
+
+The GitHub connector successfully performed a real synthetic `claim → handoff → create submitted marker → release claim` cycle; the marker persisted after release, then the synthetic marker was removed. All five real reviewer issues were checked open before the pilot. This is sufficient to **start the small, supervised 3–5-chat experiment**, not a proof of production readiness. The full committed Node checkout test suite and the independent 3–5-chat end-to-end review still need to be executed. Do not run unsupervised concurrent code-writing tasks yet.
