@@ -10,7 +10,7 @@ test('changed-file fetching reads next page and then stops',async()=>{
   const urls=[];
   const api=makeGitHubClient({token:'synthetic-test',fetchImpl:async(url,options)=>{
     urls.push({url,method:options.method});
-    if(url.includes('page=1'))return ok(hundred);
+    if(url.endsWith('&page=1'))return ok(hundred);
     if(url.includes('page=2'))return ok([{filename:'test/final.mjs',status:'added'}]);
     throw new Error('Should not request another page');
   }});
@@ -27,7 +27,7 @@ test('incomplete or unbounded changed-file pages fail closed',async()=>{
 });
 test('403 on later page does not produce partial PR audit results',async()=>{
   const api=makeGitHubClient({token:'synthetic-test',fetchImpl:async url=>
-    url.includes('page=1')?ok(hundred):{ok:false,status:403}
+    url.endsWith('&page=1')?ok(hundred):{ok:false,status:403}
   });
   await assert.rejects(()=>api.getPullRequestFiles('owner/repo',9),GitHubError);
 });
