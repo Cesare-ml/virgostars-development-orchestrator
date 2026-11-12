@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "state": "submitted",
+  "target_repository": "Cesare-ml/astrological-charts",
+  "issue_number": 999994,
+  "session_id": "chat-2c85fd6e-4baf-430d-9528-4f89d1ca16b1",
+  "role": "reviewer",
+  "access": "read",
+  "resource_scope_id": null,
+  "submitted_at": "2026-11-12T13:03:58.088Z",
+  "handoff": {
+    "at": "2026-11-12T13:03:55.254Z",
+    "summary": "Synthetic submission smoke test; no target issues touched",
+    "head_sha": null
+  },
+  "note": "Awaiting independent review; not automatically approved or DONE"
+}
