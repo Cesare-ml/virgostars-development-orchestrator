@@ -95,3 +95,13 @@ No deploy, Actions, production mutation, release, automatic merge, or license/vi
 - [x] Authored `docs/LAUNCH_DEVELOPERS_WAVE2.md` with a shared two-chat prompt, resource-first claim format, stacked draft PR requirement and honest test/handoff reporting.
 - [ ] Observe both agents independently acquire disjoint resource+issue locks and open draft PRs without writing outside declared paths.
 - [ ] Verify their tests and target PR heads, then decide whether to approve work or expand toward additional repos.
+
+## Read-only PR scope guard — issue #11 (2026-11-12)
+
+- [x] Implement `audit-pr OWNER/REPO ISSUE PR_NUMBER` for scoped stacked draft PRs, including complete bounded GitHub PR file pagination and checks against upstream PR branch/SHA.
+- [x] Require actual `added` new files and every approved wave-2 path, rejecting out-of-scope changes, renames and missing declared files.
+- [x] Require `--pr` when a local developer uses `submit`; re-audit and persist the exact checked PR HEAD/base SHA, while leaving reviewer submission semantics unchanged.
+- [x] Add regression tests for scope failures, wrong branch, incomplete file lists, GitHub permission errors and write-submission rejection; private monitor flags unaudited write markers as `needs-scope-audit`.
+- [x] Run 7 isolated local Node 22 tests for the exact `src/pr-audit.mjs` blob (same Git SHA as committed file); these passed. This does not validate the whole orchestrator checkout.
+- [ ] Run full `npm run check` on a fresh authenticated Git checkout, including new pagination and write-submission integration tests.
+- [ ] Audit both real developer stacked PRs and independently execute required target tests before deciding on acceptance.

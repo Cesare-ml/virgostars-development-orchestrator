@@ -44,3 +44,11 @@ The pilot succeeds only if *both independent agents* can acquire distinct scope 
 - ChatGPT connector-only workflows can implement the protocol directly; Codex/local shell may use `claim-next --role developer`, `handoff`, `submit --confirm` with a privately scoped `GITHUB_TOKEN`.
 - If the resource and issue claims are partly acquired, treat them as held until independently verified; no automatic expiry or stealing after an idle period.
 - Do not use a local test outcome to claim scientific precision, browser visual correctness or production readiness without corresponding reproducible evidence.
+
+## Extra gate before developer submission (2026-11-12)
+
+**Do not skip this step even if a draft PR was successfully created.** Each developer must inspect its draft PR's `base.ref`, `base.sha`, `head.sha`, `draft`, `changed_files`, and every entry of the GitHub changed-files list. The base must be the active upstream PR feature branch, its SHA must match the upstream PR's latest HEAD, and every changed file must be an **added** file with an exact path in `resource_scope.roots`. No other changes, renames, deletions or source edits are authorized. Document the exact inspected HEAD SHA and actual test outcomes.
+
+When using local Codex/Node, run `node bin/vs-agent.mjs audit-pr OWNER/REPO ISSUE PR_NUMBER`; only a `scope-clean` verdict permits the subsequent `submit --pr PR_NUMBER --confirm`. This **automatically repeats the audit**, but does not approve the PR or establish runtime correctness.
+
+When using ChatGPT's GitHub connector without a local Node runtime, perform the same checks manually. In the private `submitted` marker include the actual `pull_request` number, `audited_head_sha`, `audited_base_sha` and `scope_verdict:"manual-reviewed"` (not `scope-clean`), together with the handoff and ownership fields. The private monitor will show `needs-scope-audit` until the maintainer runs the independent CLI audit. This is intentional: never represent a manual review as an executed automated check. See [PR scope audit](PR_SCOPE_AUDIT.md).

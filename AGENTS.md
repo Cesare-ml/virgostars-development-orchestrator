@@ -54,3 +54,7 @@ Before a new wave of chats, run `fleet-status` or inspect the immutable private 
 ## Supervised developer pilot, wave 2
 
 Read `docs/LAUNCH_DEVELOPERS_WAVE2.md` before selecting a developer task. Only two curated `pilot_wave:2`, `access:write` issues currently qualify. Each requires a verified **resource-first** lock, then issue claim, exact file-root scope compliance, new feature branch from the latest upstream PR head and a **draft stacked PR** against that PR's branch. No direct writes to active PR branches. Stop rather than expanding file scope. Existing five submitted reviewer findings remain pending independent review.
+
+## Required PR scope gate for write tasks
+
+Before handoff or submission of a write task, inspect `docs/PR_SCOPE_AUDIT.md`. Check every changed file on the new stacked draft PR against the **exact curated resource roots** and verify the PR's base/upstream HEAD. Local agents must run `node bin/vs-agent.mjs audit-pr OWNER/REPO ISSUE PR_NUMBER`; the CLI's `submit` requires `--pr` and rechecks this evidence automatically. GitHub-connector-only chat agents must manually inspect the actual changed-file metadata and report that the machine audit was not run. Never record an unaudited manual check as `scope-clean`. A new PR commit invalidates the previous audit snapshot. No scope audit is PR approval, runtime validation or authorization to merge.

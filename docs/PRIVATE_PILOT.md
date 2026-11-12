@@ -81,3 +81,7 @@ The first five reviewer chats submitted their curated tasks, with each handoff p
 ## Wave 2 after completed reviewer submissions
 
 The first five reviewer submissions are persisted and must not be automatically reassigned. The next approved pilot experiment is **two developer sessions on two different repositories**, constrained to new, non-overlapping files. Read `docs/LAUNCH_DEVELOPERS_WAVE2.md` and `config/pilot-tasks.json`. The developer prompt takes precedence over the initial read-only reviewer-only launch prompt for these two tasks. Do not silently extend the resource scopes if source changes would be required.
+
+## Wave-2 PR diff safety
+
+The latest private CLI includes `audit-pr` and a mandatory `--pr PR_NUMBER` for `access:write` submissions. This verifies a draft stacked PR's current branch/base and complete changed-file names against the curated partition; changes outside the allowed roots block CLI submission. See `docs/PR_SCOPE_AUDIT.md`. Connector-only chats must perform and describe an equivalent manual inspection, without claiming they ran the CLI. Missing audited write-submission metadata appears as `needs-scope-audit` in the private fleet monitor.

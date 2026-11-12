@@ -73,3 +73,7 @@ Run `node bin/vs-agent.mjs fleet-status` from the feature branch with a private 
 ## Two supervised write tasks now available
 
 After the first five reviewer tasks were submitted, the private catalog gained two `pilot_wave:2` developer tasks. Local Codex may run `node bin/vs-agent.mjs claim-next --session YOUR_SESSION --role developer`; it will try the two curated tasks and require a resource lock before the task claim. Follow `docs/LAUNCH_DEVELOPERS_WAVE2.md` for exact branch/PR rules, permitted paths and handoff/submit procedure. These are **stacked draft PRs**, not updates to main or the existing active PR branches.
+
+## Prevent out-of-scope developer submissions
+
+Developer tasks must use the actual draft PR number and current PR HEAD SHA. After publishing a factual handoff, run `node bin/vs-agent.mjs audit-pr OWNER/REPO ISSUE PR_NUMBER` and then `node bin/vs-agent.mjs submit OWNER/REPO ISSUE --session YOUR_SESSION --pr PR_NUMBER --confirm`. Submission rechecks the scope and refuses missing or unauthorized changes. The original five reviewer tasks remain `access:read` and do not require `--pr`. Read `docs/PR_SCOPE_AUDIT.md` for the exact checks, error codes, and limitations. A manually created ChatGPT marker is not evidence of CLI execution.

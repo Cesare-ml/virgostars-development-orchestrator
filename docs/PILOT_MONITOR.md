@@ -52,3 +52,7 @@ These are **reviewers' reported findings**, not maintainer-approved conclusions 
 ## Wave 2 work queue
 
 The ledger retains the five wave-1 submitted reviewer markers. Two new curated developer tasks are ready: `astrological-functions#5` and `astrological-charts#25`, each with a single explicit partition and a new-file-only write scope. `fleet-status` now lists seven task records (five submitted, two available before a wave-2 claim) plus any alerts. The live status may change as agents work. Use `docs/LAUNCH_DEVELOPERS_WAVE2.md` for startup prompts, required resource-first claims and stacked-PR rules.
+
+## Scope verification for wave-2 write submissions
+
+A write-task submission lacking a verified CLI audit is displayed as `needs-scope-audit`, with a maintainer alert. This includes connector-only agent handoffs marked `scope_verdict:"manual-reviewed"`. After an agent opens a stacked draft PR, run `node bin/vs-agent.mjs audit-pr OWNER/REPO ISSUE ACTUAL_PR_NUMBER` using the latest PR HEAD, then independently review content and actual tests. `scope-clean` is only a file-path/branch metadata gate, **not** approval or scientific validation. A later commit changes the inspected HEAD and requires a fresh audit.

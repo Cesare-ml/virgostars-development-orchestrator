@@ -40,3 +40,7 @@ The first five curated reviewer assignments have submitted technical findings. U
 ## Wave 2: two first developer agents
 
 The first five reviewer tasks are submitted (pending independent review). **Two supervised write tasks** are now in the curated queue: `astrological-functions#5` (ESM provider consumer smoke) and `astrological-charts#25` (axis canvas browser smoke). They are restricted to exact new files and each uses a separate exclusive resource partition. Use [docs/LAUNCH_DEVELOPERS_WAVE2.md](docs/LAUNCH_DEVELOPERS_WAVE2.md) to launch two independent GitHub-connected developer chats; never have either agent push to an existing active PR branch or modify production.
+
+## Audit developers' stacked PRs before accepting handoff
+
+The private Node CLI now supports `audit-pr OWNER/REPO ISSUE PR_NUMBER`. It reads the actual GitHub PR changed-file list, verifies the submitted draft is stacked onto the approved upstream PR branch, and rejects out-of-scope, renamed, missing, or modified files in wave 2. For a developer (`access:write`), `submit --pr PR_NUMBER --confirm` **re-runs the scope audit** and saves the audited head SHA before releasing the task. Submitted work still awaits independent code and test review; no auto-merge is authorized. See [PR scope audit](docs/PR_SCOPE_AUDIT.md).
