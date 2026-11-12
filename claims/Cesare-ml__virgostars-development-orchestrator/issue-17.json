@@ -16,7 +16,11 @@
   "claimed_at": "2026-11-12T18:51:15.332Z",
   "role": "developer",
   "access": "write",
-  "state": "claimed",
+  "state": "in_progress",
   "branch": "feat/distributed-agent-coordination-v0",
-  "last_handoff": null
+  "last_handoff": {
+    "at": "2026-11-12T19:19:55.316Z",
+    "summary": "Actual native Node 22.16.0 npm run check: 120/120 passed, 0 failed, on exact 36 runtime/test/config blobs, 171781 bytes, manifest FNV1a64 40dcc945464b179f at draft PR #1 HEAD 9b4441de37412d3f026689a06b93d9da13fe68c8. Fixed one assertion in write-resources test, added missing-resource-after-handoff regression. Issue #17 comment 6833549004. No main merge; full docs/templates clone excluded.",
+    "head_sha": "9b4441de37412d3f026689a06b93d9da13fe68c8"
+  }
 }
