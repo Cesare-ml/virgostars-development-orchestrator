@@ -70,3 +70,14 @@ test('non-ready ownership is resumed but not otherwise offered',async()=>{
  const other=await claimNext({...a(api,newSession()),tasks:changed});
  assert.equal(other.claim.issue_number,13);
 });
+
+
+test('a resumed write task is blocked if curated partition changes',async()=>{
+ const api=fake(),session=newSession();
+ const original=[{repository:repo,issue:77,role:'developer',access:'write',
+  resource_scope:{id:'renderer',roots:['src/render/']},status:'ready'}];
+ const first=await claimNext({api,config,tasks:original,session,role:'developer'});
+ assert.equal(first.result,'acquired');
+ const changed=[{...original[0],resource_scope:{id:'other',roots:['src/other/']}}];
+ await assert.rejects(()=>claimNext({api,config,tasks:changed,session,role:'developer'}),/resource scope changed/);
+});
