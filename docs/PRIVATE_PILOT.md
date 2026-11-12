@@ -56,3 +56,7 @@ This can be reused as the initial prompt for each chat; after that `ottimo, avan
 ## Readiness gate
 
 The pilot is not considered fully functional until task discovery, claim, collision, handoff, release and stale-recovery flows are independently validated on all five repositories. The GitHub-native mechanism prevents two **successful creates of the same file**, not every form of duplicated engineering work or unauthorized GitHub writes.
+
+## Runnable private pilot and five real assignments
+
+The Node.js CLI, `config/pilot-tasks.json` and `docs/CLI_PRIVATE_PILOT.md` now provide an initial curated work queue: five read-only PR review tasks, one per target repo. The CLI implements session, discover, status, claim, handoff and release with direct GitHub Contents API. The tool pins claim reads to a branch **commit SHA** before reading the claim file, because a connector smoke test observed a stale immediate branch-path read after update (the stale-SHA delete failed closed with HTTP 409). The fresh content was verified by its commit SHA and successfully released. This is still an owner-only pilot, not automatic cross-issue resource fencing or a hosted service.
