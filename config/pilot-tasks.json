@@ -1,0 +1,57 @@
+{
+  "schema_version": "1-pilot-curated",
+  "status": "ready-for-small-pilot",
+  "description": "Only these issue tasks are ready. Reviewer tasks are read-only. New developer tasks require a manual check for PR/file overlap.",
+  "tasks": [
+    {
+      "repository": "Cesare-ml/VirgoStars-Ephemeris",
+      "issue": 85,
+      "status": "ready",
+      "role": "reviewer",
+      "title": "Audit observer/orientation PR cluster (#79–#83)",
+      "scope": [
+        "read-only: PRs #79–#83, scientific contracts and test evidence"
+      ]
+    },
+    {
+      "repository": "Cesare-ml/VirgoStars-Event-Ephemeris",
+      "issue": 10,
+      "status": "ready",
+      "role": "reviewer",
+      "title": "Audit VSEPH reader, fixtures and dataset PRs (#4–#6)",
+      "scope": [
+        "read-only: PRs #4–#6, format/bindings/rights"
+      ]
+    },
+    {
+      "repository": "Cesare-ml/astrological-charts",
+      "issue": 23,
+      "status": "ready",
+      "role": "reviewer",
+      "title": "Review natal/transit interactions PR #22",
+      "scope": [
+        "read-only: PR #22 and test coverage, cross-check issue #20"
+      ]
+    },
+    {
+      "repository": "Cesare-ml/astrological-functions",
+      "issue": 4,
+      "status": "ready",
+      "role": "reviewer",
+      "title": "Audit ephemeris provider contract PR #3",
+      "scope": [
+        "read-only: PR #3, errors and validation"
+      ]
+    },
+    {
+      "repository": "Cesare-ml/virgostars-desktop",
+      "issue": 34,
+      "status": "ready",
+      "role": "reviewer",
+      "title": "Review SQLCipher storage v3 PRs #31–#33",
+      "scope": [
+        "read-only: PRs #31–#33, storage integrity and Windows validation"
+      ]
+    }
+  ]
+}

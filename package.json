@@ -1,0 +1,16 @@
+{
+  "name": "virgostars-development-orchestrator",
+  "version": "0.1.0-private-pilot",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "check": "node --check bin/vs-agent.mjs && node --check src/claims.mjs && node --check src/github.mjs && node --check src/registry.mjs && npm test"
+  },
+  "bin": {
+    "vs-agent": "./bin/vs-agent.mjs"
+  }
+}
