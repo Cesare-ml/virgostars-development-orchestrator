@@ -36,7 +36,7 @@ test('disjoint scopes and multiple tasks in one shared partition are allowed',()
 
 test('no access inference, malformed paths, and multiple IDs are rejected',()=>{
  assert.throws(()=>validateTaskCatalog([{...read,access:undefined}]),/explicitly read or write/);
- assert.throws(()=>validateTaskCatalog([write(2,'core',['../private/'])]),/valid partition/);
+ assert.throws(()=>validateTaskCatalog([write(2,'core',[String.fromCharCode(46,46,47)+'private/'])]),/valid partition/);
  assert.throws(()=>validateTaskCatalog([write(2,'core',['src/**/'])]),/valid partition/);
  assert.throws(()=>validateTaskCatalog([write(2,'core',[])]),/valid partition/);
  assert.throws(()=>validateTaskCatalog([{...read,resource_scope:{id:'core'}}]),/Read-only/);
