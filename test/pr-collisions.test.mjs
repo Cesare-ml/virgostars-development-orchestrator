@@ -117,7 +117,7 @@ test('GitHub open PR pagination is bounded and read only',async()=>{
   const api=makeGitHubClient({token:'synthetic',fetchImpl:async(url,opts)=>{
     urls.push({url,method:opts.method});
     return {ok:true,status:200,json:async()=>
-      url.includes('page=1')?twenty:[a,b]};
+      url.endsWith('&page=1')?twenty:[a,b]};
   }});
   const found=await api.getOpenPullRequests(R);
   assert.equal(found.length,102);
