@@ -8,7 +8,7 @@
   },
   "scripts": {
     "test": "node --test",
-    "check": "node --check bin/vs-agent.mjs && node --check src/claims.mjs && node --check src/github.mjs && node --check src/registry.mjs && node --check src/queue.mjs && node --check src/resources.mjs && node --check src/submissions.mjs && node --check src/fleet-status.mjs && node --check src/pr-audit.mjs && node --check src/submission-freshness.mjs && node --check src/pr-collisions.mjs && node --check src/review-gates.mjs && node --check src/native-check.mjs && node --check scripts/verify-pilot.mjs && npm test",
+    "check": "node --check bin/vs-agent.mjs && node --check src/claims.mjs && node --check src/github.mjs && node --check src/registry.mjs && node --check src/queue.mjs && node --check src/resources.mjs && node --check src/submissions.mjs && node --check src/fleet-status.mjs && node --check src/pr-audit.mjs && node --check src/submission-freshness.mjs && node --check src/pr-collisions.mjs && node --check src/review-gates.mjs && node --check src/native-check.mjs && node --check scripts/verify-pilot.mjs && node --check src/validation-receipt.mjs && npm test",
     "verify:private": "node scripts/verify-pilot.mjs"
   },
   "bin": {
