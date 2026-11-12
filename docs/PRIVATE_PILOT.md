@@ -73,3 +73,7 @@ The original issue-level claim method remains appropriate for initial read-only 
 ## How to actually launch 3–5 ChatGPT chats
 
 Use the [private MVP launch guide](LAUNCH_PRIVATE_MVP.md). All five initial reviewer assignments are verified open as of 2026-11-12. Copy the same prompt into separate GitHub-connected ChatGPT chats. The instructions include UUID session isolation, create-only task locking, a real PR/issue review, handoff, and a persistent **submitted / awaiting-review** marker that prevents duplicate assignment. The main branch has not yet absorbed this feature branch. `submit` is not merge or approval.
+
+## First five chat submissions observed
+
+The first five reviewer chats submitted their curated tasks, with each handoff pointing to a GitHub issue review comment. This is a successful coordination signal, **not** approval of their technical conclusions. Do not launch additional reviewer chats expecting the same five tasks to be free. Use the private `fleet-status` command and [PILOT_MONITOR.md](PILOT_MONITOR.md) to inspect submitted reviews and any stale/orphaned resources before opening a new task wave.

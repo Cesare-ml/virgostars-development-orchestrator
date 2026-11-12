@@ -65,3 +65,7 @@ When a review is actually complete, first post your findings in the target issue
 This saves a private immutable `submissions/OWNER__REPO/issue-N.json` marker with the handoff, then releases the issue lock (and write-resource lock if applicable). The queue reports `submitted` and will not reassign that work merely because the issue claim is gone. **Submitted does not mean reviewed, approved or merged.** To abandon incomplete work, use `release` only after a handoff; such tasks can be claimed again.
 
 For connector-only ChatGPT chats, follow [LAUNCH_PRIVATE_MVP.md](LAUNCH_PRIVATE_MVP.md) to create and verify a submission marker **before** deleting the claim. An interrupted `submit` may leave both marker and claim; only the original session or a maintainer may complete the release.
+
+## Read-only monitoring of the whole private fleet
+
+Run `node bin/vs-agent.mjs fleet-status` from the feature branch with a private `GITHUB_TOKEN`. This command performs only GitHub reads; it produces structured JSON with an immutable ledger commit, five task states, pending review links, and alerts for mismatched or orphaned locks. It is intended for the maintainer and doesn't autonomously claim, approve, merge or restart work. Full status definitions and first-wave reviewer comments are in [PILOT_MONITOR.md](PILOT_MONITOR.md).

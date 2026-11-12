@@ -32,3 +32,7 @@ Private pilot write tasks now require a **single approved resource partition**, 
 ## Ready to launch the first private chats
 
 **[Open the single-prompt pilot launch guide](docs/LAUNCH_PRIVATE_MVP.md).** Start with 3–5 ChatGPT chats using their connected GitHub tools. All five initial tasks are read-only reviews. Each agent claims one task via `coordination/claims`, posts its findings in the target issue, stores its handoff and creates a private `submissions/OWNER__REPO/issue-N.json` marker **before** releasing the issue claim. Submitted work is not automatically reassigned and is *not* considered approved. The executable Node CLI supports `claim-next`, `handoff`, and `submit --confirm`. Do not confuse the feature branch with `main`.
+
+## Fleet monitoring after the first five chats
+
+The first five curated reviewer assignments have submitted technical findings. Use `node bin/vs-agent.mjs fleet-status` on a private, authenticated checkout to see a read-only, Git-commit-pinned snapshot of assignments, submitted reviews, mismatches and orphaned resource locks. See [pilot monitor](docs/PILOT_MONITOR.md). Submitted reviews await independent approval; the monitor does not merge PRs or create new development tasks.

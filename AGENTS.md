@@ -46,3 +46,7 @@ For an explicitly approved `access: "write"` task, read [docs/RESOURCE_LOCKS.md]
 ## Trial launch and terminal submission status
 
 For the first ChatGPT pilot, use `docs/LAUNCH_PRIVATE_MVP.md` (feature branch) and only five read-only reviewer assignments. A finished review is **submitted**, not DONE: publish real issue/PR review findings, save the owner handoff, then create a `submissions/OWNER__REPO/issue-N.json` marker on `coordination/claims` **before** releasing the issue claim. Never delete that marker as part of normal release. The CLI `submit --confirm` performs these steps with ownership validation; connector-only agents follow the documented equivalent. A new chat must not claim an already-submitted task. If the process fails between submission and release, the original owner or maintainer must reconcile it; do not steal the lock.
+
+## Central monitoring and evidence review
+
+Before a new wave of chats, run `fleet-status` or inspect the immutable private `coordination/claims` branch. Use [docs/PILOT_MONITOR.md](docs/PILOT_MONITOR.md) for state definitions. `submitted` means a review was handed off, not that defects are fixed or code approved. Do not reassign submitted work to a new agent without a maintainer decision. Investigate `inconsistent`, `resource-busy` and `submitted-pending-release` states before scheduling new code-writing tasks. Never expose the private monitor output on a public repository.

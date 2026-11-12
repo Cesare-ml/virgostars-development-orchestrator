@@ -75,3 +75,13 @@ No deploy, Actions, production mutation, release, automatic merge, or license/vi
 
 - [x] Real GitHub synthetic review submission test: acquired issue claim, saved handoff, created `submitted` marker, released issue; marker still existed after release. Removed synthetic test marker and verified cleanup. This validates the GitHub write sequence, not a real ChatGPT agent performing a review.
 - [ ] On Windows or another GitHub-capable checkout run `npm run check` and record the exact result before expanding beyond review-only pilot.
+
+## First-wave observability checkpoint — 2026-11-12
+
+- [x] Observed all five submitted reviewer markers in the private claim ledger; corresponding technical issue comments were located. No existing submitted data was edited.
+- [x] Add `fleet-status` CLI read-only audit from one immutable Git tree, aggregating available, claimed, submitted, inconsistent, pending-release, resource-busy and closed statuses.
+- [x] Preserve compatibility with `last_handoff` markers from ChatGPT and `handoff` records from early CLI versions; normalize new CLI submissions to `last_handoff`.
+- [x] Add mock tests for mixed marker formats, identity mismatch, orphaned resources, untracked records, permission errors and truncated Git snapshot.
+- [x] Validate the live GitHub REST ref → commit → tree → blobs path and confirm each of the five submissions references an issue comment.
+- [ ] Run `npm run check` against a fresh checkout of this latest feature branch; newly committed monitor tests have not been executed in this tool runtime.
+- [ ] Independent maintainer review of the five submitted findings before converting them into scoped coding tasks; no automatic task approval or merging.
