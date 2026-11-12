@@ -5,12 +5,14 @@ import { newSession, claim, status, release, handoff, discover } from '../src/cl
 import { claimNext } from '../src/queue.mjs';
 import { submit } from '../src/submissions.mjs';
 import { auditFleet } from '../src/fleet-status.mjs';
+import { auditTaskPullRequest } from '../src/pr-audit.mjs';
 
 const usage = [
   'VirgoStars private pilot — Node.js 20+',
   'node bin/vs-agent.mjs session [--kind chat|codex]',
   'node bin/vs-agent.mjs discover',
   'node bin/vs-agent.mjs fleet-status  # read-only, all five repositories',
+  'node bin/vs-agent.mjs audit-pr OWNER/REPO ISSUE PR_NUMBER  # read-only scope audit',
   'node bin/vs-agent.mjs claim-next --session chat-UUID --role reviewer [--repo OWNER/REPO]',
   'node bin/vs-agent.mjs status OWNER/REPO ISSUE',
   'node bin/vs-agent.mjs claim OWNER/REPO ISSUE --session chat-UUID --role reviewer',
@@ -52,6 +54,13 @@ async function main() {
   } else if(command==='fleet-status') {
     if(positionals.length) throw new Error('Fleet-status takes no positional target.');
     result=await auditFleet({api,config,tasks:await loadPilotTasks()});
+  } else if(command==='audit-pr') {
+    if(positionals.length!==3) throw new Error('Audit-pr expects OWNER/REPO ISSUE PR_NUMBER.');
+    const [repo,rawIssue,rawPr]=positionals;
+    if(!/^[1-9]\d*$/.test(rawIssue)||!/^[1-9]\d*$/.test(rawPr))
+      throw new Error('Audit-pr requires positive issue and PR numbers.');
+    result=await auditTaskPullRequest({api,tasks:await loadPilotTasks(),repo,
+      issue:Number(rawIssue),prNumber:Number(rawPr)});
   } else if(command==='claim-next') {
     if(positionals.length) throw new Error('Claim-next takes no positional target.');
     result=await claimNext({api,config,tasks:await loadPilotTasks(),
@@ -74,7 +83,7 @@ async function main() {
     else throw new Error('Unknown command ' + command);
   }
   process.stdout.write(JSON.stringify(result,null,2)+'\n');
-  if(result?.result==='busy'||result?.result==='no-task') process.exitCode=2;
+  if(result?.result==='busy'||result?.result==='no-task'||result?.verdict==='blocked') process.exitCode=2;
 }
 main().catch(error=>{
   process.stderr.write('ERROR: '+error.message+'\n');
