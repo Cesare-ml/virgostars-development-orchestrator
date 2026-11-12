@@ -11,7 +11,8 @@
       "title": "Audit observer/orientation PR cluster (#79–#83)",
       "scope": [
         "read-only: PRs #79–#83, scientific contracts and test evidence"
-      ]
+      ],
+      "access": "read"
     },
     {
       "repository": "Cesare-ml/VirgoStars-Event-Ephemeris",
@@ -21,7 +22,8 @@
       "title": "Audit VSEPH reader, fixtures and dataset PRs (#4–#6)",
       "scope": [
         "read-only: PRs #4–#6, format/bindings/rights"
-      ]
+      ],
+      "access": "read"
     },
     {
       "repository": "Cesare-ml/astrological-charts",
@@ -31,7 +33,8 @@
       "title": "Review natal/transit interactions PR #22",
       "scope": [
         "read-only: PR #22 and test coverage, cross-check issue #20"
-      ]
+      ],
+      "access": "read"
     },
     {
       "repository": "Cesare-ml/astrological-functions",
@@ -41,7 +44,8 @@
       "title": "Audit ephemeris provider contract PR #3",
       "scope": [
         "read-only: PR #3, errors and validation"
-      ]
+      ],
+      "access": "read"
     },
     {
       "repository": "Cesare-ml/virgostars-desktop",
@@ -51,7 +55,8 @@
       "title": "Review SQLCipher storage v3 PRs #31–#33",
       "scope": [
         "read-only: PRs #31–#33, storage integrity and Windows validation"
-      ]
+      ],
+      "access": "read"
     }
   ]
 }
