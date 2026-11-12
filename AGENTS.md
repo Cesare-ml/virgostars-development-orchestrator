@@ -33,3 +33,8 @@ Target-repository rules always apply. No direct push to main, automatic merge, p
 ## Executable private task queue
 
 Read `config/pilot-tasks.json` and `docs/CLI_PRIVATE_PILOT.md`. Every pilot reviewer must claim their issue before a review, just as developers must claim before code edits. The five initial tasks are reviewer-only and **do not authorize source changes**. `claim` requires a task explicitly marked `ready`; do not work on arbitrary issues. Local Codex may use the Node CLI; a GitHub-connected ChatGPT must use the exact same claim path and ownership rules through connector actions. A task claim is exclusive per issue key only, not across modules or files shared by different issues.
+
+
+## Next task and continuity
+
+Prefer `claim-next` for local agents with the CLI. Provide the **same session ID** when resuming the same chat; a new chat must generate a fresh session ID. The selector first checks whether that session already owns any curated task; it does not silently reserve a second. Normal `release` is rejected until the owner saves a factual handoff. If a claim is orphaned or you lose your session ID, stop and request explicit maintainer recovery rather than deleting another session's claim.

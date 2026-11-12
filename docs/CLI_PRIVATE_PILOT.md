@@ -37,3 +37,15 @@ The five initial tasks are **read-only reviews** to exercise claim and handoff b
 Claims are exclusive **only per issue file path**, not across different issues touching overlapping files. There is no automatic expiry, no server, no heartbeat, and no transactionally enforced resource lock. Recovery of stale claims requires explicit owner inspection. Do not assume an idle browser tab continues working.
 
 Run `npm run check` locally to execute syntax checks and mock regression tests. Also verify real GitHub behavior before scaling. No automatic merge, production changes, deployment or new GitHub Actions are permitted.
+
+
+## Automatic selection of the next task
+
+Instead of choosing an issue number yourself, use:
+
+    node bin/vs-agent.mjs claim-next --session codex-YOUR-UUID --role reviewer
+    node bin/vs-agent.mjs claim-next --session codex-YOUR-UUID --role reviewer --repo Cesare-ml/astrological-charts
+
+The first call checks whether this session already owns any curated task. If so it returns `already-owned` and its saved task; otherwise it tries ready, compatible tasks in the curated order. An occupied task is skipped, a closed issue is skipped, and HTTP permission/network failures stop the attempt without claiming anything. When no task can be acquired it returns `no-task` (CLI exit status 2). A normal `release` requires that the same session previously saved a nonempty handoff; write the corresponding factual issue/PR note before releasing. This does **not** replace the manual recovery procedure for orphaned claims.
+
+All five initial tasks require `--role reviewer`. The CLI remains a local tool; connector-based ChatGPT users can reproduce the same selection using current issue and claim-file reads, then an exclusive `create_file` on the first ready task that succeeds.

@@ -60,3 +60,8 @@ The pilot is not considered fully functional until task discovery, claim, collis
 ## Runnable private pilot and five real assignments
 
 The Node.js CLI, `config/pilot-tasks.json` and `docs/CLI_PRIVATE_PILOT.md` now provide an initial curated work queue: five read-only PR review tasks, one per target repo. The CLI implements session, discover, status, claim, handoff and release with direct GitHub Contents API. The tool pins claim reads to a branch **commit SHA** before reading the claim file, because a connector smoke test observed a stale immediate branch-path read after update (the stale-SHA delete failed closed with HTTP 409). The fresh content was verified by its commit SHA and successfully released. This is still an owner-only pilot, not automatic cross-issue resource fencing or a hosted service.
+
+
+## Automatic next-task command
+
+The pilot CLI supports `claim-next --session SESSION --role reviewer [--repo OWNER/REPO]`, so independent Codex/terminal sessions do not need to choose an issue manually. It resumes an existing owned task first, then tries remaining ready tasks, skips conflicts and closed issues, and returns `no-task` if none is available. A normal release is blocked unless the current owner has saved a factual handoff. There is still no lock between unrelated issue IDs and no unattended stale-lock reclamation.

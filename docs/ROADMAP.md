@@ -39,3 +39,13 @@ No deploy, Actions, production mutation, release, automatic merge, or license/vi
 - [x] Pin claim reads to a concrete Git commit SHA to avoid stale branch-path responses observed in testing.
 - [ ] Run the committed CLI suite in a full checkout, including Windows 11 Codex shell; local implementation tests passed, but the remote commit was not executed in this environment.
 - [ ] Review the five QA handoffs, triage nonoverlapping coding tasks, and test 5–10 independent working chats before targeting 40.
+
+
+## Increment: private next-task selector
+
+- [x] Add `claim-next` command with explicit role, optional repository filter and existing-session resume.
+- [x] Treat a busy claim as a reason to try another eligible task; skip closed issues without fabricating work.
+- [x] Require a stored owner handoff before normal release.
+- [x] Execute 12 deterministic local Node.js mock tests, including simultaneous selection, permission errors, resume and handoff/release; local copies of the committed modules were exercised.
+- [ ] Run checkout-native checks on Windows and verify the full CLI against GitHub with two independent real chats.
+- [ ] Implement cross-task resource conflict guards before parallel write-heavy assignments.

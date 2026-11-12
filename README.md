@@ -19,3 +19,8 @@ The current pilot uses GitHub tools available to authorized agents. No network s
 ## First runnable private-agent pilot
 
 The initial Node.js 20+ CLI is in `bin/vs-agent.mjs`, with no external runtime packages. Read `docs/CLI_PRIVATE_PILOT.md` for local Codex commands and GitHub-connected ChatGPT equivalent actions. `config/pilot-tasks.json` curates exactly five initial **read-only PR review tasks**, one for each target repository. The CLI supports session creation, discovery, issue claim, status, factual handoff and explicit owner-controlled release. It is not a hosted API; other task types will be opened only after scope review.
+
+
+### Automatic task pickup (private pilot)
+
+The CLI now supports `claim-next --session chat-UUID --role reviewer [--repo OWNER/REPO]`. It resumes a task already owned by that session, otherwise tries approved ready tasks in order and skips busy or closed issues. It never creates tasks from unreviewed issues. A normal release requires an owner-authored handoff to prevent silent loss of progress. See [CLI instructions](docs/CLI_PRIVATE_PILOT.md).
