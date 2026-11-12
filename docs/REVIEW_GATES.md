@@ -48,4 +48,4 @@ The private `coordination/claims` ledger is read from **one Git commit**, but cu
 
 No automatic GitHub Actions, CI inference, checkout test execution, PR approval, merge, deployment, forced lock release, branch modification or changes to public repos. Even an entirely empty blocker list would **not** itself authorize merging: an independent reviewer must examine code, test evidence, dependencies and integration plan.
 
-The module `src/review-gates.mjs` has 10 isolated exact-source V8 test cases, and the enhanced `fleet-status` has 13 isolated exact-source tests. These are **not** native `node --test` from a full checkout; execute `npm run check` locally as the next gate.
+The module `src/review-gates.mjs` has **11/11** passing isolated exact-source V8 test cases, the enhanced `fleet-status` has **13/13**, and the scoped PR audit has **8/8**. A read-only task guard expectation was corrected to match the earlier catalog validator's explicit rejection. These are **not** native `node --test` from a full checkout; execute `npm run check` locally as the next gate.
