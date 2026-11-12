@@ -5,7 +5,7 @@
  */
 const SCOPE_ID = /^[a-z][a-z0-9_-]{0,63}$/;
 const PATH = /^[a-z0-9_.-]+(?:\/[a-z0-9_.-]+)*\/?$/i;
-const REPO = /^[a-z\d_.-]+\/[a-z\d_.-]+$/i;
+const REPO = /^[a-z\d][a-z\d_.-]*\/[a-z\d][a-z\d_.-]*$/i;
 
 export function resourceKey(repository, scopeId) {
   if (!REPO.test(repository) || !SCOPE_ID.test(scopeId))
