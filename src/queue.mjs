@@ -25,7 +25,8 @@ export async function claimNext({ api, config, tasks, session, role, repository 
       throw new Error('Inconsistent active task claim; manual recovery required.');
     if (current.status === 'claimed' && current.claim.session_id === session) {
       if (current.claim.access !== task.access ||
-        (task.access === 'write' && current.claim.resource_scope_id !== task.resource_scope.id))
+        (task.access === 'write' && (current.claim.resource_scope_id !== task.resource_scope.id ||
+          JSON.stringify(current.claim.resource_roots) !== JSON.stringify([...task.resource_scope.roots].sort()))))
         throw new Error('Curated task resource scope changed; manual reconciliation required.');
       return { result: 'already-owned', claim: current.claim };
     }
