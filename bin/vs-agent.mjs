@@ -2,6 +2,7 @@
 import { makeGitHubClient } from '../src/github.mjs';
 import { loadPilotConfig, loadPilotTasks } from '../src/registry.mjs';
 import {loadPublicDiscovery} from '../src/public-discovery.mjs';
+import {inspectPrivateDestination} from '../src/private-ledger-preflight.mjs';
 import {assertPrivateLedger,guardLegacyLedgerClient} from '../src/ledger-visibility.mjs';
 import { newSession, claim, status, release, handoff, discover } from '../src/claims.mjs';
 import { claimNext } from '../src/queue.mjs';
@@ -13,6 +14,7 @@ import { auditOpenPullRequestCollisions } from '../src/pr-collisions.mjs';
 const usage = [
   'VirgoStars private pilot — Node.js 20+',
   'node bin/vs-agent.mjs public-discover  # read-only, no token, public repos only',
+  'node bin/vs-agent.mjs check-private-destination OWNER/REPO  # GET-only, token required',
   'node bin/vs-agent.mjs session [--kind chat|codex]',
   'node bin/vs-agent.mjs discover',
   'node bin/vs-agent.mjs fleet-status  # read-only, all five repositories',
@@ -55,6 +57,14 @@ async function main() {
       throw new Error('Public-discover takes no arguments.');
     const discovery=await loadPublicDiscovery();
     process.stdout.write(JSON.stringify(discovery,null,2)+'\n');
+    return;
+  }
+  if(command==='check-private-destination') {
+    if(positionals.length!==1 || Object.keys(flags).length)
+      throw new Error('check-private-destination requires exactly OWNER/REPO.');
+    const api=makeGitHubClient({token:process.env.GITHUB_TOKEN});
+    const report=await inspectPrivateDestination({api,destination:positionals[0]});
+    process.stdout.write(JSON.stringify(report,null,2)+'\n');
     return;
   }
   // Fail closed BEFORE any legacy ledger reads or writes. The historical
