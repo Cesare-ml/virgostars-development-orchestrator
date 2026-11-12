@@ -3,6 +3,7 @@ import { makeGitHubClient } from '../src/github.mjs';
 import { loadPilotConfig, loadPilotTasks } from '../src/registry.mjs';
 import {loadPublicDiscovery} from '../src/public-discovery.mjs';
 import {inspectPrivateDestination} from '../src/private-ledger-preflight.mjs';
+import {planPrivateCutover} from '../src/private-cutover-plan.mjs';
 import {assertPrivateLedger,guardLegacyLedgerClient} from '../src/ledger-visibility.mjs';
 import { newSession, claim, status, release, handoff, discover } from '../src/claims.mjs';
 import { claimNext } from '../src/queue.mjs';
@@ -15,6 +16,7 @@ const usage = [
   'VirgoStars private pilot — Node.js 20+',
   'node bin/vs-agent.mjs public-discover  # read-only, no token, public repos only',
   'node bin/vs-agent.mjs check-private-destination OWNER/REPO  # GET-only, token required',
+  'node bin/vs-agent.mjs plan-private-cutover OWNER/PRIVATE-REPO  # metadata-only, no migration',
   'node bin/vs-agent.mjs session [--kind chat|codex]',
   'node bin/vs-agent.mjs discover',
   'node bin/vs-agent.mjs fleet-status  # read-only, all five repositories',
@@ -65,6 +67,14 @@ async function main() {
     const api=makeGitHubClient({token:process.env.GITHUB_TOKEN});
     const report=await inspectPrivateDestination({api,destination:positionals[0]});
     process.stdout.write(JSON.stringify(report,null,2)+'\n');
+    return;
+  }
+  if(command==='plan-private-cutover') {
+    if(positionals.length!==1 || Object.keys(flags).length)
+      throw new Error('plan-private-cutover requires exactly OWNER/PRIVATE-REPO.');
+    const api=makeGitHubClient({token:process.env.GITHUB_TOKEN});
+    const plan=await planPrivateCutover({api,destination:positionals[0]});
+    process.stdout.write(JSON.stringify(plan,null,2)+'\n');
     return;
   }
   // Fail closed BEFORE any legacy ledger reads or writes. The historical
