@@ -7,7 +7,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "node --test test/*.test.mjs",
+    "test": "node --test",
     "check": "node --check bin/vs-agent.mjs && node --check src/claims.mjs && node --check src/github.mjs && node --check src/registry.mjs && node --check src/queue.mjs && node --check src/resources.mjs && node --check src/submissions.mjs && npm test"
   },
   "bin": {
