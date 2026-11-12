@@ -131,3 +131,13 @@ test('read-only tasks and mismatched markers are rejected',async()=>{
     api:api(),task,marker:marker({issue_number:123})
   }),/matching submitted marker/);
 });
+
+
+test('curated tester write role receives the same conservative integration gates',async()=>{
+  const result=await assessSubmittedDeveloper({
+    api:api(),task:{...task,role:'tester'},marker:marker({role:'tester'})
+  });
+  assert.equal(result.status,'submitted');
+  assert.equal(result.collisions.status,'single-candidate');
+  assert.equal(result.review_gates.integration_ready,false);
+});
