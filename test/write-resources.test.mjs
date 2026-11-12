@@ -91,7 +91,7 @@ test('missing resource cannot be treated as valid write ownership',async()=>{
  api.files.delete(resource('render'));
  assert.equal((await status({api,config,repo,issue:10})).status,'inconsistent');
  await assert.rejects(()=>handoff({api,config,repo,issue:10,session:a,summary:'Unsafe'}),/Resource lock invalid/);
- await assert.rejects(()=>release({api,config,repo,issue:10,session:a,confirm:true}),/Resource lock invalid/);
+ await assert.rejects(()=>release({api,config,repo,issue:10,session:a,confirm:true}),/Save an owner handoff/);
  assert.ok(api.files.has(taskKey(repo,10))); // never silently releases issue
 });
 
@@ -122,4 +122,17 @@ test('discovery does not advertise an orphan-locked write resource as free',asyn
  assert.equal(rows.find(x=>x.issue===10).availability,'resource-busy');
  assert.equal(rows.find(x=>x.issue===11).availability,'resource-busy');
  assert.equal(rows.find(x=>x.issue===12).availability,'unclaimed');
+});
+
+
+test('release refuses a missing resource even after a valid handoff was saved',async()=>{
+ const api=mock(),session=newSession();
+ await claim(options(api,session,10));
+ await handoff({api,config,repo,issue:10,session,
+   summary:'Handoff saved while resource ownership was valid.'});
+ api.files.delete(resource('render'));
+ await assert.rejects(()=>release({api,config,repo,issue:10,session,confirm:true}),
+   /Resource lock invalid/);
+ assert.ok(api.files.has(taskKey(repo,10)));
+ assert.equal((await status({api,config,repo,issue:10})).status,'inconsistent');
 });
