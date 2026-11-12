@@ -1,4 +1,5 @@
 import { assertSession, claim, status } from './claims.mjs';
+import { validateTaskCatalog } from './resources.mjs';
 
 const ROLES = new Set(['planner','developer','tester','reviewer','auditor','integrator']);
 
@@ -8,6 +9,7 @@ const ROLES = new Set(['planner','developer','tester','reviewer','auditor','inte
  */
 export async function claimNext({ api, config, tasks, session, role, repository = null }) {
   assertSession(session);
+  validateTaskCatalog(tasks);
   if (!ROLES.has(role)) throw new Error('Choose an explicit valid role for claim-next.');
   if (repository !== null && !config.active_repositories.some(r => r.full_name === repository && r.pilot_enabled))
     throw new Error('Repository filter is not enabled in private pilot.');
@@ -19,6 +21,8 @@ export async function claimNext({ api, config, tasks, session, role, repository 
   // tasks removed from READY remain owned until explicitly released.
   for (const task of inFleet) {
     const current = await status({ api, config, repo: task.repository, issue: task.issue });
+    if (current.status === 'inconsistent')
+      throw new Error('Inconsistent active task claim; manual recovery required.');
     if (current.status === 'claimed' && current.claim.session_id === session)
       return { result: 'already-owned', claim: current.claim };
   }
