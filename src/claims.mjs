@@ -14,6 +14,9 @@ export function taskKey(repo,issue) {
   const [owner,name]=repo.split('/');
   return 'claims/' + owner + '__' + name + '/issue-' + issue + '.json';
 }
+export function submissionKey(repo,issue) {
+  return taskKey(repo,issue).replace(/^claims\//,'submissions/');
+}
 export function assertSession(s) {
   if (!VALID_SESSION.test(s)) throw new Error('Create a unique session ID using the session command.');
 }
@@ -32,8 +35,16 @@ function isOwner(current,session,repo,issue) {
 }
 export async function status({api,config,repo,issue}) {
   const {ledger,branch}=store(config);
-  const current=await api.getClaim(ledger,taskKey(repo,issue),branch);
-  if(!current) return {status:'unclaimed'};
+  const [current,submission]=await Promise.all([
+    api.getClaim(ledger,taskKey(repo,issue),branch),
+    api.getClaim(ledger,submissionKey(repo,issue),branch)
+  ]);
+  if(submission && (submission.data.target_repository!==repo || submission.data.issue_number!==issue ||
+      submission.data.state!=='submitted'))
+    throw new Error('Invalid submission record; manual reconciliation required.');
+  if(!current) return submission
+    ? {status:'submitted',submission:submission.data}
+    : {status:'unclaimed'};
   const data=current.data;
   if(data.access==='write') {
     if(typeof data.resource_scope_id!=='string')
@@ -44,7 +55,8 @@ export async function status({api,config,repo,issue}) {
   } else if(data.access!=='read') {
     return {status:'inconsistent',reason:'unknown-claim-access'};
   }
-  return {status:'claimed',claim:data,blob_sha:current.sha};
+  return {status:'claimed',claim:data,blob_sha:current.sha,
+    submitted:!!submission,submission:submission?.data??null};
 }
 
 export async function claim({api,config,tasks,repo,issue,session,role='developer',branchName=null,now=()=>new Date().toISOString()}) {
@@ -54,16 +66,20 @@ export async function claim({api,config,tasks,repo,issue,session,role='developer
   if(!['developer','tester','planner','reviewer','auditor','integrator'].includes(role))
     throw new Error('Unknown role.');
   if(task.role!==role) throw new Error('Task requires role '+task.role);
+  const {ledger,branch}=store(config);
+  const previouslySubmitted=await api.getClaim(ledger,submissionKey(repo,issue),branch);
+  if(previouslySubmitted) return {result:'submitted',task:repo+'#'+issue};
   const target=await api.getIssue(repo,issue);
   if(!target || target.state!=='open' || target.pull_request)
     throw new Error('The target issue is not an open GitHub issue.');
 
-  const path=taskKey(repo,issue),{ledger,branch}=store(config);
+  const path=taskKey(repo,issue);
   const existing=await api.getClaim(ledger,path,branch);
   if(existing) {
     const observed=await status({api,config,repo,issue});
     if(observed.status==='inconsistent') throw new Error('Inconsistent active claim: manual recovery required.');
     if(isOwner(existing,session,repo,issue)) {
+      if(observed.submitted) return {result:'submitted',task:repo+'#'+issue};
       if(existing.data.access!==task.access ||
         (task.access==='write' && (existing.data.resource_scope_id!==task.resource_scope.id ||
           JSON.stringify(existing.data.resource_roots)!==JSON.stringify([...task.resource_scope.roots].sort()))))
@@ -180,7 +196,8 @@ export async function discover({api,config,tasks}) {
       api.getIssue(task.repository,task.issue),
       status({api,config,repo:task.repository,issue:task.issue})
     ]);
-    let availability=issue.state!=='open' || issue.pull_request ? 'closed' : current.status;
+    let availability=issue.state!=='open' || issue.pull_request ? 'closed' :
+      (current.submitted?'submitted':current.status);
     if(availability==='unclaimed' && task.access==='write') {
       const {ledger,branch}=store(config);
       const held=await api.getClaim(ledger,resourceKey(task.repository,task.resource_scope.id),branch);
