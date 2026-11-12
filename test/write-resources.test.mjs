@@ -70,7 +70,7 @@ test('issue collision rolls back a newly acquired partition',async()=>{
 test('orphan reservation after interrupted claim blocks another session',async()=>{
  const api=mock(),a=newSession(),b=newSession();
  const data={kind:'write-resource',target_repository:repo,resource_scope_id:'render',
-  issue_number:10,session_id:a,claimed_at:'2026-11-12T00:00:00Z'};
+  issue_number:10,session_id:a,resource_roots:['src/render/'],claimed_at:'2026-11-12T00:00:00Z'};
  await api.createClaim('ledger',resource('render'),'branch',data);
  assert.equal((await claim(options(api,b,11))).result,'busy');
  assert.equal((await claim(options(api,a,10))).result,'acquired');
