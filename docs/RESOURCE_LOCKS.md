@@ -54,8 +54,12 @@ The GitHub CLI implements these operations in `src/claims.mjs` and `src/resource
 
 ## Verification completed (2026-11-12)
 
-- A local Node.js 22 mirror of the changed modules: **26 tests passed**, including two distinct issue numbers competing for one resource, disjoint resources, known-failure rollback, orphan locks, interrupted release, and scope changes. This is not an execution of a clean remote checkout.
+- A local Node.js 22 mirror of the changed modules: **28 tests passed**, including two distinct issue numbers competing for one resource, disjoint resources, known-failure rollback, orphan locks, interrupted release, and scope changes. This is not an execution of a clean remote checkout.
 - GitHub real smoke test on `coordination/claims`: two simultaneous creates at `resources/Cesare-ml__astrological-charts/pilot-race-20261112.json` returned one success and one HTTP 422. The winner created a synthetic issue claim, saved a handoff, then deleted issue and resource files in order. The final Git tree confirmed both test paths absent.
 - **Not yet proven:** concurrent agents really editing two different production repository modules, GitHub recovery under regional outages, catalog drift during active work, or a 40-agent load test.
 
 Every contribution remains on a feature branch and requires independent review before merging to main.
+
+### Task discovery states
+
+For an approved write task with no issue claim but an occupied resource, `discover` returns `resource-busy`, **not** `unclaimed`. This includes orphaned locks after interrupted work. `claim-next` will attempt only claimable work; it never force-deletes an existing resource. Changes to active resource IDs or authorized roots are rejected when an owning session resumes.
