@@ -18,7 +18,7 @@ const usage = [
   'node bin/vs-agent.mjs claim OWNER/REPO ISSUE --session chat-UUID --role reviewer',
   'node bin/vs-agent.mjs handoff OWNER/REPO ISSUE --session chat-UUID --summary "Actual work"',
   'node bin/vs-agent.mjs release OWNER/REPO ISSUE --session chat-UUID --confirm',
-  'node bin/vs-agent.mjs submit OWNER/REPO ISSUE --session chat-UUID --confirm',
+  'node bin/vs-agent.mjs submit OWNER/REPO ISSUE --session chat-UUID --confirm [--pr PR_NUMBER for write tasks]',
   'Set GITHUB_TOKEN privately in your environment; never paste it into chat.'
 ].join('\n') + '\n';
 
@@ -28,7 +28,7 @@ function parse(tokens) {
     const item=tokens[i];
     if (!item.startsWith('--')) {positionals.push(item);continue;}
     const name=item.slice(2);
-    if(!['kind','session','role','branch','summary','head-sha','confirm','repo'].includes(name))
+    if(!['kind','session','role','branch','summary','head-sha','confirm','repo','pr'].includes(name))
       throw new Error('Unknown option ' + item);
     if(name==='confirm') {flags.confirm=true;continue;}
     const next=tokens[++i];
@@ -79,6 +79,7 @@ async function main() {
     else if(command==='release') result=await release({...common,session:flags.session,
       confirm:flags.confirm});
     else if(command==='submit') result=await submit({...common,session:flags.session,
+      tasks:await loadPilotTasks(),prNumber:flags.pr===undefined?null:Number(flags.pr),
       confirm:flags.confirm});
     else throw new Error('Unknown command ' + command);
   }
