@@ -1,6 +1,7 @@
 import {assertSession, status, release, submissionKey} from './claims.mjs';
 import {GitHubError} from './github.mjs';
 import {auditTaskPullRequest} from './pr-audit.mjs';
+import {auditOpenPullRequestCollisions} from './pr-collisions.mjs';
 
 /**
  * Persist "submitted for review", then release the owner claim.
@@ -36,6 +37,12 @@ export async function submit({api,config,tasks,repo,issue,session,prNumber=null,
     if(scopedAudit.verdict!=='scope-clean')
       throw new Error('Write submission blocked by scope audit: '+
         scopedAudit.reasons.map(x=>x.code).join(','));
+    const collisions=await auditOpenPullRequestCollisions({api,tasks,repo,issue});
+    if(collisions.status!=='single-candidate' ||
+       collisions.candidates[0]?.number!==prNumber)
+      throw new Error('Write submission blocked by competing/open PRs on the same resource: '+
+        collisions.candidates.map(p=>'#'+p.number).join(',')+
+        '. Review the overlapping branches before submitting.');
     if(claim.last_handoff.head_sha!==scopedAudit.pull_request_head)
       throw new Error('Handoff head SHA is missing or differs from audited PR head; revalidate work.');
     if(prior && (prior.data.pull_request!==prNumber ||
@@ -47,7 +54,8 @@ export async function submit({api,config,tasks,repo,issue,session,prNumber=null,
     session_id:session,role:claim.role,access:claim.access,resource_scope_id:claim.resource_scope_id,
     submitted_at:now(),last_handoff:claim.last_handoff,
     ...(scopedAudit?{pull_request:prNumber,audited_head_sha:scopedAudit.pull_request_head,
-      audited_base_sha:scopedAudit.upstream_head,scope_verdict:scopedAudit.verdict}:{}),
+      audited_base_sha:scopedAudit.upstream_head,scope_verdict:scopedAudit.verdict,
+      collision_audit:'single-candidate'}:{}),
     note:'Awaiting independent review; not automatically approved or DONE'
   };
   if(!prior) {
