@@ -95,5 +95,15 @@ export async function auditTaskPullRequest({api,tasks,repo,issue,prNumber}) {
       pr.changed_files < 1 || pr.changed_files > MAX_PR_FILES)
     throw new Error('PR metadata is incomplete or has too many files for the pilot.');
   const files=await api.getPullRequestFiles(repo,prNumber);
-  return inspectTaskPullRequest(task,pr,upstream,files);
+  // GitHub paginates changed files independently of the initial PR metadata.
+  // Re-read both heads so a push/rebase during pagination cannot pass the audit.
+  const [freshPr,freshUpstream]=await Promise.all([
+    api.getPullRequest(repo,prNumber),api.getPullRequest(repo,task.upstream_pr)
+  ]);
+  if(freshPr?.head?.sha!==pr.head?.sha ||
+     freshPr?.base?.sha!==pr.base?.sha ||
+     freshPr?.changed_files!==pr.changed_files ||
+     freshUpstream?.head?.sha!==upstream.head?.sha)
+    throw new Error('PR or upstream changed during audit; retry from fresh GitHub metadata.');
+  return inspectTaskPullRequest(task,freshPr,freshUpstream,files);
 }
