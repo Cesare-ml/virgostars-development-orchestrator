@@ -9,7 +9,7 @@ const sha=/^[0-9a-f]{40}$/i;
  * Incomplete/denied GitHub responses propagate errors (fail closed).
  */
 export async function assessSubmittedDeveloper({api,task,marker}) {
-  if(!task || task.access!=='write' || task.role!=='developer')
+  if(!task || task.access!=='write' || !['developer','tester'].includes(task.role))
     throw new Error('Developer review gates require a curated write task.');
   if(!marker || marker.state!=='submitted' ||
      marker.target_repository!==task.repository || marker.issue_number!==task.issue)
