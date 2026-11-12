@@ -17,9 +17,11 @@
     "auto_merge": false,
     "github_actions": false,
     "volunteer_registration": false,
-    "allow_private_repository_metadata_in_public_exports": false
+    "allow_private_repository_metadata_in_public_exports": false,
+    "exclusive_single_partition_write_locks": true,
+    "multi_partition_atomicity": false
   },
-  "task_readiness": "Must be explicitly triaged and not already covered by an open PR. Agents must check latest issue, PRs and AGENTS.md.",
+  "task_readiness": "Explicit curated read/write access. Write tasks must have a single validated partition, disjoint paths across different partitions, and no active overlapping PR.",
   "roles": [
     "planner",
     "developer",

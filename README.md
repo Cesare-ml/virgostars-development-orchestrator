@@ -24,3 +24,7 @@ The initial Node.js 20+ CLI is in `bin/vs-agent.mjs`, with no external runtime p
 ### Automatic task pickup (private pilot)
 
 The CLI now supports `claim-next --session chat-UUID --role reviewer [--repo OWNER/REPO]`. It resumes a task already owned by that session, otherwise tries approved ready tasks in order and skips busy or closed issues. It never creates tasks from unreviewed issues. A normal release requires an owner-authored handoff to prevent silent loss of progress. See [CLI instructions](docs/CLI_PRIVATE_PILOT.md).
+
+## Cooperative write-resource locks
+
+Private pilot write tasks now require a **single approved resource partition**, acquired before the issue claim. Different issues sharing that partition cannot both become writers; disjoint declared partitions may be worked on concurrently. Catalog scopes are validated for overlapping paths. The five initial eligible tasks remain read-only reviews; this does not automatically authorize new coding work. See [resource lock protocol](docs/RESOURCE_LOCKS.md). There is no multi-resource transaction, automatic stale lock recovery or enforcement of actual file edits outside the declared scope.

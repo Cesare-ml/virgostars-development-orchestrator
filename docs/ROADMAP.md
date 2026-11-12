@@ -49,3 +49,14 @@ No deploy, Actions, production mutation, release, automatic merge, or license/vi
 - [x] Execute 12 deterministic local Node.js mock tests, including simultaneous selection, permission errors, resume and handoff/release; local copies of the committed modules were exercised.
 - [ ] Run checkout-native checks on Windows and verify the full CLI against GitHub with two independent real chats.
 - [ ] Implement cross-task resource conflict guards before parallel write-heavy assignments.
+
+## Checkpoint — partition-safe pilot writes (2026-11-12)
+
+- [x] Add single-partition `resource_scope` declarations and validation of disjoint write roots (case-insensitive check).
+- [x] Acquire resource lock before task lock; release task lock before resource, with explicit partial-failure handling.
+- [x] Fail closed on malformed task catalogs, path traversal-like repository IDs, missing/foreign resource locks and scope changes after a session has claimed work.
+- [x] Execute 27 local Node.js mock tests on an equivalent source mirror, including real protocol failure and concurrency cases; **not** a fresh remote checkout test.
+- [x] Real GitHub resource-create collision test: exactly one success, one HTTP 422; synthetic task claim/handoff/release and resource release; both paths absent in final Git tree.
+- [ ] Test real developer tasks on two nonoverlapping modules in the same target repo, verifying actual diffs stay within declared roots.
+- [ ] Add maintainer-guided audit/recovery tooling for orphaned resources, with protections against stale chat sessions.
+- [ ] Prove multi-partition atomicity via PostgreSQL backend before allowing tasks spanning independent partitions. No 40-agent scalability claim yet.

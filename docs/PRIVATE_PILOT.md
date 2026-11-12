@@ -41,7 +41,7 @@ Claims **do not expire automatically in this MVP**. `expires_at` is advisory, no
 
 Each active developer works on a dedicated feature branch, makes small commits and a draft PR (do not push to main). Preserve the target repository's own approval, licensing and CI restrictions. At the end of each run, add factual progress in issue/PR and maintain a handoff record; to continue after 20–30 minutes, re-read the remote claim and current PR/branch before making changes. A chat does not remain running during idle time.
 
-**No conflict detection across different task IDs is implemented yet.** The planner must choose nonoverlapping files/modules and check in-flight branches/PRs. Do not run 40 unsupervised writers on conflicting parts of the same repository. Start with 2 competing claims, then 5–10 disjoint tasks; expand only after conflict/recovery tests.
+**General cross-task conflict detection is not implemented.** Single-partition write locks now protect approved shared resource IDs, but not arbitrary edits or multiple resource partitions. The planner must choose nonoverlapping files/modules and check in-flight branches/PRs. Do not run 40 unsupervised writers on conflicting parts of the same repository. Start with 2 competing claims, then 5–10 disjoint tasks; expand only after conflict/recovery tests.
 
 ## Roles and allocation
 
@@ -65,3 +65,7 @@ The Node.js CLI, `config/pilot-tasks.json` and `docs/CLI_PRIVATE_PILOT.md` now p
 ## Automatic next-task command
 
 The pilot CLI supports `claim-next --session SESSION --role reviewer [--repo OWNER/REPO]`, so independent Codex/terminal sessions do not need to choose an issue manually. It resumes an existing owned task first, then tries remaining ready tasks, skips conflicts and closed issues, and returns `no-task` if none is available. A normal release is blocked unless the current owner has saved a factual handoff. There is still no lock between unrelated issue IDs and no unattended stale-lock reclamation.
+
+## Write task resource coordination
+
+The original issue-level claim method remains appropriate for initial read-only reviewer tasks. **For any curated write task**, use the two-stage exclusive-resource protocol in [RESOURCE_LOCKS.md](RESOURCE_LOCKS.md): acquire one approved resource partition before the issue. Write task roots must not overlap across different partition IDs within the same repository; the CLI validates the catalog and checks the matching resource on resume, handoff and release. A failed, incomplete or orphaned reservation is not available work. We have a tested single-partition model, **not** general multi-resource atomicity, automatic expiry, scope enforcement on GitHub pushes, or protection from out-of-catalog editing.

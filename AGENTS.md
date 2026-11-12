@@ -38,3 +38,7 @@ Read `config/pilot-tasks.json` and `docs/CLI_PRIVATE_PILOT.md`. Every pilot revi
 ## Next task and continuity
 
 Prefer `claim-next` for local agents with the CLI. Provide the **same session ID** when resuming the same chat; a new chat must generate a fresh session ID. The selector first checks whether that session already owns any curated task; it does not silently reserve a second. Normal `release` is rejected until the owner saves a factual handoff. If a claim is orphaned or you lose your session ID, stop and request explicit maintainer recovery rather than deleting another session's claim.
+
+## Resource-first rule for code changes
+
+For an explicitly approved `access: "write"` task, read [docs/RESOURCE_LOCKS.md](docs/RESOURCE_LOCKS.md). Acquire an exclusive `resources/OWNER__REPO/PARTITION.json` lock on `coordination/claims` **before** attempting `claims/OWNER__REPO/issue-N.json`. Both must have matching task, session, scope ID and frozen root paths. Read-only tasks only require an issue lock. Use the CLI to handle this automatically; connector-only agents must follow the same two-step protocol. If any lock or resource scope is inconsistent, **do not write code**. Single-partition claims do not authorize edits outside their declared paths. Do not change the curated catalog's resource IDs or roots while agents own those tasks.
