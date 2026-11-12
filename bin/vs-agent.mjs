@@ -2,11 +2,13 @@
 import { makeGitHubClient } from '../src/github.mjs';
 import { loadPilotConfig, loadPilotTasks } from '../src/registry.mjs';
 import { newSession, claim, status, release, handoff, discover } from '../src/claims.mjs';
+import { claimNext } from '../src/queue.mjs';
 
 const usage = [
   'VirgoStars private pilot — Node.js 20+',
   'node bin/vs-agent.mjs session [--kind chat|codex]',
   'node bin/vs-agent.mjs discover',
+  'node bin/vs-agent.mjs claim-next --session chat-UUID --role reviewer [--repo OWNER/REPO]',
   'node bin/vs-agent.mjs status OWNER/REPO ISSUE',
   'node bin/vs-agent.mjs claim OWNER/REPO ISSUE --session chat-UUID --role reviewer',
   'node bin/vs-agent.mjs handoff OWNER/REPO ISSUE --session chat-UUID --summary "Actual work"',
@@ -20,7 +22,7 @@ function parse(tokens) {
     const item=tokens[i];
     if (!item.startsWith('--')) {positionals.push(item);continue;}
     const name=item.slice(2);
-    if(!['kind','session','role','branch','summary','head-sha','confirm'].includes(name))
+    if(!['kind','session','role','branch','summary','head-sha','confirm','repo'].includes(name))
       throw new Error('Unknown option ' + item);
     if(name==='confirm') {flags.confirm=true;continue;}
     const next=tokens[++i];
@@ -43,6 +45,10 @@ async function main() {
   if(command==='discover') {
     if(positionals.length) throw new Error('Discover takes no target.');
     result=await discover({api,config,tasks:await loadPilotTasks()});
+  } else if(command==='claim-next') {
+    if(positionals.length) throw new Error('Claim-next takes no positional target.');
+    result=await claimNext({api,config,tasks:await loadPilotTasks(),
+      session:flags.session,role:flags.role,repository:flags.repo||null});
   } else {
     if(positionals.length!==2) throw new Error('Expected OWNER/REPO and ISSUE.');
     const [repo,raw]=positionals;
@@ -59,7 +65,7 @@ async function main() {
     else throw new Error('Unknown command ' + command);
   }
   process.stdout.write(JSON.stringify(result,null,2)+'\n');
-  if(result?.result==='busy') process.exitCode=2;
+  if(result?.result==='busy'||result?.result==='no-task') process.exitCode=2;
 }
 main().catch(error=>{
   process.stderr.write('ERROR: '+error.message+'\n');
