@@ -26,6 +26,31 @@ export function makeGitHubClient({ token, fetchImpl = fetch, baseUrl = 'https://
   }
   const contentUrl = (repo,path) => '/repos/' + repo + '/contents/' + path.split('/').map(encodeURIComponent).join('/');
   return {
+    async getLedgerSnapshot(repo, branch) {
+      // Pin every file to ONE Git tree; separate Contents branch reads can be stale.
+      const ref=await request('GET','/repos/'+repo+'/git/ref/heads/'+branch);
+      const head=ref?.object?.sha;
+      if(!/^[0-9a-f]{40}$/i.test(head||'')) throw new Error('Invalid ledger branch head.');
+      const commit=await request('GET','/repos/'+repo+'/git/commits/'+head);
+      const treeSha=commit?.tree?.sha;
+      if(!/^[0-9a-f]{40}$/i.test(treeSha||'')) throw new Error('Invalid ledger tree.');
+      const listing=await request('GET','/repos/'+repo+'/git/trees/'+treeSha+'?recursive=1');
+      if(listing?.truncated || !Array.isArray(listing?.tree))
+        throw new Error('Ledger tree is truncated or malformed; status cannot be trusted.');
+      const relevant=listing.tree.filter(e=>e.type==='blob' &&
+        /^(claims|resources|submissions)\//.test(e.path));
+      if(relevant.length>250) throw new Error('Ledger contains too many entries for the pilot.');
+      const entries=await Promise.all(relevant.map(async e=>{
+        if(!/^[0-9a-f]{40}$/i.test(e.sha||'') || e.size>65536)
+          throw new Error('Invalid or oversized ledger entry.');
+        const blob=await request('GET','/repos/'+repo+'/git/blobs/'+e.sha);
+        if(blob?.encoding!=='base64' || typeof blob.content!=='string')
+          throw new Error('Invalid Git blob encoding for ledger entry.');
+        const raw=Buffer.from(blob.content.replace(/\s/g,''),'base64').toString('utf8');
+        return {path:e.path,sha:e.sha,data:JSON.parse(raw)};
+      }));
+      return {head,entries};
+    },
     async getClaim(repo, path, branch) {
       const ref = await request('GET', '/repos/' + repo + '/git/ref/heads/' + branch);
       const tip = ref?.object?.sha;
