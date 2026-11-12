@@ -115,3 +115,13 @@ No deploy, Actions, production mutation, release, automatic merge, or license/vi
 - [x] Run **9/9** isolated Node.js 22 regression tests from `test/submission-freshness.test.mjs` against exact Git-blob-identical copies of `src/submission-freshness.mjs`, `src/pr-audit.mjs`, and `src/resources.mjs`; all corresponding SHA-1 Git blob IDs matched the private feature branch.
 - [ ] Run the **entire** `npm run check` suite on a fresh checkout; the extended `fleet-status` integration tests have not yet been independently executed.
 - [ ] Observe real developer stacked PRs from two independent chats and verify scope, commit freshness and actual target test evidence before any integration decision.
+
+## Open PR collision prevention — issue #13 (2026-11-12)
+
+- [x] Verify Charts #27 and #28 both open, draft and overlapping on `tests/pilot-axis-canvas.browser.test.mjs` while #22's upstream HEAD has advanced. Confirmed in actual GitHub read-only scan of seven open PRs.
+- [x] Implement `audit-collisions OWNER/REPO ISSUE` with bounded open PR inventory, changed-file paths including rename sources, resource scope overlap, and start/end PR inventory comparison.
+- [x] Block local CLI write `submit --pr ...` unless exactly one candidate PR touches its scoped resource and it is the submitted PR. Original read-only reviews and manual submission markers are not modified.
+- [x] Add `test/pr-collisions.test.mjs` and write-submission regression for two overlapping open PRs; correct a `page=1` URL matching error in existing pagination tests.
+- [x] Execute 8/8 isolated V8 checks of exact GitHub checker sources, 6/6 isolated V8 checks of write-submission guard, and live GitHub read-only conflict scan; these were **not** Node's native test runner.
+- [ ] Execute complete `npm run check` on a fresh private checkout and review native test reports before integrating the coordinator PR.
+- [ ] Choose one Charts test PR (#27 or #28) after real browser testing; update its upstream base and review/close the redundant proposal only by explicit owner/maintainer decision, never automatically.

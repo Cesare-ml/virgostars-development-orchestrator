@@ -48,3 +48,7 @@ The private Node CLI now supports `audit-pr OWNER/REPO ISSUE PR_NUMBER`. It read
 ## Submission freshness monitoring
 
 The private `fleet-status` command now **rechecks live developer PR metadata and file scope** against the immutable `submitted` record. If a developer pushes after handoff, the upstream branch moves or the current changed files violate the curated scope, it reports `stale-submission` rather than continuing to present the recorded audit as current. Historical/manual write markers remain `needs-scope-audit`; reviewer-only submissions are unaffected. The monitor is GET-only and does not approve or merge PRs. See [pilot monitor](docs/PILOT_MONITOR.md).
+
+## Detect competing PRs before developer handoff
+
+Use `node bin/vs-agent.mjs audit-collisions OWNER/REPO ISSUE` to find multiple open PRs touching the same curator-approved resource paths. The wave-2 Charts task has two competing draft tests (#27 and #28) for one file. The local CLI now requires both `audit-pr` (path/base) and this overlap check before `submit --pr ... --confirm` can mark a write task delivered. No PR is automatically closed or merged. See [PR collisions](docs/PR_COLLISIONS.md).

@@ -62,3 +62,7 @@ Before handoff or submission of a write task, inspect `docs/PR_SCOPE_AUDIT.md`. 
 ## Detecting PR changes after developer handoff
 
 Before recommending integration of a write submission, run private `fleet-status` and `audit-pr` on the **current** PR HEAD. `submitted` is only the state recorded at handoff. A subsequent PR or upstream commit can make it `stale-submission`, even when the stored SHA was scope-clean. Stop and obtain a fresh audit/evidence on drift; never edit immutable submission markers merely to conceal an outdated PR. Connector-only manual submissions without executable CLI evidence continue to require independent review. No automatic approval or merge.
+
+## Open PR collision gate before submitting write work
+
+Run `audit-collisions OWNER/REPO ISSUE` as well as `audit-pr` before final write-task handoff. Two open PRs for the same authorized file are a **conflict**, even if each PR individually passes its file scope audit. The Node `submit` command now blocks delivery unless the only open PR touching the resource is the named delivery PR. For connector-only agents, manually inspect the current complete open-PR inventory, report competing branches and do not claim CLI validation. Follow [docs/PR_COLLISIONS.md](docs/PR_COLLISIONS.md). Never force close/rebase/merge another agent's PR.

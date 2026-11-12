@@ -77,3 +77,7 @@ After the first five reviewer tasks were submitted, the private catalog gained t
 ## Prevent out-of-scope developer submissions
 
 Developer tasks must use the actual draft PR number and current PR HEAD SHA. After publishing a factual handoff, run `node bin/vs-agent.mjs audit-pr OWNER/REPO ISSUE PR_NUMBER` and then `node bin/vs-agent.mjs submit OWNER/REPO ISSUE --session YOUR_SESSION --pr PR_NUMBER --confirm`. Submission rechecks the scope and refuses missing or unauthorized changes. The original five reviewer tasks remain `access:read` and do not require `--pr`. Read `docs/PR_SCOPE_AUDIT.md` for the exact checks, error codes, and limitations. A manually created ChatGPT marker is not evidence of CLI execution.
+
+## Block overlapping open PRs on one resource
+
+Run `node bin/vs-agent.mjs audit-collisions OWNER/REPO ISSUE` on an authenticated feature-branch checkout. `conflict` means two or more open PRs touch at least one approved resource root. The CLI returns exit code 2 on conflict, and write `submit --pr N --confirm` refuses to mark the task delivered unless exactly one PR candidate exists and it is PR N. This is read-only GitHub PR metadata inspection, not independent tests or approval; connector-only manual submissions do not imply the CLI ran. See [PR_COLLISIONS.md](PR_COLLISIONS.md).

@@ -85,3 +85,7 @@ The first five reviewer submissions are persisted and must not be automatically 
 ## Wave-2 PR diff safety
 
 The latest private CLI includes `audit-pr` and a mandatory `--pr PR_NUMBER` for `access:write` submissions. This verifies a draft stacked PR's current branch/base and complete changed-file names against the curated partition; changes outside the allowed roots block CLI submission. See `docs/PR_SCOPE_AUDIT.md`. Connector-only chats must perform and describe an equivalent manual inspection, without claiming they ran the CLI. Missing audited write-submission metadata appears as `needs-scope-audit` in the private fleet monitor.
+
+## Review overlapping developer PRs
+
+The second wave uncovered two distinct open draft PRs (#27/#28) adding the same file for Charts issue #25. Each individually respected the scoped paths, but they cannot be automatically accepted together. `audit-collisions` now checks all current open PRs for path overlaps; local CLI write submissions require exactly one candidate matching the selected PR, in addition to `audit-pr` and recorded test evidence. See [PR_COLLISIONS.md](PR_COLLISIONS.md). Original manual developer submissions remain submitted for independent review and are never silently rewritten.
