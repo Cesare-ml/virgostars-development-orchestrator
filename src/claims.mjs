@@ -13,7 +13,7 @@ export function taskKey(repo,issue) {
   const [owner,name]=repo.split('/');
   return 'claims/' + owner + '__' + name + '/issue-' + issue + '.json';
 }
-function assertSession(s) {
+export function assertSession(s) {
   if (!VALID_SESSION.test(s)) throw new Error('Create a unique session ID using the session command.');
 }
 function approved(config,tasks,repo,issue) {
@@ -85,6 +85,8 @@ export async function release({api,config,repo,issue,session,confirm}) {
   const {ledger,branch}=store(config);
   const current=await api.getClaim(ledger,path,branch);
   if (!isOwner(current,session,repo,issue)) throw new Error('Not the current owner; cannot release.');
+  if (!current.data.last_handoff?.summary?.trim())
+    throw new Error('Save an owner handoff before release; do not abandon work silently.');
   try {
     await api.deleteClaim(ledger,path,branch,current.sha,current.data);
   } catch(error) {
