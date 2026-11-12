@@ -112,5 +112,6 @@ No deploy, Actions, production mutation, release, automatic merge, or license/vi
 - [x] Enhance `fleet-status` to show `stale-submission`, `needs-scope-audit` and per-PR recorded/live HEAD/SHA checks; preserve risk states when an issue claim also remains active.
 - [x] Re-fetch the PR and its upstream HEAD after changed-file pagination, refusing checks that raced with a push/rebase.
 - [x] Add targeted Node test cases for PR HEAD drift, upstream movement, scope violations, manual handoffs, API denial, claim release overlap and concurrent PR updates.
-- [ ] Run `npm run check` on a fresh checkout of the latest branch; these new regression tests have been committed but not executed in this runtime.
+- [x] Run **9/9** isolated Node.js 22 regression tests from `test/submission-freshness.test.mjs` against exact Git-blob-identical copies of `src/submission-freshness.mjs`, `src/pr-audit.mjs`, and `src/resources.mjs`; all corresponding SHA-1 Git blob IDs matched the private feature branch.
+- [ ] Run the **entire** `npm run check` suite on a fresh checkout; the extended `fleet-status` integration tests have not yet been independently executed.
 - [ ] Observe real developer stacked PRs from two independent chats and verify scope, commit freshness and actual target test evidence before any integration decision.
