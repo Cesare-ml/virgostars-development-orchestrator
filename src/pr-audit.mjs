@@ -16,7 +16,7 @@ function inScope(path, root) {
 /** No merge/approval decisions. A machine-checkable, conservative PR scope review. */
 export function inspectTaskPullRequest(task, pr, upstream, files) {
   validateTaskCatalog([task]);
-  if (task.access !== 'write' || task.role !== 'developer' ||
+  if (task.access !== 'write' || !['developer','tester'].includes(task.role) ||
       !Number.isSafeInteger(task.upstream_pr) || task.upstream_pr < 1 ||
       !task.upstream_branch || typeof task.upstream_branch !== 'string')
     throw new Error('This task is not configured for a scoped stacked developer PR.');
