@@ -19,9 +19,11 @@ const pr={number:6,state:'open',draft:true,changed_files:2,head:{ref:'pilot/cons
 const validFiles=task.resource_scope.roots.map(filename=>({filename,status:'added'}));
 
 function mock() {
- const store=new Map();let seq=0,changedFiles=validFiles;
+ const store=new Map();let seq=0,changedFiles=validFiles,competing=false;
+ const extra={...pr,number:7,head:{...pr.head,sha:'d'.repeat(40)}};
  return {store,
   setFiles(value){changedFiles=value;},
+  setCompeting(value){competing=value;},
   async getIssue(){return {state:'open'};},
   async getClaim(_r,p){return store.has(p)?structuredClone(store.get(p)):null;},
   async createClaim(_r,p,_b,data){
@@ -36,8 +38,12 @@ function mock() {
     if(store.get(p)?.sha!==sha)throw new GitHubError(409);
     store.delete(p);
   },
-  async getPullRequest(_r,n){return n===3?upstream:pr;},
-  async getPullRequestFiles(){return changedFiles;}
+  async getOpenPullRequests(){return [
+    {number:3,state:'open',head:{sha:B},base:{sha:'c'.repeat(40),ref:'main'}},
+    pr,...(competing?[extra]:[])
+  ];},
+  async getPullRequest(_r,n){return n===3?upstream:n===7?extra:pr;},
+  async getPullRequestFiles(_r,n){return n===7?validFiles:changedFiles;}
  };
 }
 async function assigned(api,session,head=A){
@@ -86,4 +92,13 @@ test('write submission refuses handoff without an exact PR HEAD SHA',async()=>{
  await assert.rejects(()=>submit({...args,prNumber:6,confirm:true}),/Handoff head SHA is missing/);
  assert.equal((await status(args)).status,'claimed');
  assert.ok(api.store.has(resourceKey(target,task.resource_scope.id)));
+});
+
+test('another open PR adding the same file blocks a write submission',async()=>{
+ const api=mock(),session=newSession(),args=await assigned(api,session);
+ api.setCompeting(true);
+ await assert.rejects(()=>submit({...args,prNumber:6,confirm:true}),/competing\/open PRs/);
+ assert.equal((await status(args)).status,'claimed');
+ assert.ok(api.store.has(resourceKey(target,task.resource_scope.id)));
+ assert.equal(api.store.has(submissionKey(target,5)),false);
 });
