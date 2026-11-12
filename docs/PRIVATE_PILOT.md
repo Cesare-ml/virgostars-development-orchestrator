@@ -33,7 +33,7 @@ For example `claims/Cesare-ml__astrological-charts/issue-42.json`.
 
 Use the GitHub Contents API or available GitHub connector's **create_file** action on that path and branch; NEVER use update_file to steal or overwrite an existing claim. JSON must include `target_repository`, `issue_number`, `session_id`, `state`, `claimed_at`, `branch` (when known) and `last_handoff` (when known). A successful create confirms exclusive acquisition of that *task claim path*. If GitHub rejects the write or the file already exists, stop and select a different issue. Report failed claims rather than treating API errors as success.
 
-**Verified smoke test (2026-11-12):** two simultaneous GitHub connector `create_file` attempts at an identical path on a test branch led to one success and one 422 rejection. This does not yet prove full lease lifecycle or across-issue resource exclusivity.
+**Verified smoke test (2026-11-12):** two simultaneous GitHub connector `create_file` attempts at an identical path on a test branch led to one success and one 422 rejection. The first session's test file was then read, deleted with its blob SHA, and successfully recreated by a second session; a follow-up read confirmed the second owner. This does not prove production handoff, automatic expiry or cross-issue resource exclusivity.
 
 Claims **do not expire automatically in this MVP**. `expires_at` is advisory, not proof of an available task. An interrupted chat must not be silently replaced by time. Recovery is a manual maintainer-controlled action: verify old owner has stopped, read current GitHub PR/branch, check no concurrent updates, then explicitly archive/delete the stale claim before reassignment. Do not use the initial test branch `coordination/pilot-state` for real claims.
 
