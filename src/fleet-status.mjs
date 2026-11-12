@@ -91,7 +91,7 @@ export async function auditFleet({api,config,tasks}) {
     output.push({
       repository:task.repository,issue:task.issue,title:task.title,
       mode:task.access,role:task.role,issue_state:issue.state,status:state,
-      session_id:owner,evidence_url,review:'pending',warning
+      session_id:owner,evidence_url,review:submitted?'pending':null,warning
     });
   }
   const claimedIds=new Set(snapshot.entries.filter(e=>e.path.startsWith('claims/'))
