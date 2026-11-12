@@ -27,10 +27,10 @@ export function makeGitHubClient({ token, fetchImpl = fetch, baseUrl = 'https://
   const contentUrl = (repo,path) => '/repos/' + repo + '/contents/' + path.split('/').map(encodeURIComponent).join('/');
   return {
     async getClaim(repo, path, branch) {
+      const ref = await request('GET', '/repos/' + repo + '/git/ref/heads/' + branch);
+      const tip = ref?.object?.sha;
+      if (!/^[0-9a-f]{40}$/i.test(tip || '')) throw new Error('Invalid Git branch head.');
       try {
-        const ref = await request('GET', '/repos/' + repo + '/git/ref/heads/' + branch);
-        const tip = ref?.object?.sha;
-        if (!/^[0-9a-f]{40}$/i.test(tip || '')) throw new Error('Invalid Git branch head.');
         const f = await request('GET', contentUrl(repo,path) + '?ref=' + encodeURIComponent(tip));
         if (f.type !== 'file' || !f.sha || !f.content) throw new Error('Unexpected GitHub claim file.');
         return { sha: f.sha, data: JSON.parse(Buffer.from(f.content.replace(/\s/g,''),'base64').toString('utf8')) };
