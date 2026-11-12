@@ -180,8 +180,15 @@ export async function discover({api,config,tasks}) {
       api.getIssue(task.repository,task.issue),
       status({api,config,repo:task.repository,issue:task.issue})
     ]);
+    let availability=issue.state!=='open' || issue.pull_request ? 'closed' : current.status;
+    if(availability==='unclaimed' && task.access==='write') {
+      const {ledger,branch}=store(config);
+      const held=await api.getClaim(ledger,resourceKey(task.repository,task.resource_scope.id),branch);
+      if(held) availability='resource-busy';
+    }
     output.push({repository:task.repository,issue:task.issue,title:task.title,role:task.role,
-      scope:task.scope,availability:issue.state!=='open' || issue.pull_request ? 'closed' : current.status});
+      access:task.access,resource_scope_id:task.access==='write'?task.resource_scope.id:null,
+      scope:task.scope,availability});
   }
   return output;
 }
