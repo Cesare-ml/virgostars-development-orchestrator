@@ -76,5 +76,7 @@ export function resourceMatches(current, claim) {
     && current.data.target_repository === claim.target_repository
     && current.data.resource_scope_id === claim.resource_scope_id
     && current.data.issue_number === claim.issue_number
-    && current.data.session_id === claim.session_id;
+    && current.data.session_id === claim.session_id
+    && Array.isArray(current.data.resource_roots)
+    && JSON.stringify(current.data.resource_roots) === JSON.stringify(claim.resource_roots);
 }
