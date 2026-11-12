@@ -1,9 +1,0 @@
-{
-  "schema_version": 1,
-  "kind": "write-resource",
-  "target_repository": "Cesare-ml/astrological-charts",
-  "resource_scope_id": "pilot-race-20261112",
-  "issue_number": 999991,
-  "session_id": "chat-3d40a717-5d73-4704-b716-b6369af3b271",
-  "claimed_at": "2026-11-12T11:30:05.165Z"
-}
