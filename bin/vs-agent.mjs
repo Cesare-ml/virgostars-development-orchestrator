@@ -3,6 +3,7 @@ import { makeGitHubClient } from '../src/github.mjs';
 import { loadPilotConfig, loadPilotTasks } from '../src/registry.mjs';
 import { newSession, claim, status, release, handoff, discover } from '../src/claims.mjs';
 import { claimNext } from '../src/queue.mjs';
+import { submit } from '../src/submissions.mjs';
 
 const usage = [
   'VirgoStars private pilot — Node.js 20+',
@@ -13,6 +14,7 @@ const usage = [
   'node bin/vs-agent.mjs claim OWNER/REPO ISSUE --session chat-UUID --role reviewer',
   'node bin/vs-agent.mjs handoff OWNER/REPO ISSUE --session chat-UUID --summary "Actual work"',
   'node bin/vs-agent.mjs release OWNER/REPO ISSUE --session chat-UUID --confirm',
+  'node bin/vs-agent.mjs submit OWNER/REPO ISSUE --session chat-UUID --confirm',
   'Set GITHUB_TOKEN privately in your environment; never paste it into chat.'
 ].join('\n') + '\n';
 
@@ -61,6 +63,8 @@ async function main() {
     else if(command==='handoff') result=await handoff({...common,session:flags.session,
       summary:flags.summary,branchName:flags.branch,headSha:flags['head-sha']});
     else if(command==='release') result=await release({...common,session:flags.session,
+      confirm:flags.confirm});
+    else if(command==='submit') result=await submit({...common,session:flags.session,
       confirm:flags.confirm});
     else throw new Error('Unknown command ' + command);
   }
