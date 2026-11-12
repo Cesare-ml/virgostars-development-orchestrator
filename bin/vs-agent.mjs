@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { makeGitHubClient } from '../src/github.mjs';
 import { loadPilotConfig, loadPilotTasks } from '../src/registry.mjs';
+import {loadPublicDiscovery} from '../src/public-discovery.mjs';
 import { newSession, claim, status, release, handoff, discover } from '../src/claims.mjs';
 import { claimNext } from '../src/queue.mjs';
 import { submit } from '../src/submissions.mjs';
@@ -10,6 +11,7 @@ import { auditOpenPullRequestCollisions } from '../src/pr-collisions.mjs';
 
 const usage = [
   'VirgoStars private pilot — Node.js 20+',
+  'node bin/vs-agent.mjs public-discover  # read-only, no token, public repos only',
   'node bin/vs-agent.mjs session [--kind chat|codex]',
   'node bin/vs-agent.mjs discover',
   'node bin/vs-agent.mjs fleet-status  # read-only, all five repositories',
@@ -47,6 +49,15 @@ async function main() {
     if(positionals.length) throw new Error('Session takes no target.');
     process.stdout.write(newSession(flags.kind||'chat')+'\n');return;
   }
+  if(command==='public-discover') {
+    if(positionals.length || Object.keys(flags).length)
+      throw new Error('Public-discover takes no arguments.');
+    const discovery=await loadPublicDiscovery();
+    process.stdout.write(JSON.stringify(discovery,null,2)+'\n');
+    return;
+  }
+  // Legacy pilot workflows below remain owner-operated and authenticated.
+  // Public discovery deliberately never loads this catalog or token.
   const config=await loadPilotConfig();
   const api=makeGitHubClient({token:process.env.GITHUB_TOKEN});
   let result;
