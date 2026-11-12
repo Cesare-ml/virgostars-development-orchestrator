@@ -59,6 +59,12 @@ export async function auditFleet({api,config,tasks}) {
         owner=d.session_id;
         evidence_url=commentLink(handoff.summary,task);
         if(!evidence_url) warning='Handoff has no matching GitHub issue-comment link';
+        if(task.access==='write' && (d.scope_verdict!=='scope-clean' ||
+            !Number.isSafeInteger(d.pull_request) ||
+            !/^[0-9a-f]{40}$/i.test(d.audited_head_sha||''))) {
+          state='needs-scope-audit';
+          warning='Write submission has no verified CLI scope audit; independently review its PR.';
+        }
       }
     }
     if(claimed) {
