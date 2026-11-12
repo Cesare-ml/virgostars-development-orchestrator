@@ -158,7 +158,14 @@ test('fleet monitor reports live stale developer PR without altering submitted l
      {number:26,state:'open',draft:true,changed_files:1,
        head:{ref:'pilot/axis',sha:'c'.repeat(40),repo:{full_name:r}},
        base:{ref:'feat/interactions',sha:'b'.repeat(40),repo:{full_name:r}}};},
-   async getPullRequestFiles(){return [{filename:'tests/pilot.test.mjs',status:'added'}];}
+   async getPullRequestFiles(){return [{filename:'tests/pilot.test.mjs',status:'added'}];},
+   async getOpenPullRequests(){return [
+     {number:22,state:'open',head:{sha:'b'.repeat(40)},
+       base:{sha:'d'.repeat(40),ref:'main'}},
+     {number:26,state:'open',draft:true,changed_files:1,
+       head:{sha:'c'.repeat(40)},
+       base:{sha:'b'.repeat(40),ref:'feat/interactions'}}
+   ];}
  };
  const result=await auditFleet({api,config,tasks:[task]});
  assert.equal(result.summary['stale-submission'],1);
@@ -188,10 +195,79 @@ test('a stale PR warning remains visible when submission has not released its ow
      {number:26,state:'open',draft:true,changed_files:1,
        head:{ref:'pilot/axis',sha:'c'.repeat(40),repo:{full_name:r}},
        base:{ref:'feat/interactions',sha:'b'.repeat(40),repo:{full_name:r}}};},
-   async getPullRequestFiles(){return [{filename:'tests/pilot.test.mjs',status:'added'}];}
+   async getPullRequestFiles(){return [{filename:'tests/pilot.test.mjs',status:'added'}];},
+   async getOpenPullRequests(){return [
+     {number:22,state:'open',head:{sha:'b'.repeat(40)},
+       base:{sha:'d'.repeat(40),ref:'main'}},
+     {number:26,state:'open',draft:true,changed_files:1,
+       head:{sha:'c'.repeat(40)},
+       base:{sha:'b'.repeat(40),ref:'feat/interactions'}}
+   ];}
  };
  const result=await auditFleet({api,config,tasks:[task]});
  assert.equal(result.tasks[0].status,'stale-submission');
  assert.match(result.tasks[0].warning,/finish releasing claim/);
  assert.match(result.tasks[0].warning,/HEAD changed/);
+});
+
+
+test('live competing PRs are visible together with manual scope review blockers',async()=>{
+ const task={repository:r,issue:24,status:'ready',role:'developer',access:'write',
+   title:'Canvas focus smoke',pilot_wave:2,upstream_pr:22,upstream_branch:'feat/interactions',
+   resource_scope:{id:'renderer',roots:['tests/pilot.test.mjs']}};
+ const h='a'.repeat(40),base='b'.repeat(40);
+ const marker={state:'submitted',target_repository:r,issue_number:24,
+   role:'developer',access:'write',session_id:session,pull_request:26,
+   scope_verdict:'manual-reviewed',audited_head_sha:h,audited_base_sha:base,
+   last_handoff:{head_sha:h,summary:'Draft #26 manual-reviewed, tests not run'}};
+ const upstream={number:22,state:'open',draft:true,changed_files:10,
+   head:{sha:base,ref:'feat/interactions',repo:{full_name:r}},
+   base:{sha:'d'.repeat(40),ref:'main',repo:{full_name:r}}};
+ const draft=n=>({number:n,state:'open',draft:true,changed_files:1,
+   head:{sha:n===26?h:'c'.repeat(40),ref:'agent/test-'+n,repo:{full_name:r}},
+   base:{sha:base,ref:'feat/interactions',repo:{full_name:r}}});
+ const candidates=[upstream,draft(26),draft(27)];
+ let writes=0;
+ const api={
+   async getLedgerSnapshot(){return {head:'f'.repeat(40),
+     entries:[entry(submissionKey(r,24),marker)]};},
+   async getIssue(){return {state:'open'};},
+   async getOpenPullRequests(){return candidates;},
+   async getPullRequest(_repo,n){return candidates.find(p=>p.number===n);},
+   async getPullRequestFiles(){return [{filename:'tests/pilot.test.mjs',status:'added'}];},
+   async createClaim(){writes++;throw new Error('read-only monitor wrote a claim');}
+ };
+ const result=await auditFleet({api,config,tasks:[task]});
+ assert.equal(result.tasks[0].status,'needs-scope-audit');
+ assert.equal(result.tasks[0].collision_check.status,'conflict');
+ assert.deepEqual(result.tasks[0].collision_check.candidates.map(x=>x.number),[26,27]);
+ assert.equal(result.tasks[0].review_gates.integration_ready,false);
+ assert.ok(result.tasks[0].review_gates.blockers.includes('OVERLAPPING_OPEN_PULL_REQUESTS'));
+ assert.ok(result.tasks[0].review_gates.blockers.includes('INDEPENDENT_NATIVE_TESTS_NOT_VERIFIED'));
+ assert.ok(result.alerts.some(a=>a.reason.includes('Competing open pull requests')));
+ assert.equal(writes,0);
+});
+
+test('permission denied to enumerate competing PRs fails entire monitor closed',async()=>{
+ const task={repository:r,issue:24,status:'ready',role:'developer',access:'write',
+   title:'Canvas smoke',pilot_wave:2,upstream_pr:22,upstream_branch:'feat/interactions',
+   resource_scope:{id:'renderer',roots:['tests/pilot.test.mjs']}};
+ const h='a'.repeat(40),base='b'.repeat(40);
+ const marker={state:'submitted',target_repository:r,issue_number:24,
+   role:'developer',access:'write',session_id:session,pull_request:26,
+   scope_verdict:'scope-clean',audited_head_sha:h,audited_base_sha:base,
+   last_handoff:{head_sha:h,summary:'Submitted'}};
+ const api={
+   async getLedgerSnapshot(){return {head:'f'.repeat(40),
+     entries:[entry(submissionKey(r,24),marker)]};},
+   async getIssue(){return {state:'open'};},
+   async getPullRequest(_r,n){return n===22?
+     {state:'open',head:{ref:'feat/interactions',sha:base}}:
+     {number:26,state:'open',draft:true,changed_files:1,
+       head:{ref:'agent/test',sha:h,repo:{full_name:r}},
+       base:{ref:'feat/interactions',sha:base,repo:{full_name:r}}};},
+   async getPullRequestFiles(){return [{filename:'tests/pilot.test.mjs',status:'added'}];},
+   async getOpenPullRequests(){throw new GitHubError(403);}
+ };
+ await assert.rejects(()=>auditFleet({api,config,tasks:[task]}),GitHubError);
 });
