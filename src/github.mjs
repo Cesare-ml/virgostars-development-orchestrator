@@ -26,6 +26,11 @@ export function makeGitHubClient({ token, fetchImpl = fetch, baseUrl = 'https://
   }
   const contentUrl = (repo,path) => '/repos/' + repo + '/contents/' + path.split('/').map(encodeURIComponent).join('/');
   return {
+    async getRepository(repo) {
+      if(typeof repo!=='string'|| !/^[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._-]*$/.test(repo))
+        throw new Error('Invalid GitHub repository identifier.');
+      return request('GET','/repos/'+repo);
+    },
     async getLedgerSnapshot(repo, branch) {
       // Pin every file to ONE Git tree; separate Contents branch reads can be stale.
       const ref=await request('GET','/repos/'+repo+'/git/ref/heads/'+branch);
