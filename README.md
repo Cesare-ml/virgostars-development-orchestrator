@@ -52,3 +52,7 @@ The private `fleet-status` command now **rechecks live developer PR metadata and
 ## Detect competing PRs before developer handoff
 
 Use `node bin/vs-agent.mjs audit-collisions OWNER/REPO ISSUE` to find multiple open PRs touching the same curator-approved resource paths. The wave-2 Charts task has two competing draft tests (#27 and #28) for one file. The local CLI now requires both `audit-pr` (path/base) and this overlap check before `submit --pr ... --confirm` can mark a write task delivered. No PR is automatically closed or merged. See [PR collisions](docs/PR_COLLISIONS.md).
+
+## Private review gates for submitted developer PRs
+
+The `fleet-status` CLI now combines the live PR scope/head audit with a scan of open PRs touching the same approved resource partition. For each submitted write task it reports `pr_check`, `collision_check`, and explicit `review_gates.blockers`; the monitored `integration_ready` and `merge_authorized` values remain `false` until independent test evidence and human review are completed. The command is GET-only and does not alter existing submissions. See [review gates](docs/REVIEW_GATES.md).

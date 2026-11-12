@@ -68,3 +68,7 @@ For every submitted `access:write` task that names a PR, `fleet-status` now fetc
 | `submitted` | Recorded and live scope evidence currently agrees, but code/tests still require independent review |
 
 If the same issue claim remains present, `fleet-status` keeps a more serious `stale-submission` or `needs-scope-audit` status and **also** reports that the owner must finish releasing the claim. Permission errors, inconsistent PR metadata or a commit changing during file pagination stop the read-only audit rather than yielding a false clean verdict. The Git ledger is pinned to one commit, but live PR refs are **not** transactionally pinned across repositories: always recheck before merge decisions. No automated merge or approval exists.
+
+## Combined wave-2 integration blockers
+
+After [PR collision detection](PR_COLLISIONS.md) and [PR freshness checks](PR_SCOPE_AUDIT.md), `fleet-status` now exposes per-developer `collision_check` (all open PR candidates touching the curated roots) and `review_gates` (machine-readable blockers, test status `unverified`, `integration_ready:false`, `merge_authorized:false`). A duplicate PR warning appears alongside the existing `stale-submission` or `needs-scope-audit` status, **not instead of it**. Only submissions with a usable PR number can be collision-scanned; otherwise the limitation is explicitly reported. The monitor is strictly GET-only and fails closed if private GitHub access or PR/file inventory is incomplete. See [REVIEW_GATES.md](REVIEW_GATES.md) for blocker codes and wave-2 examples.

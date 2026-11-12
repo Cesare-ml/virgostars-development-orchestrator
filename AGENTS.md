@@ -66,3 +66,7 @@ Before recommending integration of a write submission, run private `fleet-status
 ## Open PR collision gate before submitting write work
 
 Run `audit-collisions OWNER/REPO ISSUE` as well as `audit-pr` before final write-task handoff. Two open PRs for the same authorized file are a **conflict**, even if each PR individually passes its file scope audit. The Node `submit` command now blocks delivery unless the only open PR touching the resource is the named delivery PR. For connector-only agents, manually inspect the current complete open-PR inventory, report competing branches and do not claim CLI validation. Follow [docs/PR_COLLISIONS.md](docs/PR_COLLISIONS.md). Never force close/rebase/merge another agent's PR.
+
+## Human integration gate after task submission
+
+Review [docs/REVIEW_GATES.md](docs/REVIEW_GATES.md) and run private `fleet-status` before recommending a developer PR for integration. A task can have a correctly filed `submitted` marker and still have stale PR evidence, competing open PRs, unrun native/visual tests and outstanding review. Inspect `review_gates.blockers`; never infer `approved` or `merge ready` from a scope-clean diff. The readiness flag is deliberately `false` in this private pilot. The monitor is read-only and cannot independently validate tests, merge or clean up another agent's branches.

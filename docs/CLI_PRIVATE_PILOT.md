@@ -81,3 +81,7 @@ Developer tasks must use the actual draft PR number and current PR HEAD SHA. Aft
 ## Block overlapping open PRs on one resource
 
 Run `node bin/vs-agent.mjs audit-collisions OWNER/REPO ISSUE` on an authenticated feature-branch checkout. `conflict` means two or more open PRs touch at least one approved resource root. The CLI returns exit code 2 on conflict, and write `submit --pr N --confirm` refuses to mark the task delivered unless exactly one PR candidate exists and it is PR N. This is read-only GitHub PR metadata inspection, not independent tests or approval; connector-only manual submissions do not imply the CLI ran. See [PR_COLLISIONS.md](PR_COLLISIONS.md).
+
+## Summarize outstanding integration blockers across submissions
+
+Run `node bin/vs-agent.mjs fleet-status` with the existing read credentials. The output now combines one-commit claim/submission data, live per-PR freshness checks, overlapping open PR candidates and conservative `review_gates.blockers` for submitted write tasks. It always records native test evidence as **unverified** and keeps human approval outstanding: no `scope-clean` or absent conflict means tests passed. See [REVIEW_GATES.md](REVIEW_GATES.md). No GitHub write action is performed.
