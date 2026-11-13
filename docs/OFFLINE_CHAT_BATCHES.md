@@ -26,6 +26,24 @@ Batches are **ordered, positive integers**, at least two groups, with a total of
 
 Output is limited to aggregate counts such as `arrival_batch_sizes`, `earlier_session_resumes_verified` and `earlier_claims_preserved`. No task identities, session IDs, private filenames, tokens or repository names are printed.
 
+## Reconstructing the coordinator between waves (issue #88)
+
+To rehearse a restart of the **synthetic** coordinator after wave 1, with ten sessions still active:
+
+```powershell
+node bin/vs-agent.mjs stress-fleet --batches 10,10 --reopen-after-wave 1
+node bin/vs-agent.mjs stress-fleet --agents 40 --batches 5,10,10,15 --reopen-after-wave 2
+node --test test/offline-wave-reopen.test.mjs
+```
+
+`--reopen-after-wave` is **optional**. Its value is a 1-based wave index between 1 and the penultimate wave, and it requires `--batches`. The original no-reopen stress mode behaves as before; invalid boundaries exit without starting the rehearsal.
+
+At the selected boundary, the simulator captures a deep copy of all in-memory ledger records and SHA/write counters and creates a **new adapter instance with a new Map**. It checks that every issue claim, resource lock and submission marker is identical, then invokes the real `claimNext` using only each older session ID. Every resumed session must get its original repository, issue and resource partition without creating another lock or changing the snapshot. Later waves still arrive, and all sessions still hand off, submit and release with zero residual locks.
+
+The opt-in report contains **aggregate-only** `reopened_after_wave`, `restored_session_resumes_verified`, `restored_live_issue_claims`, `restored_live_resource_locks`, `restored_submission_markers` and `restored_ledger_entries_preserved`. It never serializes identifiers, repositories or private tasks.
+
+**Limit:** This is an in-memory reconstruction test within a single process. It does **not** demonstrate persistence or durability of a real external database, GitHub ledger, filesystem, network or browser chats. No private data, token, network calls or real coordination writes are used.
+
 ## Limits and next milestone
 
 The simulation uses a single Node process and synthetic GitHub API behavior; the groups are sequential arrival *phases*, not timed/background conversations. It cannot guarantee that two real browsers, GitHub API concurrent requests, network failures or owner permissions behave the same way.
