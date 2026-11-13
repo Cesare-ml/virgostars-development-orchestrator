@@ -263,3 +263,11 @@ No deploy, production mutation, release, automatic merge, or license change is i
 - [x] Add automated tests, public Node checks and a Windows quickstart with strict limitations.
 - [ ] Verify public Node 20/22 CI at final HEAD and independent source review.
 - [ ] After privately approved ledger cutover, perform an actual cross-chat GitHub integration test with 2 new tasks; do not claim the synthetic rehearsal proves live concurrency.
+
+## Submission marker create-race hardening — 2026-11-13
+
+- [x] Require exact immutable task identity, session, role, access, resource scope, handoff and audited write-PR evidence when an existing submission marker is encountered.
+- [x] After a GitHub 409/422 create-if-absent collision, re-read the saved marker and refuse to release the issue/resource claim unless all expected evidence matches, even when the session ID matches.
+- [x] Add Node regression coverage for a mismatched PR head, a different issue number and a truly identical same-session retry.
+- [ ] Obtain a green Node 20/22 CI run and independent review of the stacked draft PR.
+- [ ] Live test only after private ledger cutover and supervised owner approval; no synthetic race proves cross-process GitHub transaction guarantees.
