@@ -12,6 +12,8 @@ The old coordinator repository is now PUBLIC. Never create another private task 
 4. Freeze the old public branch for coordination, confirm no client continues writing there and independently approve the reconciliation and rollback plan in PUBLIC_TRANSITION.md and OFFLINE_CUTOVER_REHEARSAL.md. The frozen source has zero claims, zero resource locks, seven submitted markers and one README. A source change blocks this alpha until manual review.
 5. Store your GitHub token privately with public source and appropriate private ledger read permissions, plus private ledger Contents write permissions for actual task claims. Do not paste tokens or private destination names into public issues, PRs, CI or chat prompts.
 
+To prepare a local record-only comparison backup without manually transcribing seven submitted records, see [VERIFIED_LOCAL_LEDGER_EXPORT.md](VERIFIED_LOCAL_LEDGER_EXPORT.md). The exporter writes only a newly created protected LOCAL file after GitHub GET-only checks; a separate full Git mirror backup and an independently approved private copy-only migration remain mandatory.
+
 ## Run the read-only activation check
 
 From a trusted checkout of the reviewed stacked feature branch with Node.js 20 or newer:
