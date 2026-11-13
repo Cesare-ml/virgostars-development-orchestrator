@@ -272,3 +272,13 @@ No deploy, production mutation, release, automatic merge, or license change is i
 - [x] Add repeatable Node CI tests and a user-facing guide that distinguishes synthetic scaling from real concurrent GitHub activity.
 - [ ] Confirm public Node 20/22 CI on the final commit and review concurrency assumptions independently.
 - [ ] Independently provision and approve the PRIVATE coordination ledger; first run two actual browser agents, then 5 and 10 before contemplating 40.
+
+## Verified owner-local historical ledger export — issue #52 (2026-11-13)
+
+- [x] Introduce GitHub GET-only pinned Git blob retrieval and source/destination inventory verification.
+- [x] Build an exact byte-checked local record-only backup manifest for seven frozen historic submissions and a separately owner-approved PRIVATE destination.
+- [x] Require a local output path outside the public checkout, explicit --confirm, private destination acknowledgement and no existing target file; create owner-only file with exclusive write.
+- [x] Reuse offline manifest SHA verification and provide Windows-only operational documentation without exposing record bytes in output.
+- [x] Add synthetic tests for byte corruption, public destination, missing permission, drift, symlink/overwrite and the CLI no-token failure.
+- [ ] Confirm public Node 20/22 CI and independent code review; no private credentials in CI.
+- [ ] Create and independently audit a **complete** immutable Git mirror backup and PRIVATE destination, then conduct owner-approved copy-only migration before any live two-chat pilot.
