@@ -212,3 +212,12 @@ No deploy, production mutation, release, automatic merge, or license change is i
 - [x] Add mocked Node tests for races, visibility drift, permissions and no-token CLI plus docs; exercise on public GitHub Actions Node 20/22 without secrets.
 - [ ] Select/provision the private store and validate it locally under owner's private access. No real private destination is assumed by this plan.
 - [ ] Freeze and reconcile source/destination records under a separately reviewed migration design; never auto-copy, delete, merge or deploy based on this report.
+
+## Offline local backup validation and rollback rehearsal — issue #26 (2026-11-13)
+
+- [x] Add local-only `rehearse-private-cutover FILE.json` command with no GitHub token, network access, public-claim branch writes or migration side effects.
+- [x] Verify record-only backups against Git blob SHA-1 of exact bytes, reject unsafe/case-colliding paths and malformed/oversized data, and count identity/content collisions without displaying sensitive input values.
+- [x] Define explicit no-write rollback phases with preserved source, full verified backups, frozen writers, reconciled identities, staging, controlled client cutover and restore-configuration path.
+- [x] Add synthetic Node tests for identical, missing, conflicting, extra, locked, corrupted, malformed and inaccessible backups; public GitHub Actions Node 20/22 validation.
+- [ ] Independently obtain a complete authenticated **full Git tree** backup in a trusted owner-controlled environment and verify live head/visibility; the offline record-only rehearsal alone **cannot** establish full backup completeness.
+- [ ] Complete owner-approved identity reconciliation and cutover plan on a separately provisioned private ledger, without automatic deletion of the public historical branch.

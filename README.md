@@ -88,3 +88,7 @@ For the owner-controlled migration, `node bin/vs-agent.mjs check-private-destina
 ## Public-to-private ledger cutover dry run
 
 An owner can now run `node bin/vs-agent.mjs plan-private-cutover OWNER/PRIVATE-REPO` on a trusted local checkout. It compares aggregate historical public-ledger counts with a **separately verified private** destination, detects branch movement and lists non-authorizing blocker codes. It does not fetch record contents, migrate data or enable writes. See [PRIVATE_CUTOVER_PLAN.md](docs/PRIVATE_CUTOVER_PLAN.md). The public CI runs only synthetic tests, never private credentials.
+
+## Offline backup reconciliation rehearsal
+
+For owner-held local record exports, `node bin/vs-agent.mjs rehearse-private-cutover LOCAL_BACKUP.json` verifies every listed record's Git blob SHA-1 and produces **counts-only** differences, safety blockers and a human rollback sequence. It uses no GitHub token or network and cannot migrate, overwrite, release locks or modify a repo. The result explicitly **cannot** establish that the backup contains the complete Git tree or matches a current remote commit. Keep real backup files private. See [OFFLINE_CUTOVER_REHEARSAL.md](docs/OFFLINE_CUTOVER_REHEARSAL.md).

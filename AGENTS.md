@@ -94,3 +94,7 @@ The read-only `check-private-destination OWNER/REPO` command is a planning aid o
 ## Public-to-private cutover planning is read-only
 
 The `plan-private-cutover OWNER/PRIVATE-REPO` command is a **metadata-only** planning aid under issue #24, stacked on the private-destination preflight PR. It may be run only with locally managed read access and must never copy or expose private claim contents, create destination branches or bypass the public legacy-ledger guard. Every output is `ready_to_migrate:false`, `writes_enabled:false`. Do not claim migration is authorized or complete. See [docs/PRIVATE_CUTOVER_PLAN.md](docs/PRIVATE_CUTOVER_PLAN.md) and owner migration issue #19.
+
+## Offline backup rehearsal is not a migration authorization
+
+The `rehearse-private-cutover FILE.json` command reads only a **locally supplied** backup manifest, verifies listed record bytes against Git blob hashes and reports aggregate collisions/rollback blockers. It must not print record contents, Git filenames, session IDs or private target identities. **Never** upload real backup manifests into this public repository, its CI artifacts or chat. It does not verify live GitHub identity, private visibility, full-tree backup completeness or owner approval; the output always denies writes and migration. Follow [OFFLINE_CUTOVER_REHEARSAL.md](docs/OFFLINE_CUTOVER_REHEARSAL.md) before any separately authorized cutover.
