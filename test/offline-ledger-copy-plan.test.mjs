@@ -200,7 +200,7 @@ test('CLI refuses forged backup and keeps output private even with private env v
   assert.equal(run.stdout,'');
   assert.match(run.stderr,/record inventory does not match frozen public Git tree/);
   assert.doesNotMatch(run.stderr,
-    /owner\\/private|synthetic-session|astrological-charts|Cesare-ml__|invalid-local|issue-1\\.json/);
+    /owner\/private|synthetic-session|astrological-charts|Cesare-ml__|invalid-local|issue-1\.json/);
 });
 
 test('CLI blocks fake source before branch planning and rejects extra flags',async t=>{
