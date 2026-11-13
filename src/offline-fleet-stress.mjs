@@ -28,6 +28,18 @@ export function validateFleetSize(value) {
   return value;
 }
 
+/** Batch sizes are a bounded, synthetic arrival schedule (not timers). */
+export function validateArrivalBatches(batches,agents) {
+  validateFleetSize(agents);
+  if(batches===null || batches===undefined) return [agents];
+  if(!Array.isArray(batches)||batches.length<2||batches.length>40||
+    batches.some(size=>!Number.isSafeInteger(size)||size<1||size>40))
+    throw new Error('Arrival batches must be 2..40 positive integer sizes.');
+  if(batches.reduce((sum,size)=>sum+size,0)!==agents)
+    throw new Error('Arrival batch sizes must sum to the total agent count.');
+  return [...batches];
+}
+
 function makeTasks(n) {
   return Array.from({length:n},(_,i)=>{
     const repository=REPOS[i%REPOS.length];
@@ -131,8 +143,9 @@ function inMemoryAdapter(tasks) {
  * functions, against a single-event-loop memory adapter. NO remote GitHub
  * atomicity or concurrent browser session guarantees are implied.
  */
-export async function runOfflineFleetStress({agents=40}={}) {
+export async function runOfflineFleetStress({agents=40,batches=null}={}) {
   const n=validateFleetSize(agents);
+  const arrivalBatches=validateArrivalBatches(batches,n);
   const tasks=makeTasks(n);
   const mock=inMemoryAdapter(tasks);
   const config={
@@ -144,10 +157,41 @@ export async function runOfflineFleetStress({agents=40}={}) {
   const args=id=>({api:mock.api,config,tasks,session:session(id),
     role:'developer'});
 
-  // Launch all synthetic contenders in the same event loop. Each must pass
-  // the *real* issue and resource exclusive-creation checks.
-  const attempts=await Promise.all(Array.from({length:n},(_,i)=>
-    claimNext(args(i+1))));
+  // Each batch starts while all earlier batches still own their claims.
+  // Every session uses the real claim-next code against the SAME ledger.
+  const attempts=[];
+  let nextSession=1;
+  let earlierResumes=0;
+  for(const size of arrivalBatches) {
+    const batch=await Promise.all(Array.from({length:size},(_,i)=>
+      claimNext(args(nextSession+i))));
+    nextSession+=size;
+    expect(batch.every(result=>result.result==='acquired'),
+      'a batch failed to acquire its independent synthetic tasks.');
+    const earlier=[...attempts];
+    attempts.push(...batch);
+
+    expect(mock.count('claims')===attempts.length &&
+      mock.count('resources')===attempts.length,
+    'later batch changed the expected count of live locks.');
+    if(earlier.length) {
+      // Resuming a chat must return its ORIGINAL assignment, not a new one.
+      const resumed=await Promise.all(earlier.map(result=>claimNext({
+        api:mock.api,config,tasks,session:result.claim.session_id,
+        role:'developer'
+      })));
+      expect(resumed.every((result,i)=>result.result==='already-owned' &&
+        result.claim.session_id===earlier[i].claim.session_id &&
+        result.claim.target_repository===earlier[i].claim.target_repository &&
+        result.claim.issue_number===earlier[i].claim.issue_number &&
+        result.claim.resource_scope_id===earlier[i].claim.resource_scope_id),
+      'a new batch displaced or reassigned an earlier session.');
+      earlierResumes+=resumed.length;
+      expect(mock.count('claims')===attempts.length &&
+        mock.count('resources')===attempts.length,
+      'resuming earlier sessions must not acquire extra locks.');
+    }
+  }
   expect(attempts.every(r=>r.result==='acquired'),
     'all assigned synthetic sessions must acquire exactly one task.');
   const owners=attempts.map(r=>r.claim);
@@ -214,6 +258,9 @@ export async function runOfflineFleetStress({agents=40}={}) {
     schema_version:'1-offline-fleet-stress',
     mode:'synthetic-single-process-only',
     requested_agents:n,
+    arrival_batch_sizes:arrivalBatches,
+    earlier_session_resumes_verified:earlierResumes,
+    earlier_claims_preserved:true,
     simulated_repositories:REPOS.length,
     unique_claims:n,
     unique_resource_locks:n,
