@@ -114,3 +114,7 @@ Before proposing the first two new developer chats, follow [docs/ALPHA_READINESS
 ## Offline two-agent rehearsal (synthetic only)
 
 Before a live owner-operated pilot, run `node bin/vs-agent.mjs rehearse-two-agents` and review [docs/OFFLINE_TWO_AGENT_REHEARSAL.md](docs/OFFLINE_TWO_AGENT_REHEARSAL.md). The command uses only synthetic in-memory GitHub data, even with private environment variables set. It exercises actual claim/handoff/submit/release functions, overlapping PR submission blockers and owner retry after interrupted release. Never represent synthetic pass as proof of a live private ledger, human code review, real branch tests, GitHub write concurrency or a deployed coordinator. No public ledger operations are authorized.
+
+## Submission retry evidence gate (issue #38)
+
+A GitHub 409/422 submission create conflict is **not** enough to prove idempotency merely because the existing marker has the same session ID. Before releasing any task/resource lock, match the saved immutable marker evidence to the current handoff and audited PR metadata. If same-session evidence differs, stop for manual reconciliation; **never** overwrite a submission marker or force-release a lock. Use [docs/SUBMISSION_RETRY_SAFETY.md](docs/SUBMISSION_RETRY_SAFETY.md). Public synthetic CI does not test a real private ledger.
