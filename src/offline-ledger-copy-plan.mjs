@@ -104,7 +104,7 @@ export function planCopyOnlyImport(manifest) {
  * Reject symlinks and project-local files; do not surface the local filename,
  * repository identifiers, record names, session IDs or record contents.
  */
-export async function planLocalCopyOnlyImport(file) {
+export async function readVerifiedLocalCopyManifest(file) {
   if(typeof file!=='string'||!isAbsolute(file)||file.length>1024)
     fail('an absolute owner-local manifest file is required.');
   let descriptor;
@@ -135,11 +135,18 @@ export async function planLocalCopyOnlyImport(file) {
       fail('owner-local backup must contain valid UTF-8 JSON.');
     }
     const fingerprint=createHash('sha256').update(bytes).digest('hex');
-    return {...planCopyOnlyImport(data),local_manifest_sha256:fingerprint};
+    const report={...planCopyOnlyImport(data),local_manifest_sha256:fingerprint};
+    return {report,manifest:data};
   } catch(error) {
     if(error?.message?.startsWith('Copy-only import plan blocked:'))throw error;
     fail('owner-local backup could not be read or verified.');
   } finally {
     await descriptor?.close();
   }
+}
+
+/** Return ONLY aggregate, non-sensitive status from the owner-local file. */
+export async function planLocalCopyOnlyImport(file) {
+  const {report}=await readVerifiedLocalCopyManifest(file);
+  return report;
 }
