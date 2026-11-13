@@ -263,3 +263,12 @@ No deploy, production mutation, release, automatic merge, or license change is i
 - [x] Add automated tests, public Node checks and a Windows quickstart with strict limitations.
 - [ ] Verify public Node 20/22 CI at final HEAD and independent source review.
 - [ ] After privately approved ledger cutover, perform an actual cross-chat GitHub integration test with 2 new tasks; do not claim the synthetic rehearsal proves live concurrency.
+
+## Offline fleet contention scalability — issue #36 (2026-11-13)
+
+- [x] Add a memory-only `stress-fleet --agents 2..40` command that executes real claim/queue/handoff/PR scope/submit code against synthetic five-repository fixtures.
+- [x] Exercise simultaneous N-agent task pickup, verify unique issue and resource ownership, deny excess contenders, preserve all submitted markers and leave zero locks after completion.
+- [x] Prevent already-submitted tasks from being reoffered; validate bounds and make no token/network calls.
+- [x] Add repeatable Node CI tests and a user-facing guide that distinguishes synthetic scaling from real concurrent GitHub activity.
+- [ ] Confirm public Node 20/22 CI on the final commit and review concurrency assumptions independently.
+- [ ] Independently provision and approve the PRIVATE coordination ledger; first run two actual browser agents, then 5 and 10 before contemplating 40.
