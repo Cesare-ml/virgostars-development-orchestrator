@@ -263,3 +263,11 @@ No deploy, production mutation, release, automatic merge, or license change is i
 - [x] Add automated tests, public Node checks and a Windows quickstart with strict limitations.
 - [ ] Verify public Node 20/22 CI at final HEAD and independent source review.
 - [ ] After privately approved ledger cutover, perform an actual cross-chat GitHub integration test with 2 new tasks; do not claim the synthetic rehearsal proves live concurrency.
+
+## Increment — safe partial-release retry (2026-11-13)
+
+- [x] Identify the GitHub Contents two-delete gap: a persisted write submission with issue claim deleted and resource deletion failed could not be retried through `submit`.
+- [x] Add strictly original-session, scope-audited, same-catalog SHA-conditional residual resource release; preserve failed/inconsistent cases for manual recovery.
+- [x] Add isolated synthetic regression coverage and inject the later failure point into offline two-agent rehearsal; extend syntax gate and recovery runbook.
+- [ ] Verify exact stacked PR CI on Node 20 and Node 22 and obtain independent review.
+- [ ] Prove the same path on an approved PRIVATE ledger with supervised real agents. Never reactivate the PUBLIC historical claim store.
