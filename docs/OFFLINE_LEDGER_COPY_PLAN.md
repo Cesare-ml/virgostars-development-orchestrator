@@ -25,6 +25,14 @@ No GITHUB_TOKEN or owner environment variables are needed. The command only read
 
 The planner enforces the immutable historical public Git commit AND tree identity, exactly seven historical submissions, no active source or destination lock records, valid Git hashes for every record, valid submission state and correspondence between its target repository/issue number and filename.
 
+### Independent seven-blob checkpoint binding
+
+The **file/CLI entry point** also verifies a fixed SHA-256 commitment over the **seven exact Git path + blob-SHA pairs** from the public historical tree `892d39e23da8f6b4b16c9f2a8099df717b4221e7`. The commitment was calculated from that independently inspected Git tree, not from the local backup. Each path is case-normalized and each line is `path:git_blob_sha` followed by LF, sorted lexically, before hashing.
+
+This prevents an internally self-consistent but invented seven-submission backup from passing merely by asserting the expected public commit and tree SHA. A mismatch exits 1 without printing record identities. Synthetic examples may still pass the pure `planCopyOnlyImport()` comparison helper; **only the owner-facing `planLocalCopyOnlyImport()` / CLI enforces the external historic-blob commitment**.
+
+The stronger local check does **not** establish live public/private branch stability, current repository permissions, a complete Git mirror backup or migration approval. Only a fresh separate authenticated read of the actual repositories can establish live state. Public test fixtures include path/SHA metadata, not record contents or session identifiers.
+
 It returns exit 0 for a conflict-free *offline plan* and exit 2 for review blockers; invalid file contents, mismatched checkpoint or unsafe filesystem paths exit 1. Exit 0 is **not** a migration authorization or evidence that remote GitHub is ready.
 
 The backup input must be an absolute local regular JSON file outside this public checkout. Symlinks, oversized/malformed files, tampered Git blobs and changed files during the read are rejected. The planner leaves the input unchanged and creates no output files.
