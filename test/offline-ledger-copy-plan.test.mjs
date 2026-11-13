@@ -1,14 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {mkdtemp,writeFile,readFile,rm,stat,symlink} from 'node:fs/promises';
+import {mkdtemp,writeFile,readFile,rm,stat,lstat,open,symlink} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {
   planCopyOnlyImport,planLocalCopyOnlyImport,
-  fingerprintSubmissionInventory,assertFrozenSubmissionInventory
+  fingerprintSubmissionInventory,assertFrozenSubmissionInventory,
+  sameManifestFileSnapshot
 } from '../src/offline-ledger-copy-plan.mjs';
 
 const SOURCE='Cesare-ml/virgostars-development-orchestrator';
@@ -194,6 +195,39 @@ test('all seven frozen public blob identities match the independently pinned dig
   altered[6].path=altered[6].path.replace('34.json','35.json');
   assert.throws(()=>assertFrozenSubmissionInventory(altered),
     /record inventory does not match frozen public Git tree/);
+});
+
+test('manifest file identity detects inode, device and timestamp swaps before reading',()=>{
+  const initial={
+    dev:3,ino:17,size:256,mtimeMs:11,ctimeMs:12,
+    isFile:()=>true,isSymbolicLink:()=>false
+  };
+  assert.equal(sameManifestFileSnapshot(initial,{...initial}),true);
+  for(const mutation of [
+    {ino:18},{dev:4},{size:257},{mtimeMs:13},{ctimeMs:14},
+    {isFile:()=>false}
+  ]) {
+    assert.equal(sameManifestFileSnapshot(initial,{...initial,...mutation}),false);
+  }
+  assert.equal(sameManifestFileSnapshot(
+    {...initial,isSymbolicLink:()=>true},initial),false);
+  assert.equal(sameManifestFileSnapshot(initial,null),false);
+});
+
+test('owner local manifest lstat matches opened descriptor for regular files',async t=>{
+  const {file}=await tmp(t);
+  const before=await lstat(file);
+  const handle=await open(file,'r');
+  try {
+    const opened=await handle.stat();
+    assert.equal(sameManifestFileSnapshot(before,opened),true);
+    const read=await handle.readFile();
+    const after=await handle.stat();
+    assert.equal(read.length,opened.size);
+    assert.equal(sameManifestFileSnapshot(opened,after),true);
+  } finally {
+    await handle.close();
+  }
 });
 
 test('local file reader rejects relative, in-checkout and symlink paths',async t=>{
