@@ -38,6 +38,22 @@ export function assertFrozenSubmissionInventory(records) {
   return true;
 }
 
+/**
+ * Guard against replacing the owner-local manifest between lstat() and
+ * open(). O_NOFOLLOW alone does not guarantee identity on every platform.
+ * Both timestamps are sampled before reading; a second descriptor stat
+ * detects edits during the read. Device/inode checks are best-effort on
+ * filesystems that do not expose unique inode identifiers.
+ */
+export function sameManifestFileSnapshot(initial,opened) {
+  return Boolean(initial?.isFile?.()&&opened?.isFile?.()&&
+    !initial.isSymbolicLink()&&
+    initial.dev===opened.dev&&initial.ino===opened.ino&&
+    initial.size===opened.size&&
+    initial.mtimeMs===opened.mtimeMs&&
+    initial.ctimeMs===opened.ctimeMs);
+}
+
 function submissionIdentity(record) {
   const match=record.path.match(VALID_PATH);
   if(!match)fail('submitted record has an unrecognized path.');
@@ -146,12 +162,11 @@ export async function planLocalCopyOnlyImport(file) {
 
     descriptor=await open(file,fsConstants.O_RDONLY|(fsConstants.O_NOFOLLOW||0));
     const before=await descriptor.stat();
-    if(!before.isFile()||before.size!==stat.size)
+    if(!sameManifestFileSnapshot(stat,before))
       fail('manifest changed while opening.');
     const bytes=await descriptor.readFile();
     const after=await descriptor.stat();
-    if(bytes.length!==before.size||after.size!==before.size||
-       after.mtimeMs!==before.mtimeMs||after.ino!==before.ino)
+    if(bytes.length!==before.size||!sameManifestFileSnapshot(before,after))
       fail('manifest changed while reading.');
     let data;
     try {
