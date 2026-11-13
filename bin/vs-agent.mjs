@@ -1,14 +1,7 @@
 #!/usr/bin/env node
-import { makeGitHubClient } from '../src/github.mjs';
-import { loadPilotConfig, loadPilotTasks } from '../src/registry.mjs';
+// Public discovery must not evaluate or resolve owner-only pilot modules.
+// Keep its entire dependency graph independent of GitHub tokens/private data.
 import {loadPublicDiscovery} from '../src/public-discovery.mjs';
-import {assertPrivateLedger,guardLegacyLedgerClient} from '../src/ledger-visibility.mjs';
-import { newSession, claim, status, release, handoff, discover } from '../src/claims.mjs';
-import { claimNext } from '../src/queue.mjs';
-import { submit } from '../src/submissions.mjs';
-import { auditFleet } from '../src/fleet-status.mjs';
-import { auditTaskPullRequest } from '../src/pr-audit.mjs';
-import { auditOpenPullRequestCollisions } from '../src/pr-collisions.mjs';
 
 const usage = [
   'VirgoStars private pilot — Node.js 20+',
@@ -48,6 +41,7 @@ async function main() {
   const {positionals,flags}=parse(rest);
   if(command==='session') {
     if(positionals.length) throw new Error('Session takes no target.');
+    const {newSession}=await import('../src/claims.mjs');
     process.stdout.write(newSession(flags.kind||'chat')+'\n');return;
   }
   if(command==='public-discover') {
@@ -57,12 +51,32 @@ async function main() {
     process.stdout.write(JSON.stringify(discovery,null,2)+'\n');
     return;
   }
-  // Fail closed BEFORE any legacy ledger reads or writes. The historical
-  // branch is PUBLIC; config labels never prove private GitHub visibility.
+  // Protected modules are intentionally loaded only AFTER public-discover
+  // has returned. Public discovery can operate without any private files.
+  const [{loadPilotConfig,loadPilotTasks},{makeGitHubClient},
+    {assertPrivateLedger,guardLegacyLedgerClient}]=await Promise.all([
+    import('../src/registry.mjs'),
+    import('../src/github.mjs'),
+    import('../src/ledger-visibility.mjs')
+  ]);
+  // Fail closed BEFORE loading owner-only task handlers or accessing any
+  // historical ledger. Config labels do not prove private GitHub visibility.
   const config=await loadPilotConfig();
   const baseApi=makeGitHubClient({token:process.env.GITHUB_TOKEN});
   await assertPrivateLedger({api:baseApi,config});
   const api=guardLegacyLedgerClient({api:baseApi,config});
+  const [
+    {claim,status,release,handoff,discover},
+    {claimNext},{submit},{auditFleet},
+    {auditTaskPullRequest},{auditOpenPullRequestCollisions}
+  ]=await Promise.all([
+    import('../src/claims.mjs'),
+    import('../src/queue.mjs'),
+    import('../src/submissions.mjs'),
+    import('../src/fleet-status.mjs'),
+    import('../src/pr-audit.mjs'),
+    import('../src/pr-collisions.mjs')
+  ]);
   let result;
   if(command==='discover') {
     if(positionals.length) throw new Error('Discover takes no target.');
