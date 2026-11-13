@@ -20,6 +20,8 @@ test('two real claim/submit/release paths complete on synthetic in-memory fixtur
   assert.equal(result.competing_pr_recovery_submitted,true);
   assert.equal(result.interrupted_release_blocked,true);
   assert.equal(result.original_owner_retry_succeeded,true);
+  assert.equal(result.interrupted_resource_release_blocked,true);
+  assert.equal(result.submitted_resource_recovery_succeeded,true);
   assert.equal(result.submitted_markers,2);
   assert.equal(result.remaining_issue_claims,0);
   assert.equal(result.remaining_resource_locks,0);
