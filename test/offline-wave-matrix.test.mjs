@@ -122,7 +122,7 @@ test('runner aborts rather than allowing one unsafe scenario to count as passed'
   }), /remaining_resource_locks/);
   assert.equal(calls, 1);
   await assert.rejects(() => runOfflineWaveMatrix({runStress: null}),
-    /Invalid synthetic stress runner/);
+    /Invalid synthetic wave matrix options/);
 });
 
 test('CLI executes the real synthetic engine with no secrets or network', {timeout: 90000}, () => {
