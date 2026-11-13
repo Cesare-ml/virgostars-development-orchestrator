@@ -8,6 +8,8 @@ The initial objective is to let many independent ChatGPT and Codex conversations
 
 ## First usable owner-operated alpha (private ledger required)
 
+**Pinned ledger integrity:** all reserved coordination entries are now strictly parsed from one Git commit with content SHA verification. Unrecognized paths, symlinks or corrupt records stop the read rather than producing an unsafe fleet report. See [ledger integrity](docs/PINNED_LEDGER_INTEGRITY.md).
+
 **New: [offline two-agent end-to-end rehearsal](docs/OFFLINE_TWO_AGENT_REHEARSAL.md).** Run `node bin/vs-agent.mjs rehearse-two-agents` on Node 20+ with no GitHub token. It executes actual task claim, resource lock, handoff, PR scope/collision audit, submission and release functions using **synthetic, in-memory GitHub fixture data**. It demonstrates collision rejection and interrupted release recovery; it does **not** contact real GitHub, launch live browser chats or replace the separately approved PRIVATE ledger.
 
 
