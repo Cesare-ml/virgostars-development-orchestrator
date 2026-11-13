@@ -19,11 +19,12 @@ const pr={number:6,state:'open',draft:true,changed_files:2,head:{ref:'pilot/cons
 const validFiles=task.resource_scope.roots.map(filename=>({filename,status:'added'}));
 
 function mock() {
- const store=new Map();let seq=0,changedFiles=validFiles,competing=false;
+ const store=new Map();let seq=0,changedFiles=validFiles,competing=false,failResourceDelete=false;
  const extra={...pr,number:7,head:{...pr.head,sha:'d'.repeat(40)}};
  return {store,
   setFiles(value){changedFiles=value;},
   setCompeting(value){competing=value;},
+  failResourceDeleteOnce(){failResourceDelete=true;},
   async getIssue(){return {state:'open'};},
   async getClaim(_r,p){return store.has(p)?structuredClone(store.get(p)):null;},
   async createClaim(_r,p,_b,data){
@@ -35,6 +36,9 @@ function mock() {
     store.set(p,{sha:String(++seq),data:structuredClone(data)});
   },
   async deleteClaim(_r,p,_b,sha){
+    if(failResourceDelete && p.startsWith('resources/')) {
+      failResourceDelete=false;throw new GitHubError(409);
+    }
     if(store.get(p)?.sha!==sha)throw new GitHubError(409);
     store.delete(p);
   },
@@ -101,4 +105,56 @@ test('another open PR adding the same file blocks a write submission',async()=>{
  assert.equal((await status(args)).status,'claimed');
  assert.ok(api.store.has(resourceKey(target,task.resource_scope.id)));
  assert.equal(api.store.has(submissionKey(target,5)),false);
+});
+
+test('same owner recovers a submitted orphan resource after second deletion fails',async()=>{
+ const api=mock(),session=newSession(),args=await assigned(api,session);
+ api.failResourceDeleteOnce();
+ await assert.rejects(()=>submit({...args,prNumber:6,confirm:true}),/resource remains locked/);
+ assert.equal(api.store.has(taskKey(target,5)),false);
+ assert.equal(api.store.has(submissionKey(target,5)),true);
+ assert.equal(api.store.has(resourceKey(target,task.resource_scope.id)),true);
+ const result=await submit({...args,prNumber:6,confirm:true});
+ assert.deepEqual(result,{result:'recovered-submitted-resource',
+   task:target+'#5',review_required:true});
+ assert.equal(api.store.has(resourceKey(target,task.resource_scope.id)),false);
+ assert.equal(api.store.has(submissionKey(target,5)),true);
+ assert.equal((await submit({...args,prNumber:6,confirm:true})).result,'already-submitted');
+});
+test('orphan recovery refuses another session and mismatched PR evidence',async()=>{
+ const api=mock(),session=newSession(),args=await assigned(api,session);
+ api.failResourceDeleteOnce();
+ await assert.rejects(()=>submit({...args,prNumber:6,confirm:true}),/resource remains locked/);
+ await assert.rejects(()=>submit({...args,session:newSession(),prNumber:6,confirm:true}),
+   /Foreign or invalid submitted-task record/);
+ await assert.rejects(()=>submit({...args,prNumber:7,confirm:true}),
+   /Submitted write evidence or task scope changed/);
+ assert.ok(api.store.has(resourceKey(target,task.resource_scope.id)));
+});
+test('orphan recovery refuses foreign resource and task scope drift',async()=>{
+ const api=mock(),session=newSession(),args=await assigned(api,session);
+ api.failResourceDeleteOnce();
+ await assert.rejects(()=>submit({...args,prNumber:6,confirm:true}),/resource remains locked/);
+ const key=resourceKey(target,task.resource_scope.id);
+ const saved=api.store.get(key);
+ api.store.set(key,{...saved,data:{...saved.data,session_id:newSession()}});
+ await assert.rejects(()=>submit({...args,prNumber:6,confirm:true}),
+   /Orphan resource belongs to a different owner or scope/);
+ api.store.set(key,saved);
+ const drift=[{...task,resource_scope:{id:task.resource_scope.id,roots:['src/elsewhere/']}}];
+ await assert.rejects(()=>submit({...args,tasks:drift,prNumber:6,confirm:true}),
+   /Orphan resource belongs to a different owner or scope/);
+ assert.ok(api.store.has(key));
+});
+test('failed orphan cleanup preserves existing submission and resource for retry',async()=>{
+ const api=mock(),session=newSession(),args=await assigned(api,session);
+ api.failResourceDeleteOnce();
+ await assert.rejects(()=>submit({...args,prNumber:6,confirm:true}),/resource remains locked/);
+ api.failResourceDeleteOnce();
+ await assert.rejects(()=>submit({...args,prNumber:6,confirm:true}),
+   /Orphan resource release failed/);
+ assert.ok(api.store.has(resourceKey(target,task.resource_scope.id)));
+ assert.ok(api.store.has(submissionKey(target,5)));
+ assert.equal((await submit({...args,prNumber:6,confirm:true})).result,
+   'recovered-submitted-resource');
 });
