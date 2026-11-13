@@ -150,7 +150,7 @@ test('CLI reconstructs synthetic ledger offline and prints only aggregates',()=>
   assert.equal(result.synthetic_adapter_recreated,true);
   assert.equal(result.real_github_requests,0);
   assert.doesNotMatch(run.stdout,
-    /must-never-be-printed|nonexistent-owner-task-file|example-synthetic|chat-[0-9a-f]|coordination\\/claims|GITHUB_TOKEN/);
+    /must-never-be-printed|nonexistent-owner-task-file|example-synthetic|chat-[0-9a-f]|coordination\/claims|GITHUB_TOKEN/);
 });
 
 test('CLI refuses invalid, final-wave or unscoped reopen requests',()=>{
