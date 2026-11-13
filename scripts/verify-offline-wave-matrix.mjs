@@ -5,7 +5,7 @@ import {runOfflineWaveMatrix} from '../src/offline-wave-matrix.mjs';
 // A failed matrix prints a fixed diagnostic only: never forward task data.
 const repeat = process.argv.length === 3 && process.argv[2] === '--repeat';
 if (process.argv.length !== 2 && !repeat) {
-  process.stderr.write('Usage: node scripts/verify-offline-wave-matrix.mjs [--repeat]\\n');
+  process.stderr.write('Usage: node scripts/verify-offline-wave-matrix.mjs [--repeat]\n');
   process.exitCode = 2;
 } else {
   try {
