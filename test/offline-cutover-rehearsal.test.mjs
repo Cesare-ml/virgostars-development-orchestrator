@@ -176,7 +176,7 @@ test('rejects filesystem symlinks and oversized JSON without printing local path
 test('rejects unsupported destination shape and non-object JSON contents',()=>{
  const m=manifest();
  m.destination.head_sha=null;
- assert.throws(()=>rehearseLedgerBackups(m),/invalid pinned Git SHA/);
+ assert.throws(()=>rehearseLedgerBackups(m),/invalid source\/destination pinned commit/);
  const bytes=Buffer.from('[]','utf8');
  const item={path:s1().path,git_blob_sha:gitBlob(bytes),
   content_base64:bytes.toString('base64')};
