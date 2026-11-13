@@ -40,6 +40,15 @@ export function validateArrivalBatches(batches,agents) {
   return [...batches];
 }
 
+/** Reopen only at a boundary that leaves at least one later arrival wave. */
+export function validateReopenAfterWave(value,batches,arrivalBatches) {
+  if(value===null||value===undefined)return null;
+  if(!Array.isArray(batches)||arrivalBatches.length<2||
+    !Number.isSafeInteger(value)||value<1||value>=arrivalBatches.length)
+    throw new Error('Reopen-after-wave requires --batches and a wave index from 1 to the penultimate wave.');
+  return value;
+}
+
 function makeTasks(n) {
   return Array.from({length:n},(_,i)=>{
     const repository=REPOS[i%REPOS.length];
@@ -54,10 +63,22 @@ function makeTasks(n) {
   });
 }
 
-function inMemoryAdapter(tasks) {
-  const ledger=new Map(),pulls=new Map();
-  let seq=0;
-  let attemptedWrites=0;
+function inMemoryAdapter(tasks,snapshot=null) {
+  // A reopen is a NEW adapter with an independently cloned ledger; counters
+  // survive so later synthetic Git SHA updates cannot reuse old identifiers.
+  if(snapshot!==null&&(!Array.isArray(snapshot?.records)||
+    !Number.isSafeInteger(snapshot.seq)||snapshot.seq<0||
+    !Number.isSafeInteger(snapshot.attemptedWrites)||snapshot.attemptedWrites<0||
+    snapshot.records.some(entry=>!Array.isArray(entry)||entry.length!==2||
+      typeof entry[0]!=='string'||!entry[1]||
+      typeof entry[1].sha!=='string'))) {
+    throw new Error('Invalid synthetic snapshot.');
+  }
+  const ledger=new Map(snapshot===null?[]:copy(snapshot.records)),pulls=new Map();
+  if(snapshot!==null&&ledger.size!==snapshot.records.length)
+    throw new Error('Duplicate keys in synthetic snapshot.');
+  let seq=snapshot===null?0:snapshot.seq;
+  let attemptedWrites=snapshot===null?0:snapshot.attemptedWrites;
   const key=(repo,number)=>repo+'#'+number;
   const addPR=(repo,pr,files)=>{
     pulls.set(key(repo,pr.number),{pr:copy(pr),files:copy(files)});
@@ -135,7 +156,10 @@ function inMemoryAdapter(tasks) {
   function count(prefix) {
     return [...ledger.keys()].filter(x=>x.startsWith(prefix+'/')).length;
   }
-  return {api,registerDelivery,ledger,count,writes:()=>attemptedWrites};
+  return {
+    api,registerDelivery,ledger,count,writes:()=>attemptedWrites,
+    snapshot:()=>copy({records:[...ledger],seq,attemptedWrites})
+  };
 }
 
 /**
@@ -143,11 +167,14 @@ function inMemoryAdapter(tasks) {
  * functions, against a single-event-loop memory adapter. NO remote GitHub
  * atomicity or concurrent browser session guarantees are implied.
  */
-export async function runOfflineFleetStress({agents=40,batches=null}={}) {
+export async function runOfflineFleetStress({
+  agents=40,batches=null,reopenAfterWave=null
+}={}) {
   const n=validateFleetSize(agents);
   const arrivalBatches=validateArrivalBatches(batches,n);
+  const reopenAt=validateReopenAfterWave(reopenAfterWave,batches,arrivalBatches);
   const tasks=makeTasks(n);
-  const mock=inMemoryAdapter(tasks);
+  let mock=inMemoryAdapter(tasks);
   const config={
     claim_store:{repo:LEDGER,branch:BRANCH},
     active_repositories:REPOS.map(full_name=>({
@@ -162,7 +189,9 @@ export async function runOfflineFleetStress({agents=40,batches=null}={}) {
   const attempts=[];
   let nextSession=1;
   let earlierResumes=0;
-  for(const size of arrivalBatches) {
+  let restoredResumes=0;
+  let restoredCounts=null;
+  for(const [waveIndex,size] of arrivalBatches.entries()) {
     const batch=await Promise.all(Array.from({length:size},(_,i)=>
       claimNext(args(nextSession+i))));
     nextSession+=size;
@@ -174,6 +203,44 @@ export async function runOfflineFleetStress({agents=40,batches=null}={}) {
     expect(mock.count('claims')===attempts.length &&
       mock.count('resources')===attempts.length,
     'later batch changed the expected count of live locks.');
+
+    if(reopenAt===waveIndex+1) {
+      const before=mock.snapshot();
+      const counts={
+        claims:mock.count('claims'),
+        resources:mock.count('resources'),
+        submissions:mock.count('submissions')
+      };
+      // Reconstruct the entire synthetic coordinator, not just an API
+      // wrapper over the previous instance or its original Map.
+      const reopened=inMemoryAdapter(tasks,before);
+      expect(reopened!==mock&&reopened.api!==mock.api&&
+        reopened.ledger!==mock.ledger,
+      'reopen must construct an independent adapter and ledger.');
+      expect(JSON.stringify(reopened.snapshot())===JSON.stringify(before),
+        'reopened adapter lost or changed ledger records or SHA counters.');
+      expect(reopened.count('claims')===counts.claims&&
+        reopened.count('resources')===counts.resources&&
+        reopened.count('submissions')===counts.submissions&&
+        counts.claims===attempts.length&&counts.resources===attempts.length,
+      'reopened adapter changed live issue/resource locks or markers.');
+      mock=reopened;
+      // Only session IDs and the reconstructed ledger are used to resume.
+      const restored=await Promise.all(attempts.map(result=>claimNext({
+        api:mock.api,config,tasks,session:result.claim.session_id,
+        role:'developer'
+      })));
+      expect(restored.every((result,i)=>result.result==='already-owned'&&
+        result.claim.session_id===attempts[i].claim.session_id&&
+        result.claim.target_repository===attempts[i].claim.target_repository&&
+        result.claim.issue_number===attempts[i].claim.issue_number&&
+        result.claim.resource_scope_id===attempts[i].claim.resource_scope_id),
+      'reopened sessions lost their prior task or resource ownership.');
+      expect(JSON.stringify(mock.snapshot())===JSON.stringify(before),
+        'reopening and resuming must not create or change ledger entries.');
+      restoredResumes=restored.length;
+      restoredCounts=counts;
+    }
     if(earlier.length) {
       // Resuming a chat must return its ORIGINAL assignment, not a new one.
       const resumed=await Promise.all(earlier.map(result=>claimNext({
@@ -261,6 +328,14 @@ export async function runOfflineFleetStress({agents=40,batches=null}={}) {
     arrival_batch_sizes:arrivalBatches,
     earlier_session_resumes_verified:earlierResumes,
     earlier_claims_preserved:true,
+    ...(reopenAt===null?{}:{
+      reopened_after_wave:reopenAt,
+      restored_session_resumes_verified:restoredResumes,
+      restored_live_issue_claims:restoredCounts.claims,
+      restored_live_resource_locks:restoredCounts.resources,
+      restored_submission_markers:restoredCounts.submissions,
+      restored_ledger_entries_preserved:true
+    }),
     simulated_repositories:REPOS.length,
     unique_claims:n,
     unique_resource_locks:n,
