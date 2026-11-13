@@ -10,6 +10,8 @@ On Node.js 20 or newer, with no GitHub credentials:
 node bin/vs-agent.mjs public-discover
 ```
 
+The public CLI entrypoint **statically imports only the public discovery module**; owner-only modules are imported lazily after the public command has returned. A regression test launches the CLI from a deliberately minimal checkout containing only the entrypoint, public discovery module and public registry (no private pilot modules or tokens). This prevents accidental coupling of anonymous discovery to private source code or protected runtime dependencies.
+
 The command reads **only** `config/fleet.json` (the public discovery catalog). It does not load `config/fleet.private.json`, `config/pilot-tasks.json`, claims, resource locks or submission records; it does not query GitHub or use a token. If the catalog is malformed, contains a nonpublic project, includes extra entry fields, enables automatic claims/merge/deploy, or contains duplicate repository names, discovery fails closed. The validator also rejects unexpected **top-level** fields, undocumented policy switches, changed approval notices, missing/duplicate/unknown roles and changes to the explicitly supported test-only Actions and manually triaged issue-source settings. Updating this versioned schema requires an intentional code-and-test review; silent policy expansion is not permitted.
 
 The returned JSON has a deliberately small schema, including:
