@@ -18,7 +18,7 @@ Create a JSON file in your secure local directory, **not in this repository**:
   "wave_id": "example-wave",
   "tasks": [
     { "repository": "example-org/example-a", "issue": 10, "role": "developer", "roots": ["src/moon/"] },
-    { "repository": "example-org/example-a", "issue": 11, "role": "developer", "roots": ["src/clock/"] },
+    { "repository": "example-org/example-a", "issue": 11, "role": "developer", "roots": ["src/clock.test.mjs"] },
     { "repository": "example-org/example-b", "issue": 12, "role": "reviewer", "roots": [] }
   ]
 }
@@ -31,7 +31,7 @@ node scripts/plan-agent-wave.mjs "C:\OwnerPrivate\wave-input.json" "C:\OwnerPriv
 node --test test/plan-agent-wave.test.mjs
 ```
 
-Open `wave-output.json` **locally** and paste each individual `prompt` into exactly one separate owner-authorized chat. Never paste the entire output into multiple chats, because that would reuse session IDs. The generator rejects duplicate issue keys (case-insensitively) and overlapping developer directory roots in the same repository, including nested/case-aliased roots. Review-only tasks have no write scope. A generated plan must be regenerated if the curated task list, issue state, PRs or roots change; old session IDs must not be recycled.
+Open `wave-output.json` **locally** and paste each individual `prompt` into exactly one separate owner-authorized chat. Never paste the entire output into multiple chats, because that would reuse session IDs. The generator rejects duplicate issue keys (case-insensitively) and overlapping developer **file or directory roots** in the same repository, including nested/case-aliased roots. A root ending in `/` means a **whole directory** (for example `src/moon/`); a root ending in an extension means **one exact file** (for example `src/clock.test.mjs`). Bare directory-like paths without `/` (such as `src` or `src/moon`) are rejected rather than silently granting access to a subtree. Hidden paths, traversal, Windows device names and unusual separators are rejected. Review-only tasks have no write scope. A generated plan must be regenerated if the curated task list, issue state, PRs or roots change; old session IDs must not be recycled.
 
 ## Independent live gates remain mandatory
 
