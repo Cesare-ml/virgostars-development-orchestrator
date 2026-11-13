@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {
- PUBLIC_REPO,parseNumbers,inspectSnapshot,inspectLive,fetchPublicJson,fetchAllChecks
+ PUBLIC_REPO,parseNumbers,inspectSnapshot,inspectLive,fetchPublicJson,fetchAllChecks,fetchAllStatuses
 } from '../scripts/inspect-public-pr-checks.mjs';
 
 const sha = c => c.repeat(40);
@@ -15,9 +15,10 @@ const check = (id,name,status='completed',conclusion='success') =>
   ({id,name,status,conclusion});
 const runs = (...xs) => ({total_count:xs.length,check_runs:xs});
 const good = () => runs(check(1,'Node 20'),check(2,'Node 22'));
+const legacy = (id,context,state='success',commit=sha('a')) => ({id,context,state,sha:commit});
 
 test('successful observed checks do not authorize merge or required-check policy',async()=>{
- const result=await inspectLive({numbers:[35],getPr:async()=>pr(),getChecks:async()=>good()});
+ const result=await inspectLive({numbers:[35],getPr:async()=>pr(),getChecks:async()=>good(),getStatuses:async()=>[]});
  assert.equal(result.all_observed_checks_successful,true);
  assert.equal(result.merge_authorized,false);
  assert.equal(result.required_checks_verified,false);
@@ -58,10 +59,11 @@ test('PR HEAD and check-run completion changes are detected between two scans',a
  let count=0;
  await assert.rejects(()=>inspectLive({numbers:[35],getPr:async()=>{
   const x=pr(); if(count++>0) x.head.sha=sha('f');return x;
- },getChecks:async()=>good()}),/changed during/);
+ },getChecks:async()=>good(),getStatuses:async()=>[]}),/changed during/);
  let checks=0;
  await assert.rejects(()=>inspectLive({numbers:[35],getPr:async()=>pr(),
-  getChecks:async()=>checks++?runs(check(1,'Node 20'),check(2,'Node 22','in_progress',null)):good()
+  getChecks:async()=>checks++?runs(check(1,'Node 20'),check(2,'Node 22','in_progress',null)):good(),
+  getStatuses:async()=>[]
  }),/changed during/);
 });
 
@@ -114,4 +116,71 @@ test('input help and invalid args work offline with no credentials',()=>{
  assert.equal(invalid.status,1);
  assert.equal(invalid.stdout,'');
  assert.match(invalid.stderr,/incomplete or invalid/);
+});
+
+
+test('legacy commit statuses use latest per context and keep historic failures as evidence',()=>{
+ const currentSuccess=[legacy(4,'external-audit','success'),legacy(3,'external-audit','failure')];
+ const ok=inspectSnapshot(pr(),35,good(),currentSuccess);
+ assert.equal(ok.observed_checks_all_successful,true);
+ assert.equal(ok.legacy_status_contexts,1);
+ assert.equal(ok.legacy_status_contexts_failed,0);
+ for(const [statuses,code] of [
+  [[legacy(2,'external-audit','failure')],'LEGACY_STATUS_NOT_SUCCESSFUL'],
+  [[legacy(2,'external-audit','error')],'LEGACY_STATUS_NOT_SUCCESSFUL'],
+  [[legacy(2,'external-audit','pending')],'LEGACY_STATUS_PENDING']
+ ]) {
+  const result=inspectSnapshot(pr(),35,good(),statuses);
+  assert.equal(result.observed_checks_all_successful,false);
+  assert.ok(result.blockers.includes(code));
+ }
+});
+
+test('wrong-commit and malformed legacy status records fail closed',()=>{
+ assert.throws(()=>inspectSnapshot(pr(),35,good(),[legacy(2,'ci','success',sha('f'))]),/foreign/);
+ assert.throws(()=>inspectSnapshot(pr(),35,good(),[legacy(2,'ci'),legacy(2,'duplicate')]),/foreign/);
+ assert.throws(()=>inspectSnapshot(pr(),35,good(),[legacy(2,'ci','unknown')]),/foreign/);
+ assert.throws(()=>inspectSnapshot(pr(),35,good(),[legacy(2,'')]),/foreign/);
+ assert.throws(()=>inspectSnapshot(pr(),35,good(),{}),/inventory/);
+});
+
+test('legacy status drift fails even when PR HEAD and checks stay unchanged',async()=>{
+ let reads=0;
+ await assert.rejects(()=>inspectLive({numbers:[35],getPr:async()=>pr(),
+  getChecks:async()=>good(),
+  getStatuses:async()=>[legacy(3,'external',reads++?'failure':'success')]
+ }),/changed during/);
+ await assert.rejects(()=>inspectLive({numbers:[35],getPr:async()=>pr(),
+  getChecks:async()=>good()
+ }),/Invalid public audit adapter/);
+});
+
+test('GET-only legacy status pagination is complete, bounded and snapshot-safe',async()=>{
+ const hundred=Array.from({length:100},(_,i)=>legacy(i+1,'ctx-'+i));
+ const last=[legacy(101,'last')];
+ const urls=[];
+ const request=async url=>{
+  urls.push(url);
+  return {status:200,json:async()=>url.endsWith('page=1')?hundred:last};
+ };
+ assert.equal((await fetchAllStatuses(sha('a'),{request})).length,101);
+ assert.equal(urls.length,2);
+ assert.ok(urls.every(url=>url.includes('/repos/Cesare-ml/virgostars-development-orchestrator/')));
+ await assert.rejects(()=>fetchAllStatuses(sha('a'),{request:async url=>({
+  status:200,json:async()=>url.endsWith('page=1')?hundred:[legacy(1,'duplicate')]
+ })}),/duplicated/);
+ await assert.rejects(()=>fetchAllStatuses(sha('a'),{request:async()=>({
+  status:200,json:async()=>[legacy(5,'wrong-sha','success',sha('f'))]
+ })}),/foreign/);
+ await assert.rejects(()=>fetchAllStatuses(sha('a'),{request:async()=>({status:403})}),/unavailable/);
+ const twoHundred=Array.from({length:200},(_,i)=>legacy(i+1,'ctx-'+i));
+ const exact=await fetchAllStatuses(sha('a'),{request:async url=>({
+  status:200,json:async()=>url.endsWith('page=1')?twoHundred.slice(0,100):
+    url.endsWith('page=2')?twoHundred.slice(100):[]
+ })});
+ assert.equal(exact.length,200);
+ await assert.rejects(()=>fetchAllStatuses(sha('a'),{request:async url=>({
+  status:200,json:async()=>url.endsWith('page=1')?twoHundred.slice(0,100):
+    url.endsWith('page=2')?twoHundred.slice(100):[legacy(201,'excess')]
+ })}),/exceeds public audit limit/);
 });
