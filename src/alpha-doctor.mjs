@@ -95,6 +95,7 @@ export async function inspectAlphaLaunch({api,config,tasks}) {
     blockers.add('NEW_TASK_ALREADY_SUBMITTED');
 
   let openIssues=0,writeTasks=0,writeTasksEligible=0,occupiedWriteScopes=0;
+  const independentWriterPartitions=new Set();
   for(const task of tasks) {
     const issue=await api.getIssue(task.repository,task.issue);
     if(!issue||issue.pull_request||
@@ -131,11 +132,13 @@ export async function inspectAlphaLaunch({api,config,tasks}) {
       continue;
     }
     writeTasksEligible++;
+    independentWriterPartitions.add(task.repository.toLowerCase()+'#'+
+      task.resource_scope.id.toLowerCase());
   }
 
   // An alpha should not claim "ready" with one developer or any competing
   // draft. Read-only reviewer tasks can supplement, not replace, two writers.
-  if(writeTasksEligible<2)
+  if(independentWriterPartitions.size<2)
     blockers.add('TWO_DISJOINT_WRITE_TASKS_REQUIRED');
   if(openIssues<2)blockers.add('TWO_OPEN_ISSUES_REQUIRED');
   if(ledger.pending_new_tasks<2)
@@ -155,6 +158,7 @@ export async function inspectAlphaLaunch({api,config,tasks}) {
     new_write_tasks:writeTasks,
     open_issues:openIssues,
     write_tasks_without_pr_overlap:writeTasksEligible,
+    independent_writer_partitions:independentWriterPartitions.size,
     overlapping_write_scopes:occupiedWriteScopes,
     ...ledger,
     blockers:[...blockers].sort(),
