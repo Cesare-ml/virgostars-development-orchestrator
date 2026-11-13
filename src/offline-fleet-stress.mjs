@@ -40,6 +40,15 @@ export function validateArrivalBatches(batches,agents) {
   return [...batches];
 }
 
+/** Reopen only between waves: never before wave one or after the last wave. */
+export function validateReopenAfterWave(value,arrivalBatches) {
+  if(value===null || value===undefined)return null;
+  if(!Number.isSafeInteger(value)||value<1||
+    !Array.isArray(arrivalBatches)||value>=arrivalBatches.length)
+    throw new Error('Reopen-after-wave must be a whole wave index from 1 to batches.length - 1.');
+  return value;
+}
+
 function makeTasks(n) {
   return Array.from({length:n},(_,i)=>{
     const repository=REPOS[i%REPOS.length];
@@ -54,15 +63,22 @@ function makeTasks(n) {
   });
 }
 
-function inMemoryAdapter(tasks) {
-  const ledger=new Map(),pulls=new Map();
-  let seq=0;
+function inMemoryAdapter(tasks,{snapshot=null}={}) {
+  // A reopened adapter receives copied values, never the previous Map or API.
+  // This tests reconstructing a client, not persistence in external storage.
+  if(snapshot!==null && (!Array.isArray(snapshot.ledger) ||
+    !Array.isArray(snapshot.pulls) || !Number.isSafeInteger(snapshot.seq) ||
+    snapshot.seq<0))
+    throw new Error('Invalid synthetic ledger snapshot.');
+  const ledger=new Map(snapshot===null?[]:copy(snapshot.ledger));
+  const pulls=new Map(snapshot===null?[]:copy(snapshot.pulls));
+  let seq=snapshot===null?0:snapshot.seq;
   let attemptedWrites=0;
   const key=(repo,number)=>repo+'#'+number;
   const addPR=(repo,pr,files)=>{
     pulls.set(key(repo,pr.number),{pr:copy(pr),files:copy(files)});
   };
-  for(let i=0;i<tasks.length;i++) {
+  if(snapshot===null)for(let i=0;i<tasks.length;i++) {
     const task=tasks[i];
     addPR(task.repository,{
       number:task.upstream_pr,state:'open',draft:true,
@@ -135,7 +151,13 @@ function inMemoryAdapter(tasks) {
   function count(prefix) {
     return [...ledger.keys()].filter(x=>x.startsWith(prefix+'/')).length;
   }
-  return {api,registerDelivery,ledger,count,writes:()=>attemptedWrites};
+  const snapshotState=()=>({
+    ledger:copy([...ledger.entries()]),
+    pulls:copy([...pulls.entries()]),
+    seq
+  });
+  return {api,registerDelivery,ledger,count,writes:()=>attemptedWrites,
+    snapshot:snapshotState};
 }
 
 /**
@@ -143,11 +165,14 @@ function inMemoryAdapter(tasks) {
  * functions, against a single-event-loop memory adapter. NO remote GitHub
  * atomicity or concurrent browser session guarantees are implied.
  */
-export async function runOfflineFleetStress({agents=40,batches=null}={}) {
+export async function runOfflineFleetStress({
+  agents=40,batches=null,reopenAfterWave=null
+}={}) {
   const n=validateFleetSize(agents);
   const arrivalBatches=validateArrivalBatches(batches,n);
+  const reopenWave=validateReopenAfterWave(reopenAfterWave,arrivalBatches);
   const tasks=makeTasks(n);
-  const mock=inMemoryAdapter(tasks);
+  let mock=inMemoryAdapter(tasks);
   const config={
     claim_store:{repo:LEDGER,branch:BRANCH},
     active_repositories:REPOS.map(full_name=>({
@@ -162,7 +187,9 @@ export async function runOfflineFleetStress({agents=40,batches=null}={}) {
   const attempts=[];
   let nextSession=1;
   let earlierResumes=0;
-  for(const size of arrivalBatches) {
+  let restoredResumes=0;
+  let restoredLedgerEntries=0;
+  for(const [waveIndex,size] of arrivalBatches.entries()) {
     const batch=await Promise.all(Array.from({length:size},(_,i)=>
       claimNext(args(nextSession+i))));
     nextSession+=size;
@@ -174,6 +201,37 @@ export async function runOfflineFleetStress({agents=40,batches=null}={}) {
     expect(mock.count('claims')===attempts.length &&
       mock.count('resources')===attempts.length,
     'later batch changed the expected count of live locks.');
+    if(reopenWave===waveIndex+1) {
+      // Rebuild a completely fresh API/Map pair from a copied snapshot,
+      // then resume with session IDs alone; do not pass cached claim objects.
+      const snapshot=mock.snapshot();
+      const oldLedger=mock.ledger;
+      const restored=inMemoryAdapter(tasks,{snapshot});
+      expect(restored.ledger!==oldLedger &&
+        JSON.stringify(restored.snapshot())===JSON.stringify(snapshot),
+      'reopened adapter changed synthetic ledger or PR metadata.');
+      mock=restored;
+      restoredLedgerEntries=snapshot.ledger.length;
+      expect(mock.count('claims')===attempts.length &&
+        mock.count('resources')===attempts.length &&
+        mock.count('submissions')===0,
+      'reopened adapter lost live issue/resource locks or markers.');
+      const beforeResume=JSON.stringify(mock.snapshot());
+      const recovered=await Promise.all(attempts.map(result=>claimNext({
+        api:mock.api,config,tasks,session:result.claim.session_id,
+        role:'developer'
+      })));
+      expect(recovered.every((result,i)=>result.result==='already-owned' &&
+        result.claim.session_id===attempts[i].claim.session_id &&
+        result.claim.target_repository===attempts[i].claim.target_repository &&
+        result.claim.issue_number===attempts[i].claim.issue_number &&
+        result.claim.resource_scope_id===attempts[i].claim.resource_scope_id),
+      'reopened adapter assigned a second task or changed an owner.');
+      expect(JSON.stringify(mock.snapshot())===beforeResume &&
+        mock.writes()===0,
+      'session recovery mutated restored claims or resource locks.');
+      restoredResumes=recovered.length;
+    }
     if(earlier.length) {
       // Resuming a chat must return its ORIGINAL assignment, not a new one.
       const resumed=await Promise.all(earlier.map(result=>claimNext({
@@ -261,6 +319,11 @@ export async function runOfflineFleetStress({agents=40,batches=null}={}) {
     arrival_batch_sizes:arrivalBatches,
     earlier_session_resumes_verified:earlierResumes,
     earlier_claims_preserved:true,
+    reopened_after_wave:reopenWave,
+    synthetic_adapter_recreated:reopenWave!==null,
+    restored_session_resumes_verified:restoredResumes,
+    restored_ledger_entries_verified:restoredLedgerEntries,
+    real_external_storage_durability_proven:false,
     simulated_repositories:REPOS.length,
     unique_claims:n,
     unique_resource_locks:n,
