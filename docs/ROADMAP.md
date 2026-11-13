@@ -263,3 +263,11 @@ No deploy, production mutation, release, automatic merge, or license change is i
 - [x] Add automated tests, public Node checks and a Windows quickstart with strict limitations.
 - [ ] Verify public Node 20/22 CI at final HEAD and independent source review.
 - [ ] After privately approved ledger cutover, perform an actual cross-chat GitHub integration test with 2 new tasks; do not claim the synthetic rehearsal proves live concurrency.
+
+## Submitted resource-lock orphan recovery (2026-11-13)
+
+- [x] Detect the partial-release case: a write-task `submitted` marker exists, the issue claim is absent, and its resource lock remains.
+- [x] Permit only same-session explicit `submit --pr ORIGINAL_PR --confirm` retry after intact private marker, approved task roots, ownership and SHA-freshness checks.
+- [x] Keep submitted evidence intact, fail closed on foreign resource, scope/PR drift and GitHub delete failures; add targeted regression coverage.
+- [ ] Validate the stacked draft PR with public Node 20/22 CI and independent source review.
+- [ ] Test a real recovery solely in an independently approved PRIVATE owner ledger with synthetic disposable tasks, never on the historical public branch.
