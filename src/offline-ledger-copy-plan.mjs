@@ -8,10 +8,35 @@ import {FROZEN_PUBLIC_LEDGER_HEAD,FROZEN_PUBLIC_SUBMISSIONS} from './private-led
 import {PUBLIC_COORDINATOR} from './private-ledger-preflight.mjs';
 
 const SOURCE_TREE='892d39e23da8f6b4b16c9f2a8099df717b4221e7';
+// SHA-256 of seven sorted (lowercase Git path + ':' + Git blob SHA) lines,
+// each newline terminated. Derived from the frozen public Git tree object,
+// NOT from any owner-supplied local manifest. Do not trust a forged head/tree
+// field as evidence that the seven bytes actually belong to that checkpoint.
+const FROZEN_SUBMISSION_INVENTORY_SHA256='3404e286d189a8860f692f1f23b5373488e033c7c62a2384a1679821ede31d83';
 const MAX_FILE_BYTES=2_000_000;
 const VALID_PATH=/^submissions\/([A-Za-z0-9][A-Za-z0-9_.-]*__[A-Za-z0-9][A-Za-z0-9_.-]*)\/issue-([1-9][0-9]*)\.json$/;
 const fail=reason=>{throw new Error('Copy-only import plan blocked: '+reason);};
 const ROOT=fileURLToPath(new URL('..',import.meta.url));
+
+/**
+ * Stable digest of path/blob identities. Paths and blob names never appear
+ * in public reports. This is intentionally distinct from manifest SHA-256.
+ */
+export function fingerprintSubmissionInventory(records) {
+  if(!Array.isArray(records)||records.some(record=>
+    !record||typeof record.path!=='string'||
+    typeof record.git_blob_sha!=='string'))
+    fail('invalid historical submission inventory.');
+  const lines=records.map(record=>
+    record.path.toLowerCase()+':'+record.git_blob_sha).sort();
+  return createHash('sha256').update(lines.join('\\n')+'\\n').digest('hex');
+}
+
+export function assertFrozenSubmissionInventory(records) {
+  if(fingerprintSubmissionInventory(records)!==FROZEN_SUBMISSION_INVENTORY_SHA256)
+    fail('record inventory does not match frozen public Git tree.');
+  return true;
+}
 
 function submissionIdentity(record) {
   const match=record.path.match(VALID_PATH);
@@ -135,7 +160,14 @@ export async function planLocalCopyOnlyImport(file) {
       fail('owner-local backup must contain valid UTF-8 JSON.');
     }
     const fingerprint=createHash('sha256').update(bytes).digest('hex');
-    return {...planCopyOnlyImport(data),local_manifest_sha256:fingerprint};
+    // The generic pure planner accepts synthetic fixtures. The owner-facing
+    // file/CLI entry point must additionally prove all seven exact Git blobs.
+    assertFrozenSubmissionInventory(data?.source?.records);
+    return {
+      ...planCopyOnlyImport(data),
+      frozen_source_blob_inventory_verified:true,
+      local_manifest_sha256:fingerprint
+    };
   } catch(error) {
     if(error?.message?.startsWith('Copy-only import plan blocked:'))throw error;
     fail('owner-local backup could not be read or verified.');
