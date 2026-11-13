@@ -130,7 +130,7 @@ test('changed-file pagination rejects malformed or oversized data',async()=>{
   const observed=[];
   const call=async(url,options)=>{
     observed.push(options.method);
-    const index=Number(url.match(/page=(\d+)/)?.[1]||0);
+    const index=Number(url.match(/[?&]page=(\d+)/)?.[1]||0);
     return {status:200,json:async()=>index===1
       ? Array.from({length:100},(_,i)=>({filename:'tests/path-'+i,status:'modified'}))
       : [{filename:'tests/tail',status:'modified'}]};
