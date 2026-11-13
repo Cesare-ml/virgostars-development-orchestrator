@@ -6,6 +6,10 @@
 
 The initial objective is to let many independent ChatGPT and Codex conversations coordinate via a shared GitHub-backed task/claim ledger. Roles are dynamically chosen from planner, developer, tester, reviewer, auditor and integrator. GitHub task claims use exclusive creation of one file per issue in the separate `coordination/claims` branch. This is a **limited pilot mechanism**: it does not yet provide cross-task resource locks, automatic expiration or transactionally fenced code writes.
 
+## First usable owner-operated alpha (private ledger required)
+
+A guarded first-alpha CLI path is now proposed in a **stacked draft**, not merged into main. See [FIRST_OWNER_ALPHA.md](docs/FIRST_OWNER_ALPHA.md) for the owner-only Windows quickstart: prepare a separate PRIVATE GitHub ledger, preserve the seven original submitted records byte-for-byte, run the read-only `verify-private-activation` check and only then select the private repository through two matching local environment variables. The old public claim store remains blocked. No automatic migration, hosted scheduler or authorization for public agent writes is provided. Do not reassign already-submitted historic tasks.
+
 ## Future design
 
 - [General onboarding](docs/START_HERE.md) — for a possible future public community.
