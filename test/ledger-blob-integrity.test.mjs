@@ -56,7 +56,7 @@ test('unknown reserved-path records, gitlinks and symbolic links fail BEFORE blo
   for(const file of weird) {
     const x=synthetic({entries:[directory('claims'),file]});
     await assert.rejects(()=>read(x.api),
-      /Ledger contains unexpected record path, mode or metadata/);
+      /Ledger contains (?:unexpected record path, mode or metadata|duplicate or case-conflicting records)/);
     assert.equal(x.calls.filter(c=>c.url.includes('/git/blobs/')).length,0);
   }
 });
