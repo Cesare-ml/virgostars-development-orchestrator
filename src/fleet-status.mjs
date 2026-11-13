@@ -2,6 +2,46 @@ import {taskKey,submissionKey} from './claims.mjs';
 import {resourceKey,resourceMatches,validateTaskCatalog} from './resources.mjs';
 import {assessSubmittedDeveloper} from './review-gates.mjs';
 
+// Group ALL physical issue-claim files, including claims outside the current
+// curated catalog. A submission marker without its claim is not an active lock.
+// Group by case-folded UUID: an agent must not sidestep detection by changing
+// hex letter case. Historical/malformed claim records are review blockers,
+// never candidates for silent lease expiry or automatic reassignment.
+const ACTIVE_SESSION=/^(chat|codex)-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+export function inspectActiveSessionOwnership(entries) {
+  if(!Array.isArray(entries)) throw new Error('Invalid active-claim snapshot.');
+  const sessions=new Map(),invalidPaths=new Set();
+  let activeClaimRecords=0;
+  for(const entry of entries) {
+    if(typeof entry?.path!=='string'||!entry.path.startsWith('claims/'))continue;
+    activeClaimRecords++;
+    const session=entry.data?.session_id;
+    if(typeof session!=='string'||!ACTIVE_SESSION.test(session)) {
+      invalidPaths.add(entry.path);
+      continue;
+    }
+    const normalized=session.toLowerCase();
+    if(!sessions.has(normalized))sessions.set(normalized,[]);
+    sessions.get(normalized).push(entry.path);
+  }
+  const duplicatePaths=new Set();
+  let duplicateSessions=0;
+  for(const paths of sessions.values()) {
+    if(paths.length<2)continue;
+    duplicateSessions++;
+    for(const path of paths)duplicatePaths.add(path);
+  }
+  return {
+    summary:{active_claim_records:activeClaimRecords,active_sessions:sessions.size,
+      duplicate_active_sessions:duplicateSessions,
+      affected_active_claims:duplicatePaths.size,
+      malformed_active_claim_sessions:invalidPaths.size,
+      manual_reconciliation_required:duplicatePaths.size>0||invalidPaths.size>0,
+      authorizes_new_assignments:false},
+    duplicatePaths,invalidPaths
+  };
+}
+
 function matches(item,task) {
   const d=item?.data;
   return d && d.target_repository===task.repository && d.issue_number===task.issue &&
@@ -34,6 +74,7 @@ export async function auditFleet({api,config,tasks}) {
       throw new Error('Duplicate or malformed ledger entry.');
     files.set(entry.path,entry);
   }
+  const sessionAudit=inspectActiveSessionOwnership(snapshot.entries);
   const output=[],used=new Set(),alerts=[];
   const tracked=tasks.filter(t=>config.active_repositories.some(
     r=>r.full_name===t.repository&&r.pilot_enabled));
@@ -99,6 +140,14 @@ export async function auditFleet({api,config,tasks}) {
       state='resource-busy';
       owner=resource.data?.session_id??null;
     }
+    if(claimed && sessionAudit.duplicatePaths.has(tpath)) {
+      warning=[warning,'DUPLICATE_ACTIVE_SESSION_CLAIMS: freeze new assignments and reconcile this owner']
+        .filter(Boolean).join('; ');
+    }
+    if(claimed && sessionAudit.invalidPaths.has(tpath)) {
+      warning=[warning,'MALFORMED_ACTIVE_SESSION: verify legacy claim owner before any reassignment']
+        .filter(Boolean).join('; ');
+    }
     if(issue.state==='closed' && state==='available')state='closed';
     if(issue.state==='closed' && state==='claimed')
       warning='Issue closed while claim remains active';
@@ -123,11 +172,16 @@ export async function auditFleet({api,config,tasks}) {
     .map(e=>e.path);
   if(untracked.length)
     alerts.push({task:'pilot-ledger',reason:untracked.length+' claim/submission entries outside curated task list'});
+  if(sessionAudit.summary.duplicate_active_sessions)
+    alerts.push({task:'pilot-ledger',reason:'DUPLICATE_ACTIVE_SESSION_CLAIMS: manual recovery required'});
+  if(sessionAudit.summary.malformed_active_claim_sessions)
+    alerts.push({task:'pilot-ledger',reason:'MALFORMED_ACTIVE_SESSION: manual recovery required'});
   const counts={total:output.length};
   for(const item of output)counts[item.status]=(counts[item.status]||0)+1;
   return {
     mode:'private-pilot-read-only',ledger_commit:snapshot.head,
     summary:counts,
+    session_integrity:sessionAudit.summary,
     tasks:output,alerts,untracked,
     note:'Submitted is not approved or DONE. Evidence links are identified, not independently adjudicated.'
   };
