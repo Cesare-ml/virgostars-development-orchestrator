@@ -115,8 +115,8 @@ function makeSyntheticGitHub(tasks) {
       },[{filename:task.resource_scope.roots[0],status:'added'}]);
       return {number,head};
     },
-    addCompetingDraft(task){
-      const original=pullRequests.get(task.repository).get(21).pr;
+    addCompetingDraft(task,deliveryNumber){
+      const original=pullRequests.get(task.repository).get(deliveryNumber).pr;
       addPr(task.repository,{
         number:99,state:'open',draft:true,changed_files:1,
         head:{ref:'agent/competing-fixture',sha:HASH(999),
@@ -176,7 +176,7 @@ export async function runOfflineTwoAgentRehearsal() {
   // The first agent must be unable to submit while a second open PR touches
   // its exact allowed file. Retain ownership and lock for safe recovery.
   const first=deliveries[0],second=deliveries[1];
-  mock.addCompetingDraft(first.task);
+  mock.addCompetingDraft(first.task,first.delivery.number);
   let conflictRejected=false;
   try {
     await submit({
