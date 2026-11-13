@@ -1,7 +1,7 @@
 import {createHash} from 'node:crypto';
 import {constants as fsConstants} from 'node:fs';
 import {lstat,open,realpath} from 'node:fs/promises';
-import {dirname,isAbsolute,parse,relative,resolve,sep} from 'node:path';
+import {dirname,isAbsolute,relative,resolve,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {GitHubError} from './github.mjs';
 import {inspectHistoricalSource} from './private-cutover-plan.mjs';
@@ -206,14 +206,14 @@ export async function exportVerifiedLocalLedgerBackup({
   const repo=validateOperatorSelection({
     repository:destination,acknowledgedRepository:acknowledgedDestination
   });
+  // Validate the local path before even examining GitHub capabilities or
+  // reading any private remote record. No input path is ever logged.
+  const path=await assertSafeOutputPath(output);
   const required=[
     'getRepository','getBranchRef','getGitCommit','getGitTree','getGitBlob'
   ];
   if(!api||!required.every(k=>typeof api[k]==='function'))
     fail('required read-only GitHub methods unavailable.');
-
-  // Validate local destination BEFORE reading any private GitHub records.
-  const path=await assertSafeOutputPath(output);
   const source=await inspectHistoricalSource({api});
   if(source.head!==FROZEN_PUBLIC_LEDGER_HEAD||
      source.records.claims!==0||source.records.resources!==0||
