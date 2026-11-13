@@ -10,6 +10,7 @@ export const PUBLIC_REPO = 'Cesare-ml/virgostars-development-orchestrator';
 const SHA = /^[0-9a-f]{40}$/i;
 const MAX_PRS = 12;
 const MAX_RUNS = 200;
+const MAX_STATUSES = 200;
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -59,12 +60,35 @@ function validateRuns(payload) {
   return payload.check_runs;
 }
 
+/**
+ * Legacy commit statuses are a separate GitHub API from check runs. The REST
+ * list is newest-first; only the first entry per context is current.
+ * Fail closed on wrong commit, duplicate IDs, malformed states or large lists.
+ */
+function validateStatuses(statuses, sha) {
+  assert(Array.isArray(statuses) && statuses.length <= MAX_STATUSES,
+    'Invalid or excessive public commit-status inventory.');
+  const ids = new Set();
+  for (const status of statuses) {
+    assert(status && Number.isSafeInteger(status.id) && status.id > 0 &&
+      !ids.has(status.id) &&
+      typeof status.context === 'string' && status.context.length > 0 &&
+      status.context.length <= 200 &&
+      ['pending','success','failure','error'].includes(status.state) &&
+      SHA.test(status.sha || '') && status.sha.toLowerCase() === sha.toLowerCase(),
+    'Malformed or foreign public commit status.');
+    ids.add(status.id);
+  }
+  return statuses;
+}
+
 /** Conservative: every observed run must be completed successfully.
  * Rerun histories and non-required checks can produce review blockers.
  */
-export function inspectSnapshot(pr, number, payload) {
+export function inspectSnapshot(pr, number, payload, statuses = []) {
   validatePr(pr, number);
   const runs = validateRuns(payload);
+  validateStatuses(statuses, pr.head.sha);
   let passed = 0, pending = 0, unsuccessful = 0;
   const names = new Set();
   let repeatedNames = 0;
@@ -75,7 +99,17 @@ export function inspectSnapshot(pr, number, payload) {
     else if (run.conclusion === 'success') passed++;
     else unsuccessful++;
   }
+  const latest = new Map();
+  for (const status of statuses) {
+    const context = status.context.toLowerCase();
+    if (!latest.has(context)) latest.set(context, status.state);
+  }
+  const legacyPending = [...latest.values()].filter(state => state === 'pending').length;
+  const legacyFailed = [...latest.values()].filter(state =>
+    state === 'failure' || state === 'error').length;
   const blockers = [];
+  if (legacyPending) blockers.push('LEGACY_STATUS_PENDING');
+  if (legacyFailed) blockers.push('LEGACY_STATUS_NOT_SUCCESSFUL');
   if (runs.length === 0) blockers.push('NO_CHECK_RUNS_OBSERVED');
   if (pending) blockers.push('CHECK_RUNS_INCOMPLETE');
   if (unsuccessful) blockers.push('CHECK_RUNS_NOT_SUCCESSFUL');
@@ -87,6 +121,9 @@ export function inspectSnapshot(pr, number, payload) {
     pending: pending,
     other_conclusions: unsuccessful,
     repeated_check_names: repeatedNames,
+    legacy_status_contexts: latest.size,
+    legacy_status_contexts_pending: legacyPending,
+    legacy_status_contexts_failed: legacyFailed,
     blockers,
     observed_checks_all_successful: blockers.length === 0
   };
@@ -105,25 +142,36 @@ function runsSignature(payload) {
     .sort((a,b) => a[0] - b[0]));
 }
 
-/** Two complete PR+check scans; a moving check or PR head fails closed. */
-export async function inspectLive({numbers,getPr,getChecks}) {
+function statusSignature(statuses, sha) {
+  validateStatuses(statuses, sha);
+  return JSON.stringify(statuses.map(status =>
+    [status.id,status.sha,status.context,status.state]));
+}
+
+/** Two complete PR+check+legacy-status scans fail closed on moving evidence. */
+export async function inspectLive({numbers,getPr,getChecks,getStatuses}) {
   assert(Array.isArray(numbers) && numbers.length >= 1 && numbers.length <= MAX_PRS &&
     numbers.every(n => Number.isSafeInteger(n) && n > 0) &&
     new Set(numbers).size === numbers.length &&
-    typeof getPr === 'function' && typeof getChecks === 'function',
+    typeof getPr === 'function' && typeof getChecks === 'function' &&
+    typeof getStatuses === 'function',
   'Invalid public audit adapter or PR list.');
   const result = [];
   for (const n of numbers) {
     const beforePr = await getPr(n);
     validatePr(beforePr,n);
     const beforeChecks = await getChecks(beforePr.head.sha);
-    const before = inspectSnapshot(beforePr,n,beforeChecks);
+    const beforeStatuses = await getStatuses(beforePr.head.sha);
+    const before = inspectSnapshot(beforePr,n,beforeChecks,beforeStatuses);
     const afterPr = await getPr(n);
     validatePr(afterPr,n);
     const afterChecks = await getChecks(afterPr.head.sha);
-    const after = inspectSnapshot(afterPr,n,afterChecks);
+    const afterStatuses = await getStatuses(afterPr.head.sha);
+    const after = inspectSnapshot(afterPr,n,afterChecks,afterStatuses);
     assert(prSignature(beforePr) === prSignature(afterPr) &&
-      runsSignature(beforeChecks) === runsSignature(afterChecks),
+      runsSignature(beforeChecks) === runsSignature(afterChecks) &&
+      statusSignature(beforeStatuses,beforePr.head.sha) ===
+      statusSignature(afterStatuses,afterPr.head.sha),
     'PR or checks changed during public scan; rerun entire audit.');
     result.push(after);
     assert(JSON.stringify(before) === JSON.stringify(after),
@@ -140,14 +188,15 @@ export async function inspectLive({numbers,getPr,getChecks}) {
     required_checks_verified:false,
     independent_review_verified:false,
     merge_authorized:false,
-    note:'Observed public check runs are not a branch-protection policy, review or permission to merge.'
+    note:'Observed check runs and legacy commit statuses are not branch-protection policy, independent review or permission to merge.'
   };
 }
 
 /** Only fixed PUBLIC repository and strictly validated PR/check paths. */
 export async function fetchPublicJson(path, {request = fetch} = {}) {
   assert(/^\/pulls\/[1-9][0-9]*$/.test(path) ||
-    /^\/commits\/[0-9a-f]{40}\/check-runs\?per_page=100&page=[12]$/i.test(path),
+    /^\/commits\/[0-9a-f]{40}\/check-runs\?per_page=100&page=[12]$/i.test(path) ||
+    /^\/commits\/[0-9a-f]{40}\/statuses\?per_page=100&page=[1-3]$/i.test(path),
   'Invalid public-only GitHub API path.');
   const response = await request('https://api.github.com/repos/' + PUBLIC_REPO + path, {
     method:'GET',
@@ -189,6 +238,32 @@ export async function fetchAllChecks(sha, {request = fetch} = {}) {
   throw new Error('Check-run inventory exceeds limit.');
 }
 
+/**
+ * Complete bounded newest-first legacy status history, including one empty
+ * terminal page if exactly 200 statuses are returned. Never trust truncation.
+ */
+export async function fetchAllStatuses(sha, {request = fetch} = {}) {
+  assert(typeof sha === 'string' && SHA.test(sha), 'Invalid commit SHA.');
+  const results = [];
+  const ids = new Set();
+  for (let page = 1; page <= 3; page++) {
+    const part = await fetchPublicJson('/commits/' + sha +
+      '/statuses?per_page=100&page=' + page, {request});
+    assert(Array.isArray(part) && part.length <= 100,
+      'Malformed commit-status pagination.');
+    for (const status of part) {
+      assert(Number.isSafeInteger(status?.id) && !ids.has(status.id),
+        'Invalid or duplicated commit-status pagination.');
+      ids.add(status.id);
+      results.push(status);
+    }
+    assert(results.length <= MAX_STATUSES,
+      'Commit-status history exceeds public audit limit.');
+    if (part.length < 100) return validateStatuses(results,sha);
+  }
+  throw new Error('Commit-status inventory pagination did not terminate.');
+}
+
 export async function main(argv = process.argv.slice(2)) {
   if (argv.length === 1 && argv[0] === '--help') {
     process.stdout.write('Public GET-only PR check audit: node scripts/inspect-public-pr-checks.mjs PR1 [PR2...]\n');
@@ -198,7 +273,8 @@ export async function main(argv = process.argv.slice(2)) {
   const result = await inspectLive({
     numbers,
     getPr:n => fetchPublicJson('/pulls/' + n),
-    getChecks:sha => fetchAllChecks(sha)
+    getChecks:sha => fetchAllChecks(sha),
+    getStatuses:sha => fetchAllStatuses(sha)
   });
   process.stdout.write(JSON.stringify(result,null,2)+'\n');
   return result.all_observed_checks_successful ? 0 : 2;
