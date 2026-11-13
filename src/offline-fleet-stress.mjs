@@ -68,12 +68,15 @@ function inMemoryAdapter(tasks,{snapshot=null}={}) {
   // This tests reconstructing a client, not persistence in external storage.
   if(snapshot!==null && (!Array.isArray(snapshot.ledger) ||
     !Array.isArray(snapshot.pulls) || !Number.isSafeInteger(snapshot.seq) ||
-    snapshot.seq<0))
+    snapshot.seq<0 || !Number.isSafeInteger(snapshot.attemptedWrites) ||
+    snapshot.attemptedWrites<0))
     throw new Error('Invalid synthetic ledger snapshot.');
   const ledger=new Map(snapshot===null?[]:copy(snapshot.ledger));
   const pulls=new Map(snapshot===null?[]:copy(snapshot.pulls));
   let seq=snapshot===null?0:snapshot.seq;
-  let attemptedWrites=0;
+  // A resumed synthetic adapter inherits the prior mutation count; otherwise
+  // the report incorrectly understates work done by the pre-reopen waves.
+  let attemptedWrites=snapshot===null?0:snapshot.attemptedWrites;
   const key=(repo,number)=>repo+'#'+number;
   const addPR=(repo,pr,files)=>{
     pulls.set(key(repo,pr.number),{pr:copy(pr),files:copy(files)});
@@ -154,7 +157,8 @@ function inMemoryAdapter(tasks,{snapshot=null}={}) {
   const snapshotState=()=>({
     ledger:copy([...ledger.entries()]),
     pulls:copy([...pulls.entries()]),
-    seq
+    seq,
+    attemptedWrites
   });
   return {api,registerDelivery,ledger,count,writes:()=>attemptedWrites,
     snapshot:snapshotState};
