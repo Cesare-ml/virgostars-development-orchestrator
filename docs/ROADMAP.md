@@ -263,3 +263,11 @@ No deploy, production mutation, release, automatic merge, or license change is i
 - [x] Add automated tests, public Node checks and a Windows quickstart with strict limitations.
 - [ ] Verify public Node 20/22 CI at final HEAD and independent source review.
 - [ ] After privately approved ledger cutover, perform an actual cross-chat GitHub integration test with 2 new tasks; do not claim the synthetic rehearsal proves live concurrency.
+
+## Session ownership cardinality safeguard — 2026-11-13
+
+- [x] Scan the entire enabled task catalog before resuming or acquiring a task; fail closed if the same session owns two or more active issue claims, rather than silently resuming the first.
+- [x] Treat a submitted marker with an active same-session claim as pending release, not available for immediate new assignment; require same-owner release completion or manual recovery.
+- [x] Add deterministic Node tests for duplicate session ownership, pending-release blocking, valid released rescheduling, and a later inconsistent lock that must not be hidden by early return.
+- [ ] Validate Node 20/22 CI and obtain independent review of this small stacked draft PR.
+- [ ] A catalog scan is not transactional enforcement against simultaneous calls sharing one session ID; the owner must assign unique IDs to independently active chats. Real private-ledger pilot remains separately gated.
