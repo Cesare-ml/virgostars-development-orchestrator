@@ -24,7 +24,7 @@ function runs(items = [run(1, 'Node 20 · tests'), run(2, 'Node 22 · tests')], 
   return { total_count, check_runs: items };
 }
 
-function transport({ first = pr(), last = first, pages = [runs()], status = 200 } = {}) {
+function transport({ first = pr(), last = first, third = first, pages = [runs()], checkScans = null, status = 200 } = {}) {
   const calls = [];
   let reads = 0;
   const request = async (url, options) => {
@@ -34,11 +34,12 @@ function transport({ first = pr(), last = first, pages = [runs()], status = 200 
     assert.equal('Authorization' in options.headers, false);
     if (url.includes('/pulls/')) {
       reads++;
-      return { ok: status === 200, json: async () => reads % 2 ? first : last };
+      return { ok: status === 200, json: async () => reads === 1 ? first : reads === 2 ? last : third };
     }
     const page = Number(new URL(url).searchParams.get('page'));
     assert.match(url, /\/commits\/[a-f0-9]{40}\/check-runs\?/);
-    return { ok: status === 200, json: async () => pages[page - 1] };
+    const scanPages = checkScans?.[reads - 1] ?? pages;
+    return { ok: status === 200, json: async () => scanPages[page - 1] };
   };
   return { request, calls };
 }
@@ -49,7 +50,7 @@ test('current commit requires Node 20 and Node 22 exact successful GitHub Action
   assert.equal(report.exit_code, 0);
   assert.equal(report.results[0].evidence_complete, true);
   assert.equal(report.merge_authorized, false);
-  assert.equal(t.calls.length, 3);
+  assert.equal(t.calls.length, 5);
 });
 
 test('missing Node 22 is blocked, not green', async () => {
@@ -111,6 +112,46 @@ test('complete multi-page inventory can pass', async () => {
   const many = Array.from({ length: 100 }, (_, index) => run(index + 1, `extra ${index}`));
   const t = transport({ pages: [runs(many, 102), runs([run(101, 'Node 20 · tests'), run(102, 'Node 22 · tests')], 102)] });
   assert.equal((await auditPublicPrCi([35], t)).exit_code, 0);
+});
+
+
+test('mid-audit CI status change fails closed even with an unchanged PR HEAD', async () => {
+  const t = transport({checkScans: [
+    [runs()],
+    [runs([run(1, 'Node 20 · tests', { conclusion: 'failure' }), run(2, 'Node 22 · tests')])],
+  ]});
+  await assert.rejects(auditPublicPrCi([35], t), {code: 'CHECK_SNAPSHOT_DRIFT'});
+});
+
+test('mid-audit check-run creation or deletion fails closed', async () => {
+  const t = transport({checkScans: [
+    [runs()],
+    [runs([run(1, 'Node 20 · tests')])],
+  ]});
+  await assert.rejects(auditPublicPrCi([35], t), {code: 'CHECK_SNAPSHOT_DRIFT'});
+});
+
+test('mid-audit check app swap fails closed', async () => {
+  const t = transport({checkScans: [
+    [runs()],
+    [runs([run(1, 'Node 20 · tests', {app: {slug: 'other'}}), run(2, 'Node 22 · tests')])],
+  ]});
+  await assert.rejects(auditPublicPrCi([35], t), {code: 'CHECK_SNAPSHOT_DRIFT'});
+});
+
+test('different pagination ordering of the same check runs is stable', async () => {
+  const t = transport({checkScans: [
+    [runs([run(1, 'Node 20 · tests'), run(2, 'Node 22 · tests')])],
+    [runs([run(2, 'Node 22 · tests'), run(1, 'Node 20 · tests')])],
+  ]});
+  assert.equal((await auditPublicPrCi([35], t)).exit_code, 0);
+});
+
+test('PR HEAD change during second check pass is blocked by third PR read', async () => {
+  const t = transport({third: pr(35, {
+    head: {repo: {full_name: repo}, sha: NEXT, ref: 'feature'}
+  })});
+  await assert.rejects(auditPublicPrCi([35], t), {code: 'PR_SNAPSHOT_DRIFT'});
 });
 
 test('API denial never publishes response payload or secrets', async () => {
