@@ -29,7 +29,7 @@ export function fingerprintSubmissionInventory(records) {
     fail('invalid historical submission inventory.');
   const lines=records.map(record=>
     record.path.toLowerCase()+':'+record.git_blob_sha).sort();
-  return createHash('sha256').update(lines.join('\\n')+'\\n').digest('hex');
+  return createHash('sha256').update(lines.join('\n')+'\n').digest('hex');
 }
 
 export function assertFrozenSubmissionInventory(records) {
