@@ -20,6 +20,13 @@ test('two real claim/submit/release paths complete on synthetic in-memory fixtur
   assert.equal(result.competing_pr_recovery_submitted,true);
   assert.equal(result.interrupted_release_blocked,true);
   assert.equal(result.original_owner_retry_succeeded,true);
+  // Both possible sides of an uncertain issue-create response are exercised:
+  // a retained orphan resource before persistence, and a persisted issue
+  // claim with its HTTP response lost. In both cases, the same owner recovers.
+  assert.equal(result.ambiguous_issue_create_before_write_recovered,true);
+  assert.equal(result.ambiguous_issue_create_after_write_resumed,true);
+  assert.equal(result.uncertain_claim_contender_denied,true);
+  assert.equal(result.uncertain_claim_final_locks_cleared,true);
   assert.equal(result.submitted_markers,2);
   assert.equal(result.remaining_issue_claims,0);
   assert.equal(result.remaining_resource_locks,0);
@@ -52,6 +59,9 @@ test('CLI rehearsal runs without GitHub token and never dumps identities',()=>{
   const report=JSON.parse(result.stdout);
   assert.equal(report.result,'synthetic-rehearsal-pass');
   assert.equal(report.github_requests,0);
+  assert.equal(report.ambiguous_issue_create_before_write_recovered,true);
+  assert.equal(report.ambiguous_issue_create_after_write_resumed,true);
+  assert.equal(report.uncertain_claim_contender_denied,true);
   assert.doesNotMatch(result.stdout,
     /example-synthetic|not-a-real|chat-1111|codex-2222|coordination\/claims|GITHUB_TOKEN/);
 });
