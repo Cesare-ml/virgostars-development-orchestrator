@@ -234,3 +234,13 @@ No deploy, production mutation, release, automatic merge, or license change is i
 - [ ] Validate the read-only gate against the owner-selected destination using an authorized local credential; record findings privately.
 - [ ] Curate two new disjoint agent tasks and execute end-to-end live claim/submit/release on the private ledger, including failure recovery, before scaling.
 - [ ] Independent code/security review and owner-controlled merge of the stacked PR chain. Green CI alone is insufficient.
+
+## First alpha local owner task queue — issue #31 (2026-11-13)
+
+- [x] Add a local absolute-path JSON catalog guarded by exact owner-acknowledged SHA-256, without committing new task metadata into the public repository.
+- [x] Prevent selection of the seven historic submitted task identities and reject malformed, duplicate, out-of-fleet or overlapping write tasks.
+- [x] Add offline `fingerprint-tasks` returning only digest and aggregate counts; separate public discovery from private environment variables.
+- [x] Add Windows setup instructions and regression tests for missing approval, unsafe filesystem paths, changed files and no-token mode.
+- [ ] Verify full Node 20/22 CI on the final PR head and independently review all new paths.
+- [ ] After private ledger migration approval, curate two **new** real issues with disjoint root scopes and demonstrate two concurrent sessions.
+- [ ] Do not claim public coordination safety, autonomous scheduling or 40-chat capacity before real testing.
