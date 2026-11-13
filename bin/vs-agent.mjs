@@ -9,6 +9,7 @@ import {rehearseLocalBackupFile} from '../src/offline-cutover-rehearsal.mjs';
 import {assertPrivateLedger,guardLegacyLedgerClient} from '../src/ledger-visibility.mjs';
 import {assertPrivateLedgerActivation} from '../src/private-ledger-activation.mjs';
 import {inspectAlphaLaunch} from '../src/alpha-doctor.mjs';
+import {runOfflineTwoAgentRehearsal} from '../src/offline-two-agent-rehearsal.mjs';
 import { newSession, claim, status, release, handoff, discover } from '../src/claims.mjs';
 import { claimNext } from '../src/queue.mjs';
 import { submit } from '../src/submissions.mjs';
@@ -26,6 +27,7 @@ const usage = [
   'node bin/vs-agent.mjs session [--kind chat|codex]',
   'node bin/vs-agent.mjs fingerprint-tasks ABSOLUTE_LOCAL_FILE.json  # offline; no token or task data printed',
   'node bin/vs-agent.mjs alpha-doctor  # GET-only owner preflight; no claims, no merge',
+  'node bin/vs-agent.mjs rehearse-two-agents  # offline synthetic claim→handoff→submit→release',
   'node bin/vs-agent.mjs discover',
   'node bin/vs-agent.mjs fleet-status  # read-only, all five repositories',
   'node bin/vs-agent.mjs audit-pr OWNER/REPO ISSUE PR_NUMBER  # read-only scope audit',
@@ -84,6 +86,13 @@ async function main() {
       approved:false,
       private_file_uploaded:false
     },null,2)+'\n');
+    return;
+  }
+  if(command==='rehearse-two-agents') {
+    if(positionals.length||Object.keys(flags).length)
+      throw new Error('rehearse-two-agents takes no arguments.');
+    const report=await runOfflineTwoAgentRehearsal();
+    process.stdout.write(JSON.stringify(report,null,2)+'\n');
     return;
   }
   if(command==='alpha-doctor') {
