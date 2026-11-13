@@ -66,6 +66,8 @@ This saves a private immutable `submissions/OWNER__REPO/issue-N.json` marker wit
 
 For connector-only ChatGPT chats, follow [LAUNCH_PRIVATE_MVP.md](LAUNCH_PRIVATE_MVP.md) to create and verify a submission marker **before** deleting the claim. An interrupted `submit` may leave both marker and claim; only the original session or a maintainer may complete the release.
 
+**Concurrent submit protection:** if two requests race to create the immutable submission marker, the CLI verifies the entire task identity, owner, handoff and (for write tasks) audited PR/commit evidence before releasing any claim. A marker with the same session ID but different issue or PR evidence is **not** an idempotent retry: the submission is blocked and the current owner must stop for manual reconciliation. This check does not make separate GitHub reads/writes transactional and never permits bypassing the private-ledger visibility gate.
+
 ## Read-only monitoring of the whole private fleet
 
 Run `node bin/vs-agent.mjs fleet-status` from the feature branch with a private `GITHUB_TOKEN`. This command performs only GitHub reads; it produces structured JSON with an immutable ledger commit, five task states, pending review links, and alerts for mismatched or orphaned locks. It is intended for the maintainer and doesn't autonomously claim, approve, merge or restart work. Full status definitions and first-wave reviewer comments are in [PILOT_MONITOR.md](PILOT_MONITOR.md).
