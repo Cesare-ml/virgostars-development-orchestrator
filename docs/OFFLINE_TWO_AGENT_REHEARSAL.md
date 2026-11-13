@@ -21,7 +21,8 @@ No setup or environment variables needed: the command works without GITHUB_TOKEN
 3. Two synthetic stacked draft PR metadata records are provided, and the agents hand off their exact synthetic PR head SHA through the real handoff function.
 4. An overlapping fake third PR is inserted on the first agent's exact approved test file. The actual submission collision audit must block submission and retain the original owner's claim. After removing the mock collision, the same owner submits successfully and releases both locks.
 5. The second agent's synthetic submission is persisted, but one simulated GitHub compare-and-swap release fails. The submission marker, claim and resource lock must remain intact until the **same original owner** retries. The retry submits without duplicating a marker and releases both locks.
-6. Two submitted markers remain, no issue or resource locks remain, and a third agent must not be offered already-submitted work.
+6. A second injected release fault occurs **after** the issue claim is deleted but before the resource lock is deleted. An identical original-owner `submit --confirm` retry uses the already-persisted, scope-audited submission to recover the orphaned resource; no new claim/marker is created.
+7. Two submitted markers remain, no issue or resource locks remain, and a third agent must not be offered already-submitted work.
 
 The output is a compact JSON report with **aggregate figures only**, such as agents_started_in_parallel, independently_claimed_tasks, competing_pr_submission_blocked, original_owner_retry_succeeded, submitted_markers, and remaining_resource_locks. It deliberately includes flags github_requests: 0, real_private_ledger_verified: false and real_multi_agent_pilot_proven: false.
 
