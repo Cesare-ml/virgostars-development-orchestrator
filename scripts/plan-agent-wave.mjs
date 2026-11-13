@@ -13,9 +13,18 @@ const issueId = (value) => Number.isSafeInteger(value) && value > 0 && value <= 
 const safeRepo = (value) => typeof value === 'string' &&
   /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?\/[A-Za-z0-9][A-Za-z0-9_.-]{0,99}$/.test(value) &&
   !value.split('/').some((p) => p === '.' || p === '..' || p.toLowerCase() === '.git');
+// A trailing slash denotes a directory; a path ending in a filename extension denotes one exact file.
+// Never infer that a bare directory-looking name authorizes a whole subtree.
 const safeRoot = (value) => typeof value === 'string' && value.length <= 160 &&
-  /^(?:[A-Za-z0-9_.-]+\/)+$/.test(value) &&
-  !value.split('/').some((p) => p === '.' || p === '..' || p.toLowerCase() === '.git' || p.toLowerCase() === '.github');
+  /^[A-Za-z0-9_-][A-Za-z0-9_.-]*(?:\/[A-Za-z0-9_-][A-Za-z0-9_.-]*)*\/?$/.test(value) &&
+  (value.endsWith('/') || /\.[A-Za-z0-9_-]+$/.test(value)) &&
+  !value.split('/').filter(Boolean).some((part) =>
+    part.endsWith('.') || /^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(part));
+const rootsOverlap = (left, right) => {
+  const a = left.endsWith('/') ? left.slice(0, -1) : left;
+  const b = right.endsWith('/') ? right.slice(0, -1) : right;
+  return a === b || a.startsWith(`${b}/`) || b.startsWith(`${a}/`);
+};
 
 function normalizeManifest(input) {
   if (!record(input) || !own(input, ['schema_version', 'wave_id', 'tasks']) || input.schema_version !== 1 ||
@@ -44,8 +53,7 @@ function normalizeManifest(input) {
     if (item.role === 'developer') {
       const previous = writeScopes.get(repositoryKey) ?? [];
       for (const root of roots) {
-        if ([...previous, ...roots.filter((other) => other !== root)].some((other) =>
-          root.startsWith(other) || other.startsWith(root))) {
+        if (previous.some((other) => rootsOverlap(root, other))) {
           throw new Error('Overlapping write roots');
         }
         previous.push(root);
