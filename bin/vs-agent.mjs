@@ -13,6 +13,7 @@ import {runOfflineTwoAgentRehearsal} from '../src/offline-two-agent-rehearsal.mj
 import {runOfflineFleetStress} from '../src/offline-fleet-stress.mjs';
 import {exportVerifiedLocalLedgerBackup} from '../src/verified-local-ledger-export.mjs';
 import {planLocalCopyOnlyImport} from '../src/offline-ledger-copy-plan.mjs';
+import {stageOwnerLocalMissingSubmissions} from '../src/owner-local-staging.mjs';
 import { newSession, claim, status, release, handoff, discover } from '../src/claims.mjs';
 import { claimNext } from '../src/queue.mjs';
 import { submit } from '../src/submissions.mjs';
@@ -34,6 +35,7 @@ const usage = [
   'node bin/vs-agent.mjs stress-fleet [--agents 2..40]  # offline synthetic concurrency only',
   'node bin/vs-agent.mjs export-verified-ledger OWNER/PRIVATE-REPO --output ABSOLUTE_BACKUP.json --confirm  # GitHub GET-only; private LOCAL file',
   'node bin/vs-agent.mjs plan-ledger-copy ABSOLUTE_BACKUP.json  # offline copy-only comparison, never writes',
+  'node bin/vs-agent.mjs stage-ledger-copy ABSOLUTE_BACKUP.json --output ABSOLUTE_NEW_FOLDER --confirm  # LOCAL only; approved SHA env required',
   'node bin/vs-agent.mjs discover',
   'node bin/vs-agent.mjs fleet-status  # read-only, all five repositories',
   'node bin/vs-agent.mjs audit-pr OWNER/REPO ISSUE PR_NUMBER  # read-only scope audit',
@@ -92,6 +94,19 @@ async function main() {
       approved:false,
       private_file_uploaded:false
     },null,2)+'\n');
+    return;
+  }
+  if(command==='stage-ledger-copy') {
+    if(positionals.length!==1||
+       Object.keys(flags).some(k=>!['output','confirm'].includes(k))||
+       typeof flags.output!=='string'||flags.confirm!==true)
+      throw new Error('stage-ledger-copy requires one absolute backup path, --output NEW_FOLDER and --confirm.');
+    const result=await stageOwnerLocalMissingSubmissions({
+      manifestFile:positionals[0],outputDirectory:flags.output,
+      approvedSha256:process.env.VS_PRIVATE_BACKUP_APPROVED_SHA256,
+      confirm:true
+    });
+    process.stdout.write(JSON.stringify(result,null,2)+'\n');
     return;
   }
   if(command==='plan-ledger-copy') {
