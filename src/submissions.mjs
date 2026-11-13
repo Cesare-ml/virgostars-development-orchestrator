@@ -43,6 +43,13 @@ export async function submit({api,config,tasks,repo,issue,session,prNumber=null,
       throw new Error('Write submission blocked by competing/open PRs on the same resource: '+
         collisions.candidates.map(p=>'#'+p.number).join(',')+
         '. Review the overlapping branches before submitting.');
+    // Two independent GitHub GET audits are not an atomic snapshot. Reject a
+    // push or rebase between the scope audit and open-PR collision inventory.
+    const delivery=collisions.candidates[0];
+    if(delivery.head_sha!==scopedAudit.pull_request_head ||
+       delivery.base_sha!==scopedAudit.upstream_head ||
+       delivery.base_ref!==scopedAudit.base_branch)
+      throw new Error('Delivery PR changed between scope and collision audits; re-audit before submitting.');
     if(claim.last_handoff.head_sha!==scopedAudit.pull_request_head)
       throw new Error('Handoff head SHA is missing or differs from audited PR head; revalidate work.');
     if(prior && (prior.data.pull_request!==prNumber ||
@@ -64,7 +71,15 @@ export async function submit({api,config,tasks,repo,issue,session,prNumber=null,
       if(!(error instanceof GitHubError) || ![409,422].includes(error.status))
         throw new Error('Submission outcome unknown; inspect ledger before retrying.',{cause:error});
       const concurrent=await api.getClaim(ledger,path,branch);
-      if(concurrent?.data?.session_id!==session || concurrent.data.state!=='submitted')
+      // A matching session alone cannot authorize releasing a task if a
+      // concurrent request recorded another PR, commit or handoff. Only the
+      // immutable task/evidence fields may be considered equivalent; timestamps
+      // can differ between otherwise identical retried requests.
+      const safetyFields=['schema_version','state','target_repository','issue_number',
+        'session_id','role','access','resource_scope_id','last_handoff',
+        'pull_request','audited_head_sha','audited_base_sha','scope_verdict','collision_audit'];
+      if(!concurrent?.data || safetyFields.some(key=>
+        JSON.stringify(concurrent.data[key])!==JSON.stringify(marker[key])))
         throw new Error('Submission conflict; manual review required.');
     }
   }
