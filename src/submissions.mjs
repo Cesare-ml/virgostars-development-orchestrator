@@ -3,6 +3,19 @@ import {GitHubError} from './github.mjs';
 import {auditTaskPullRequest} from './pr-audit.mjs';
 import {auditOpenPullRequestCollisions} from './pr-collisions.mjs';
 
+// A 409/422 may mean another request created the marker after our initial GET.
+// Recover only when its immutable ownership, handoff and audited PR evidence
+// exactly match this attempt. Same session ID alone is never sufficient.
+function sameSubmissionEvidence(actual,expected) {
+  if(!actual || typeof actual!=='object' || !expected)return false;
+  const fields=['schema_version','state','target_repository','issue_number',
+    'session_id','role','access','resource_scope_id','pull_request',
+    'audited_head_sha','audited_base_sha','scope_verdict','collision_audit'];
+  return fields.every(field=>actual[field]===expected[field]) &&
+    ['at','summary','head_sha'].every(field=>
+      actual.last_handoff?.[field]===expected.last_handoff?.[field]);
+}
+
 /**
  * Persist "submitted for review", then release the owner claim.
  * Submission is NOT maintainer approval or DONE.
@@ -58,14 +71,16 @@ export async function submit({api,config,tasks,repo,issue,session,prNumber=null,
       collision_audit:'single-candidate'}:{}),
     note:'Awaiting independent review; not automatically approved or DONE'
   };
+  if(prior && !sameSubmissionEvidence(prior.data,marker))
+    throw new Error('Existing submission evidence differs; manual reconciliation required.');
   if(!prior) {
     try {await api.createClaim(ledger,path,branch,marker);}
     catch(error) {
       if(!(error instanceof GitHubError) || ![409,422].includes(error.status))
         throw new Error('Submission outcome unknown; inspect ledger before retrying.',{cause:error});
       const concurrent=await api.getClaim(ledger,path,branch);
-      if(concurrent?.data?.session_id!==session || concurrent.data.state!=='submitted')
-        throw new Error('Submission conflict; manual review required.');
+      if(!sameSubmissionEvidence(concurrent?.data,marker))
+        throw new Error('Submission conflict: evidence differs; manual reconciliation required.');
     }
   }
   await release({api,config,repo,issue,session,confirm:true});
