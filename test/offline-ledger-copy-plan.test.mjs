@@ -174,6 +174,28 @@ test('frozen inventory digest is deterministic but binds paths and Git blob SHA'
     /record inventory does not match frozen public Git tree/);
 });
 
+// Public Git tree metadata only, without historical record JSON or sessions.
+// Verified against recursive tree 892d39e23da8f6b4b16c9f2a8099df717b4221e7.
+test('all seven frozen public blob identities match the independently pinned digest',()=>{
+  const entries=[
+    ['submissions/Cesare-ml__VirgoStars-Ephemeris/issue-85.json','f9473289a4caaba499244c72b7accc7fad16c312'],
+    ['submissions/Cesare-ml__VirgoStars-Event-Ephemeris/issue-10.json','6fc7c653c07e2e82a2be151bb4d785f99d395d95'],
+    ['submissions/Cesare-ml__astrological-charts/issue-23.json','ac8b5677d9bf2576a35f0ed92e67ebf352b5f1cb'],
+    ['submissions/Cesare-ml__astrological-charts/issue-25.json','6092968aaeac28e38197e55bdc6d8fa59dc30463'],
+    ['submissions/Cesare-ml__astrological-functions/issue-4.json','f999a0a28392b62a161ded680c78fa8fa7fdc1e4'],
+    ['submissions/Cesare-ml__astrological-functions/issue-5.json','32bedddce0663c11a086d0d5bdce375a99975ac9'],
+    ['submissions/Cesare-ml__virgostars-desktop/issue-34.json','aba1b2854a65b5081593c93a34ab8e1995480f5e']
+  ].map(([path,git_blob_sha])=>({path,git_blob_sha}));
+  assert.equal(entries.length,7);
+  assert.equal(fingerprintSubmissionInventory(entries),
+    '3404e286d189a8860f692f1f23b5373488e033c7c62a2384a1679821ede31d83');
+  assert.equal(assertFrozenSubmissionInventory(entries),true);
+  const altered=clone(entries);
+  altered[6].path=altered[6].path.replace('34.json','35.json');
+  assert.throws(()=>assertFrozenSubmissionInventory(altered),
+    /record inventory does not match frozen public Git tree/);
+});
+
 test('local file reader rejects relative, in-checkout and symlink paths',async t=>{
   const {file,dir}=await tmp(t);
   await assert.rejects(()=>planLocalCopyOnlyImport('./file.json'),
