@@ -4,6 +4,8 @@ The owner-operated Alpha uses a **separate PRIVATE** coordination ledger and a *
 
 For a tokenless, synthetic two-agent claim→submit→release regression check before the private ledger is ready, see [OFFLINE_TWO_AGENT_REHEARSAL.md](OFFLINE_TWO_AGENT_REHEARSAL.md). That rehearsal cannot substitute for this live readiness gate.
 
+For a larger **synthetic-only** contention exercise across 2–40 in-memory agents, see [OFFLINE_FLEET_STRESS.md](OFFLINE_FLEET_STRESS.md). It does not verify live GitHub performance.
+
 ## Preflight steps on Windows
 
 1. Follow [FIRST_OWNER_ALPHA.md](FIRST_OWNER_ALPHA.md). Independently provision and review a PRIVATE GitHub coordination repository, reconcile the historical seven submitted markers **byte-for-byte**, and verify the frozen public ledger no longer has active claims.
