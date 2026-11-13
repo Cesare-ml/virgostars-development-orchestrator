@@ -42,7 +42,7 @@ A local backup manifest is a JSON object with *exactly* the following shape (val
 
 The source head and tree are **claimed by the locally supplied manifest**, not authenticated by this offline command. A destination without a branch uses `head_sha:null`, `tree_sha:null` and **no records**. If its branch exists, both hashes must be valid SHA-1 IDs and the records must be separately exported.
 
-The manifest must be assembled and retained privately by the owner. A separate, reviewed export utility is still needed for complete authenticated Git tree backups. The rehearsal only understands the record partitions `claims/`, `resources/` and `submissions/`; **other tracked files and historical Git commits are NOT included** in these record-only exports.
+The manifest must be assembled and retained privately by the owner. An owner-local **record-only** authenticated blob exporter is now proposed in [VERIFIED_LOCAL_LEDGER_EXPORT.md](VERIFIED_LOCAL_LEDGER_EXPORT.md). It verifies individual source/destination blob provenance and writes a private local manifest, but it is **not** a complete Git tree or repository mirror backup. A separately verified full Git mirror remains mandatory. The rehearsal only understands the record partitions `claims/`, `resources/` and `submissions/`; **other tracked files and historical Git commits are NOT included** in these record-only exports.
 
 ## What is verified
 
