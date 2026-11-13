@@ -291,3 +291,12 @@ No deploy, production mutation, release, automatic merge, or license change is i
 - [x] Add synthetic tests for byte drift, partial/replayed backups, active records, safe local filesystem reading and CLI exit codes.
 - [ ] Verify public Node 20/22 CI and independent source review.
 - [ ] Private repository, full Git mirror backups and explicit owner-approved remote copy-only transfer remain incomplete; do not activate live agents until verified.
+
+## Owner-only missing-submission local staging — issue #85 (2026-11-13)
+
+- [x] Require exact SHA-256 approval and explicit confirmation for sensitive record-only staging.
+- [x] Validate immutable seven historical submitted records against the previously verified local manifest and stage only missing byte-exact copies into a fresh protected directory outside the public checkout.
+- [x] Refuse missing private branch, existing/conflicting/destination-only records, output overwrite, symlink parents or unapproved backup; verify every staged file and remove temporary directory on write failure.
+- [x] Cover real staging filesystem operations with synthetic records and tokenless CLI tests; document Windows steps and security limitations.
+- [ ] Verify final PR Node 20/22 CI; perform independent code review before merge.
+- [ ] Provision owner PRIVATE ledger, obtain complete Git mirror backups and carry out separately approved live copy-only migration, then a two-chat real Alpha. No public ledger writes.
