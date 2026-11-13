@@ -2,6 +2,7 @@ import {assertSession, status, release, submissionKey} from './claims.mjs';
 import {GitHubError} from './github.mjs';
 import {auditTaskPullRequest} from './pr-audit.mjs';
 import {auditOpenPullRequestCollisions} from './pr-collisions.mjs';
+import {recoverSubmittedResourceRelease} from './submission-release-recovery.mjs';
 
 /**
  * Persist "submitted for review", then release the owner claim.
@@ -22,7 +23,15 @@ export async function submit({api,config,tasks,repo,issue,session,prNumber=null,
   if(observed.status==='submitted') {
     if(!prior || prior.data.session_id!==session)
       throw new Error('Submission belongs to another session.');
-    return {result:'already-submitted',task:repo+'#'+issue};
+    // GitHub deletes the issue claim and resource lock in separate commits.
+    // If the first deletion succeeded but the second failed, complete only
+    // the stale resource release after verifying the same immutable marker,
+    // owner session, approved scope and absence of any active issue claim.
+    const recovered=await recoverSubmittedResourceRelease({
+      api,config,tasks,repo,issue,session,prior
+    });
+    return {result:'already-submitted',task:repo+'#'+issue,
+      ...(recovered?{recovered_resource_lock:true}:{})};
   }
   if(observed.status!=='claimed' || observed.claim.session_id!==session)
     throw new Error('Only the current task owner may submit.');
