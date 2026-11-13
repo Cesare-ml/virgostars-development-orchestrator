@@ -106,7 +106,7 @@ test('path traversal, symlinks in manifest, Windows paths and case-folded duplic
   assert.throws(()=>rehearseLedgerBackups(manifest([record(path)])),
     /unsafe, unsupported or malformed record/);
  }
- const a=s1(),b={...s1(),path:s1().path.toUpperCase()};
+ const a=s1(),b={...s1(),path:'submissions/SOURCE-PROJECT/issue-1.json'};
  assert.throws(()=>rehearseLedgerBackups(manifest([a,b])),
    /duplicate or case-colliding/);
 });
@@ -159,7 +159,8 @@ test('offline CLI does not require GitHub token or load the blocked legacy claim
   assert.doesNotMatch(missing.stderr,/absent\.json/);
  } finally {await rm(directory,{recursive:true,force:true});}
 });
-test('rejects filesystem symlinks and oversized JSON without printing local path',async()=>{
+test('rejects filesystem symlinks and oversized JSON without printing local path',
+  {skip:process.platform==='win32'?'Windows symlink privileges vary':false},async()=>{
  const directory=await mkdtemp(join(tmpdir(),'vs-cutover-safety-'));
  try {
   const good=join(directory,'valid.json');
