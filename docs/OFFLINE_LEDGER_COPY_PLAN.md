@@ -39,3 +39,7 @@ The next phases are separate and still require your active review:
 4. Activate the separate SHA-approved owner task catalog, run alpha-doctor, then test just **two real developer chats** with exclusive claim/submit/release before considering 40.
 
 The public repository contains only this checker and synthetic test records. Never commit, publish or paste the actual local backup.
+
+## Prepare a safe local staging folder (does not import)
+
+For a conflict-free local copy plan with an existing PRIVATE branch in the approved snapshot, [OWNER_LOCAL_STAGING.md](OWNER_LOCAL_STAGING.md) documents `stage-ledger-copy`: it requires an exact SHA-256 approval and writes only the still-missing historical records into a **new private local directory**. Never confuse this staging step with an actual GitHub private-ledger import.
