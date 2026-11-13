@@ -116,6 +116,8 @@ test('owner alpha doctor allows two distinct unclaimed write tasks after histori
   assert.equal(report.historical_submissions_preserved,7);
   assert.equal(report.new_write_tasks,2);
   assert.equal(report.write_tasks_without_pr_overlap,2);
+  assert.equal(report.eligible_developer_tasks,2);
+  assert.equal(report.independent_developer_partitions,2);
   assert.equal(report.recorded_submissions,7);
   assert.equal(report.work_claimed,false);
   assert.equal(report.merge_authorized,false);
@@ -172,6 +174,32 @@ test('two task issues sharing the same resource partition are NOT two simultaneo
   assert.equal(report.independent_writer_partitions,1);
   assert.equal(report.ready_for_manual_pilot,false);
   assert.ok(report.blockers.includes('TWO_DISJOINT_WRITE_TASKS_REQUIRED'));
+});
+
+test('first-alpha readiness needs two developers, not only tester writers',async()=>{
+  for(const roles of [['tester','tester'],['developer','tester']]) {
+    const x=fixture();
+    const candidate=clone(tasks);
+    roles.forEach((role,i)=>{candidate[i].role=role;});
+    const report=await inspectAlphaLaunch({api:x.api,config,tasks:candidate});
+    assert.equal(report.ready_for_manual_pilot,false);
+    assert.equal(report.write_tasks_without_pr_overlap,2);
+    assert.equal(report.independent_writer_partitions,2);
+    assert.equal(report.eligible_developer_tasks,roles.filter(r=>r==='developer').length);
+    assert.equal(report.independent_developer_partitions,
+      roles.filter(r=>r==='developer').length);
+    assert.ok(report.blockers.includes('TWO_ELIGIBLE_DEVELOPER_TASKS_REQUIRED'));
+    assert.doesNotMatch(JSON.stringify(report),/owner\/|doctor-chart-test|feature\//);
+  }
+});
+
+test('first-alpha readiness rejects non-ready tasks before contacting GitHub',async()=>{
+  const x=fixture();
+  const candidate=clone(tasks);
+  candidate[0].status='planned';
+  await assert.rejects(()=>inspectAlphaLaunch({api:x.api,config,tasks:candidate}),
+    /all curated first-alpha tasks must be ready/);
+  assert.deepEqual(x.calls,[]);
 });
 
 test('open competing PR touching exact task root blocks launch',async()=>{
