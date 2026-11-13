@@ -114,3 +114,7 @@ Before proposing the first two new developer chats, follow [docs/ALPHA_READINESS
 ## Offline two-agent rehearsal (synthetic only)
 
 Before a live owner-operated pilot, run `node bin/vs-agent.mjs rehearse-two-agents` and review [docs/OFFLINE_TWO_AGENT_REHEARSAL.md](docs/OFFLINE_TWO_AGENT_REHEARSAL.md). The command uses only synthetic in-memory GitHub data, even with private environment variables set. It exercises actual claim/handoff/submit/release functions, overlapping PR submission blockers and owner retry after interrupted release. Never represent synthetic pass as proof of a live private ledger, human code review, real branch tests, GitHub write concurrency or a deployed coordinator. No public ledger operations are authorized.
+
+## Synthetic fleet stress (bounded to 40)
+
+The optional `node bin/vs-agent.mjs stress-fleet --agents 40` is an offline, single-process regression harness using fictional repositories and in-memory GitHub data. Consult [docs/OFFLINE_FLEET_STRESS.md](docs/OFFLINE_FLEET_STRESS.md). Never claim that its green result proves multi-browser concurrency, a secure deployed coordinator, authenticated production permissions, or an owner-approved private ledger. Real issue/resource locks remain mandatory for every agent.
