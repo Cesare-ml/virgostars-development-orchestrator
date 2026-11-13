@@ -37,6 +37,8 @@ $env:VS_PRIVATE_LEDGER_APPROVED_REPO="OWNER/PRIVATE-REPOSITORY"
 # Supply GITHUB_TOKEN via a trusted local credential manager.
 node bin/vs-agent.mjs fleet-status
 node bin/vs-agent.mjs discover
+# After configuring the SHA-approved local queue, verify launch readiness:
+node bin/vs-agent.mjs alpha-doctor
 node bin/vs-agent.mjs session --kind codex
 ~~~
 
