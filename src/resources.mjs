@@ -34,12 +34,23 @@ function rootsOverlap(a, b) {
 export function validateTaskCatalog(tasks) {
   if (!Array.isArray(tasks)) throw new Error('Expected a task array.');
   const keys = new Set();
+  const repoSpellings = new Map();
   const writers = [];
   for (const task of tasks) {
     if (!task || !REPO.test(task.repository)
       || !Number.isSafeInteger(task.issue) || task.issue < 1)
       throw new Error('Invalid curated task identity.');
-    const key = task.repository.toLowerCase() + '#' + task.issue;
+    // GitHub resolves repository names without regard to letter case, but
+    // the Contents API stores claim/resource *paths* case-sensitively. A
+    // differently cased alias could therefore acquire a second lock for
+    // the same real repository and partition. Never rewrite legacy keys:
+    // reject conflicting spellings before any coordination API call.
+    const canonicalRepo = task.repository.toLowerCase();
+    const existingSpelling = repoSpellings.get(canonicalRepo);
+    if (existingSpelling !== undefined && existingSpelling !== task.repository)
+      throw new Error('Conflicting repository capitalization in curated tasks.');
+    repoSpellings.set(canonicalRepo, task.repository);
+    const key = canonicalRepo + '#' + task.issue;
     if (keys.has(key)) throw new Error('Duplicate curated task: ' + key);
     keys.add(key);
     if (task.access === 'read') {
