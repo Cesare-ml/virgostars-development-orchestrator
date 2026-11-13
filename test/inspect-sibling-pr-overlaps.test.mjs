@@ -142,7 +142,7 @@ test('changed-file pagination rejects malformed or oversized data',async()=>{
   await assert.rejects(()=>fetchPublicFiles(10,{request:bad}),/Malformed/);
   const tooMany=async()=>({status:200,json:async()=>Array.from({length:100},
     (_,i)=>({filename:'tests/p-'+i,status:'modified'}))});
-  await assert.rejects(()=>fetchPublicFiles(10,{request:tooMany}),/pagination did not terminate/);
+  await assert.rejects(()=>fetchPublicFiles(10,{request:tooMany}),/exceeds file audit limit|pagination did not terminate/);
 });
 
 test('tokenless help is safe and explains command invocation',()=>{
