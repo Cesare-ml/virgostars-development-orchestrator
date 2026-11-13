@@ -1,3 +1,78 @@
+import {createHash} from 'node:crypto';
+import {TextDecoder} from 'node:util';
+
+const SHA_1=/^[0-9a-f]{40}$/i;
+const LEDGER_NAMESPACES=new Set(['claims','resources','submissions']);
+const ENCODED_REPO=/^[A-Za-z0-9][A-Za-z0-9._-]*__[A-Za-z0-9][A-Za-z0-9._-]*$/;
+const ISSUE_FILE=/^issue-([1-9][0-9]*)\.json$/;
+const RESOURCE_FILE=/^[a-z][a-z0-9_-]{0,63}\.json$/;
+
+/**
+ * Git trees may contain symlinks, subtrees and case-colliding names. Never
+ * silently omit these from an owner-only coordination snapshot: a hidden
+ * claim or lock must block startup rather than look like an unclaimed task.
+ */
+export function inspectLedgerTreeEntries(tree) {
+  if(!Array.isArray(tree) || tree.length>2000)
+    throw new Error('Ledger Git tree missing or exceeds inspection limit.');
+  const records=[],seen=new Set();
+  for(const entry of tree) {
+    if(!entry || typeof entry.path!=='string')
+      throw new Error('Invalid ledger Git tree entry metadata.');
+    const parts=entry.path.split('/');
+    const root=parts[0]?.toLowerCase();
+    if(!LEDGER_NAMESPACES.has(root)) continue;
+    const folded=entry.path.toLowerCase();
+    if(seen.has(folded))throw new Error('Duplicate or case-conflicting ledger path.');
+    seen.add(folded);
+    if(parts[0]!==root || parts.length>3 || parts.some(x=>!x||x==='.'||x==='..'))
+      throw new Error('Unexpected ledger record path.');
+    if(parts.length===1 || parts.length===2) {
+      if(parts.length===2 && !ENCODED_REPO.test(parts[1]))
+        throw new Error('Unexpected ledger repository directory.');
+      if(entry.type!=='tree' || entry.mode!=='040000' || !SHA_1.test(entry.sha||''))
+        throw new Error('Unexpected ledger directory object.');
+      continue;
+    }
+    const file=parts[2];
+    const match=root==='resources'?RESOURCE_FILE.test(file):ISSUE_FILE.exec(file);
+    if(!ENCODED_REPO.test(parts[1]) || !match ||
+       (root!=='resources' && !Number.isSafeInteger(Number(match[1]))))
+      throw new Error('Noncanonical ledger record path.');
+    if(entry.type!=='blob' || entry.mode!=='100644' ||
+       !SHA_1.test(entry.sha||'') || !Number.isSafeInteger(entry.size) ||
+       entry.size<1 || entry.size>65536)
+      throw new Error('Invalid or unsafe ledger record object.');
+    records.push(entry);
+    if(records.length>250)
+      throw new Error('Ledger contains too many entries for the pilot.');
+  }
+  return records;
+}
+
+function decodeLedgerRecord(blob,entry) {
+  if(blob?.encoding!=='base64' || typeof blob.content!=='string' ||
+     blob.content.length>90000 || !SHA_1.test(blob.sha||'') ||
+     blob.sha.toLowerCase()!==entry.sha.toLowerCase() ||
+     blob.size!==entry.size)
+    throw new Error('Invalid Git blob metadata for ledger record.');
+  const base64=blob.content.replace(/\s/g,'');
+  if(!base64 || base64.length%4!==0 || !/^[A-Za-z0-9+/]+={0,2}$/.test(base64))
+    throw new Error('Malformed ledger record base64.');
+  const raw=Buffer.from(base64,'base64');
+  if(raw.length!==entry.size || raw.toString('base64')!==base64)
+    throw new Error('Ledger record content length or encoding mismatch.');
+  const digest=createHash('sha1').update('blob '+raw.length+'\0').update(raw).digest('hex');
+  if(digest.toLowerCase()!==entry.sha.toLowerCase())
+    throw new Error('Ledger record Git blob hash mismatch.');
+  let data;
+  try {data=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(raw));}
+  catch {throw new Error('Invalid ledger JSON record.');}
+  if(!data || typeof data!=='object' || Array.isArray(data))
+    throw new Error('Ledger JSON record must be an object.');
+  return data;
+}
+
 export class GitHubError extends Error {
   constructor(status) {
     super('GitHub request failed (HTTP ' + status + ')');
@@ -60,18 +135,17 @@ export function makeGitHubClient({ token, fetchImpl = fetch, baseUrl = 'https://
       const listing=await request('GET','/repos/'+repo+'/git/trees/'+treeSha+'?recursive=1');
       if(listing?.truncated || !Array.isArray(listing?.tree))
         throw new Error('Ledger tree is truncated or malformed; status cannot be trusted.');
-      const relevant=listing.tree.filter(e=>e.type==='blob' &&
-        /^(claims|resources|submissions)\//.test(e.path));
-      if(relevant.length>250) throw new Error('Ledger contains too many entries for the pilot.');
+      const relevant=inspectLedgerTreeEntries(listing.tree);
       const entries=await Promise.all(relevant.map(async e=>{
-        if(!/^[0-9a-f]{40}$/i.test(e.sha||'') || e.size>65536)
-          throw new Error('Invalid or oversized ledger entry.');
         const blob=await request('GET','/repos/'+repo+'/git/blobs/'+e.sha);
-        if(blob?.encoding!=='base64' || typeof blob.content!=='string')
-          throw new Error('Invalid Git blob encoding for ledger entry.');
-        const raw=Buffer.from(blob.content.replace(/\s/g,''),'base64').toString('utf8');
-        return {path:e.path,sha:e.sha,data:JSON.parse(raw)};
+        return {path:e.path,sha:e.sha,data:decodeLedgerRecord(blob,e)};
       }));
+      // A correct pinned tree is not a current ledger snapshot if the branch
+      // moved while blobs were being inspected.
+      const finalRef=await request('GET','/repos/'+repo+'/git/ref/heads/'+branch);
+      if(finalRef?.object?.type!=='commit' ||
+         finalRef.object.sha!==head)
+        throw new Error('Ledger branch moved during snapshot read.');
       return {head,entries};
     },
     async getClaim(repo, path, branch) {
