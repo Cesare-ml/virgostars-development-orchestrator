@@ -1,5 +1,5 @@
 import {createHash} from 'node:crypto';
-import {open, lstat, realpath} from 'node:fs/promises';
+import {open, lstat, realpath, readFile} from 'node:fs/promises';
 import {constants} from 'node:fs';
 import {isAbsolute,relative,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -37,6 +37,7 @@ export function validateOwnerTaskCatalog(catalog,legacyTasks=[]) {
 
   const historical=new Set(legacyTasks.map(task=>
     task.repository.toLowerCase()+'#'+task.issue));
+  const permittedRepositories=new Set(legacyTasks.map(task=>task.repository.toLowerCase()));
   for(const task of catalog.tasks) {
     if(!exactKeys(task,ALLOWED_TASK_FIELDS) ||
        task.status!=='ready' ||
@@ -50,6 +51,9 @@ export function validateOwnerTaskCatalog(catalog,legacyTasks=[]) {
          (!Number.isSafeInteger(task.upstream_pr)||task.upstream_pr<1)) ||
        (task.upstream_branch!==undefined&&!safeText(task.upstream_branch,200)))
       blocked('a new task has malformed or unexpected fields.');
+    if(typeof task.repository!=='string'||!Number.isSafeInteger(task.issue)||
+       task.issue<1||!permittedRepositories.has(task.repository.toLowerCase()))
+      blocked('the new task targets a repository outside the approved first fleet.');
     if(historical.has(task.repository.toLowerCase()+'#'+task.issue))
       blocked('new tasks may not reuse the original seven submitted issues.');
     // A new write task must have a reviewed base dependency; never assume
@@ -123,8 +127,7 @@ export function requireOwnerTaskApproval(report,approvedSha256) {
 }
 
 export async function loadHistoricalPilotTasks() {
-  const catalog=JSON.parse(await (await import('node:fs/promises')).readFile(
-    LEGACY_PATH,'utf8'));
+  const catalog=JSON.parse(await readFile(LEGACY_PATH,'utf8'));
   return validateTaskCatalog(catalog.tasks);
 }
 
