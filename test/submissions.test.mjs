@@ -13,15 +13,21 @@ const tasks=[{repository:repo,issue:23,role:'reviewer',status:'ready',access:'re
  status:'ready',access:'read',title:'Another review'}];
 
 function fake(){
- const files=new Map();let sequence=0,failOn=null;
+ const files=new Map();let sequence=0,failOn=null,submissionRace=null;
  return {files,
   failDeleteOnce(){failOn='delete';},
   failSubmissionCreateOnce(){failOn='submission';},
+  raceSubmissionCreateWith(transform){submissionRace=transform;},
   async getIssue(){return {state:'open'};},
   async getClaim(_r,path){return files.has(path)?structuredClone(files.get(path)):null;},
   async createClaim(_r,path,_b,data){
    if(failOn==='submission' && path.startsWith('submissions/')){
      failOn=null;throw new Error('network disconnected');
+   }
+   if(submissionRace && path.startsWith('submissions/')) {
+     const transform=submissionRace;submissionRace=null;
+     files.set(path,{sha:String(++sequence),data:transform(structuredClone(data))});
+     throw new GitHubError(422);
    }
    if(files.has(path))throw new GitHubError(422);
    files.set(path,{sha:String(++sequence),data:structuredClone(data)});
@@ -107,4 +113,42 @@ test('cannot re-submit a task using another session after completion',async()=>{
  await submit({...common(api,session),confirm:true});
  assert.equal((await submit({...common(api,session),confirm:true})).result,'already-submitted');
  await assert.rejects(()=>submit({...common(api,other),confirm:true}),/Foreign or invalid/);
+});
+
+test('same-session create collision with different handoff evidence cannot release owner',async()=>{
+ const api=fake(),session=newSession();
+ await ready(api,session);
+ api.raceSubmissionCreateWith(marker=>({
+   ...marker,last_handoff:{...marker.last_handoff,summary:'Conflicting concurrent handoff'}
+ }));
+ await assert.rejects(()=>submit({...common(api,session),confirm:true}),
+   /Submission evidence conflict/);
+ const observed=await status(common(api,session));
+ assert.equal(observed.status,'claimed');
+ assert.equal(observed.claim.session_id,session);
+ assert.equal(observed.submitted,true);
+ assert.ok(api.files.has(submissionKey(repo,23)));
+});
+
+test('identical same-session create collision is an idempotent successful submission',async()=>{
+ const api=fake(),session=newSession();
+ await ready(api,session);
+ api.raceSubmissionCreateWith(marker=>marker);
+ const result=await submit({...common(api,session),confirm:true});
+ assert.equal(result.result,'submitted');
+ assert.equal((await status(common(api,session))).status,'submitted');
+});
+
+test('changed handoff after interrupted release blocks reuse of stored submission',async()=>{
+ const api=fake(),session=newSession();
+ await ready(api,session);
+ api.failDeleteOnce();
+ await assert.rejects(()=>submit({...common(api,session),confirm:true}),
+   /Claim changed concurrently/);
+ await handoff({...common(api,session),summary:'Different review evidence following interruption.'});
+ await assert.rejects(()=>submit({...common(api,session),confirm:true}),
+   /Existing submission evidence differs/);
+ const observed=await status(common(api,session));
+ assert.equal(observed.status,'claimed');
+ assert.equal(observed.submitted,true);
 });
