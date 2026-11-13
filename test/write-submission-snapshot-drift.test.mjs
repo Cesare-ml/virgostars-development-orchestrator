@@ -120,7 +120,7 @@ for(const markerRace of ['different-head','different-handoff']) {
   test('same-session competing submission with '+markerRace+' evidence cannot release locks',async()=>{
     const api=adapter({markerRace}),session=await prepare(api);
     await assert.rejects(()=>submit({api,config,tasks,repo:R,issue:501,
-      session,prNumber:20,confirm:true}),/Submission evidence conflict; manual review required/);
+      session,prNumber:20,confirm:true}),/Submission evidence conflict; manual reconciliation required/);
     assert.equal(api.records.has(submissionKey(R,501)),true);
     assert.equal(api.records.has(taskKey(R,501)),true);
     assert.equal(api.records.has(resourceKey(R,task.resource_scope.id)),true);
