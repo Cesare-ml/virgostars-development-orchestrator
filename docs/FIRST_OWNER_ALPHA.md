@@ -42,7 +42,7 @@ node bin/vs-agent.mjs session --kind codex
 
 The duplicated repo name is an explicit operator acknowledgement, **not an authentication secret**. Do not commit it. Every protected CLI invocation performs live visibility and source/submission preservation checks before using the private branch; each ledger operation also verifies private visibility. The legacy default continues to reject the old public repository.
 
-The five original reviewer tasks and two developer tasks are already submitted. Preserving their seven markers means these old READY catalog entries must not become eligible again. Before assigning more development work, review and approve **new** tasks with unique issues and disjoint resource scopes. Existing overlapping Charts draft PRs must also be reconciled.
+The five original reviewer tasks and two developer tasks are already submitted. Preserving their seven markers means these old READY catalog entries must not become eligible again. Before assigning more development work, review and approve **new** tasks with unique issues and disjoint resource scopes. See [OWNER_TASK_QUEUE.md](OWNER_TASK_QUEUE.md): the operator may keep this queue outside the public checkout and approve its exact SHA-256 locally. Public discovery must never read it. Existing overlapping Charts draft PRs must also be reconciled.
 
 ## Launch two independent agent sessions after approved cutover
 
