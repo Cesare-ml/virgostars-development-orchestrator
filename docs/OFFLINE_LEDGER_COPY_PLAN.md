@@ -37,6 +37,8 @@ It returns exit 0 for a conflict-free *offline plan* and exit 2 for review block
 
 The backup input must be an absolute local regular JSON file outside this public checkout. Symlinks, oversized/malformed files, tampered Git blobs and changed files during the read are rejected. The planner leaves the input unchanged and creates no output files.
 
+The owner-local reader checks that its opened file descriptor matches the original file's **device, inode, size, modification time and change time**, then repeats the comparison after reading. This closes a gap where a path could be swapped between `lstat` and `open` while keeping the same byte count. On filesystems that do not provide reliable inode identities, this remains best-effort; the operator must keep the private backup folder under their own control, and a successful offline check is never authorization to import.
+
 ## After planning
 
 The next phases are separate and still require your active review:
