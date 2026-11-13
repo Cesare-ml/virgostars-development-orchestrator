@@ -1,4 +1,5 @@
 import {createHash} from 'node:crypto';
+import {constants as fsConstants} from 'node:fs';
 import {lstat,open} from 'node:fs/promises';
 import {resolve} from 'node:path';
 
@@ -27,7 +28,8 @@ function safeRecordPath(path) {
      path.startsWith('/')||!path.endsWith('.json'))return false;
   const parts=path.split('/');
   return parts.length>=3&&ROOTS.includes(parts[0])&&
-    parts.slice(1).every(p=>p&&p!=='.'&&p!=='..');
+    parts.slice(1).every(p=>p&&p!=='.'&&p!=='..'&&p.toLowerCase()!=='.git'&&
+      !/^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\.|$)/i.test(p));
 }
 function gitBlobHash(bytes) {
   return createHash('sha1')
@@ -153,13 +155,21 @@ export async function rehearseLocalBackupFile(file) {
     if(!stat.isFile()||stat.isSymbolicLink()||
        stat.size>MAX_EXPORT_BYTES||stat.size<2)
       fail('backup input must be a bounded regular file.');
-    handle=await open(path,'r');
+    handle=await open(path,fsConstants.O_RDONLY|(fsConstants.O_NOFOLLOW||0));
+    const opened=await handle.stat();
+    if(!opened.isFile()||opened.size!==stat.size)
+      fail('backup file changed or is not a regular file.');
     const buffer=Buffer.alloc(MAX_EXPORT_BYTES+1);
-    const {bytesRead}=await handle.read(buffer,0,buffer.length,0);
-    if(bytesRead>MAX_EXPORT_BYTES||bytesRead<2)
-      fail('backup manifest exceeds safe size limits.');
+    let size=0;
+    while(size<buffer.length) {
+      const {bytesRead}=await handle.read(buffer,size,buffer.length-size,size);
+      if(bytesRead===0)break;
+      size+=bytesRead;
+    }
+    if(size>MAX_EXPORT_BYTES||size<2||size!==opened.size)
+      fail('backup manifest exceeds safe size limits or changed during reading.');
     let manifest;
-    try {manifest=JSON.parse(buffer.subarray(0,bytesRead).toString('utf8'));}
+    try {manifest=JSON.parse(buffer.subarray(0,size).toString('utf8'));}
     catch {fail('backup manifest is not valid JSON.');}
     return rehearseLedgerBackups(manifest);
   } catch(error) {
