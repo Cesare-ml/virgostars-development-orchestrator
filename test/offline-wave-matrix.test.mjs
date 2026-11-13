@@ -156,3 +156,72 @@ test('CLI rejects unsupported arguments without running a matrix', () => {
   assert.equal(out.stdout, '');
   assert.match(out.stderr, /Usage: node scripts\/verify-offline-wave-matrix.mjs/);
 });
+
+
+test('repeat mode independently checks identical aggregate evidence for all scenarios', async () => {
+  let calls = 0;
+  const report = await runOfflineWaveMatrix({
+    repeat: true,
+    runStress: async args => {
+      calls++;
+      return fixture(args.batches ?? [args.agents]);
+    }
+  });
+  assert.equal(calls, 16);
+  assert.equal(report.scenarios_passed, 8);
+  assert.equal(report.repeated_scenarios_verified, 8);
+  assert.equal(report.repeat_consistency_verified, true);
+  assert.equal(report.synthetic_sessions_exercised, 262);
+  assert.equal(report.earlier_session_resumes_verified, 955);
+  assert.equal(report.real_github_requests, 0);
+});
+
+test('repeat mode fails closed on drift after a valid second scenario result', async () => {
+  let calls = 0;
+  await assert.rejects(() => runOfflineWaveMatrix({
+    repeat: true,
+    runStress: async args => {
+      calls++;
+      return {
+        ...fixture(args.batches ?? [args.agents]),
+        // Both reports satisfy the minimum mutation count, but differ.
+        synthetic_ledger_mutations: 6 * args.agents + (calls === 2 ? 1 : 0)
+      };
+    }
+  }), /Synthetic wave repeat evidence changed/);
+  assert.equal(calls, 2);
+  await assert.rejects(() => runOfflineWaveMatrix({repeat: 1}),
+    /Invalid synthetic wave matrix options/);
+});
+
+test('CLI --repeat validates real simulator stability without exposing private variables', {timeout: 90000}, () => {
+  const env = {...process.env,
+    VS_PRIVATE_LEDGER_REPO: 'private-ledger-repeat-secret',
+    VS_PRIVATE_TASKS_FILE: 'private-tasks-repeat-secret'
+  };
+  delete env.GITHUB_TOKEN;
+  delete env.GH_TOKEN;
+  const out = spawnSync(process.execPath, [cli, '--repeat'], {
+    encoding: 'utf8', env, timeout: 85000
+  });
+  assert.equal(out.status, 0, out.stderr);
+  assert.equal(out.stderr, '');
+  const report = JSON.parse(out.stdout);
+  assert.equal(report.repeated_scenarios_verified, 8);
+  assert.equal(report.repeat_consistency_verified, true);
+  assert.equal(report.real_github_requests, 0);
+  assert.equal(report.merge_authorized, false);
+  assert.doesNotMatch(out.stdout,
+    /private-ledger-repeat-secret|private-tasks-repeat-secret|chat-[0-9a-f]|example-synthetic|GITHUB_TOKEN/);
+});
+
+test('CLI rejects misspelled or value-bearing repeat flag', () => {
+  for (const args of [['--repeats'], ['--repeat', 'true'], ['--repeat', '--repeat']]) {
+    const out = spawnSync(process.execPath, [cli, ...args], {
+      encoding: 'utf8', timeout: 10000
+    });
+    assert.equal(out.status, 2);
+    assert.equal(out.stdout, '');
+    assert.match(out.stderr, /Usage:/);
+  }
+});
