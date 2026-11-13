@@ -263,3 +263,13 @@ No deploy, production mutation, release, automatic merge, or license change is i
 - [x] Add automated tests, public Node checks and a Windows quickstart with strict limitations.
 - [ ] Verify public Node 20/22 CI at final HEAD and independent source review.
 - [ ] After privately approved ledger cutover, perform an actual cross-chat GitHub integration test with 2 new tasks; do not claim the synthetic rehearsal proves live concurrency.
+
+
+## GitHub coordination snapshot integrity — issue #56 (2026-11-13)
+
+- [x] Fail closed on malformed namespace entries rather than ignoring non-blobs and missing lock records.
+- [x] Reject symlinks, executable records, invalid paths, case-folding duplicates, oversized trees and malformed metadata.
+- [x] Verify exact Git blob SHA-1 and bytes, strict UTF-8 JSON object parsing and final branch ref stability.
+- [x] Add in-memory Node tests and a no-write recovery guide.
+- [ ] Review the stacked draft and confirm Node 20/22 public CI at the final HEAD; no automatic merge.
+- [ ] After a separately approved owner PRIVATE ledger migration, run authorized local read-only validation and two-session live claim tests.
