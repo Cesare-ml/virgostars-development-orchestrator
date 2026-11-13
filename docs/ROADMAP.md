@@ -263,3 +263,12 @@ No deploy, production mutation, release, automatic merge, or license change is i
 - [x] Add automated tests, public Node checks and a Windows quickstart with strict limitations.
 - [ ] Verify public Node 20/22 CI at final HEAD and independent source review.
 - [ ] After privately approved ledger cutover, perform an actual cross-chat GitHub integration test with 2 new tasks; do not claim the synthetic rehearsal proves live concurrency.
+
+## Fail-closed same-session submission evidence — issue #38 (2026-11-13)
+
+- [x] Compare immutable submission evidence, not only session ID, when an existing marker is observed or GitHub returns 409/422 during creation.
+- [x] Preserve claim/resource locks and request manual reconciliation on conflicting same-session marker or mutated handoff; do not overwrite a marker.
+- [x] Add synthetic tests for conflicting concurrent create, matching concurrent create, and changed-handoff retry.
+- [x] Document owner-side recovery and limits in `docs/SUBMISSION_RETRY_SAFETY.md`.
+- [ ] Verify Node 20/22 CI at final stacked draft PR HEAD, obtain independent review, and do not merge until the owner approves the dependency stack.
+- [ ] Validate the complete coordination workflow against an owner-approved real PRIVATE ledger before wider multi-chat rollout.
