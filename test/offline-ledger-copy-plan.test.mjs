@@ -7,7 +7,8 @@ import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {
-  planCopyOnlyImport,planLocalCopyOnlyImport
+  planCopyOnlyImport,planLocalCopyOnlyImport,
+  fingerprintSubmissionInventory,assertFrozenSubmissionInventory
 } from '../src/offline-ledger-copy-plan.mjs';
 
 const SOURCE='Cesare-ml/virgostars-development-orchestrator';
@@ -151,17 +152,26 @@ test('an active destination resource or claim is never a safe import plan',()=>{
   }
 });
 
-test('owner-local file path checks and exact SHA-256 never leak file contents',async t=>{
+test('owner-local reader rejects invented self-consistent historical blobs without modifying input',async t=>{
   const {file,data}=await tmp(t);
   const before=await readFile(file);
-  const report=await planLocalCopyOnlyImport(file);
-  assert.equal(report.local_manifest_sha256,
-    createHash('sha256').update(data).digest('hex'));
-  assert.equal(report.submissions_to_copy,7);
-  assert.equal(report.eligible_for_independent_owner_review,true);
+  await assert.rejects(()=>planLocalCopyOnlyImport(file),
+    /record inventory does not match frozen public Git tree/);
   assert.deepEqual(await readFile(file),before);
-  assert.doesNotMatch(JSON.stringify(report),
-    /owner\/private|synthetic-session|astrological-charts|Cesare-ml__|issue-1\.json/);
+  assert.equal(createHash('sha256').update(data).digest('hex'),
+    createHash('sha256').update(before).digest('hex'));
+});
+
+test('frozen inventory digest is deterministic but binds paths and Git blob SHA',()=>{
+  const records=fixture().source.records;
+  const digest=fingerprintSubmissionInventory(records);
+  assert.match(digest,/^[0-9a-f]{64}$/);
+  assert.equal(digest,fingerprintSubmissionInventory([...records].reverse()));
+  const different=clone(records);
+  different[0].git_blob_sha='0'.repeat(40);
+  assert.notEqual(digest,fingerprintSubmissionInventory(different));
+  assert.throws(()=>assertFrozenSubmissionInventory(records),
+    /record inventory does not match frozen public Git tree/);
 });
 
 test('local file reader rejects relative, in-checkout and symlink paths',async t=>{
@@ -176,7 +186,7 @@ test('local file reader rejects relative, in-checkout and symlink paths',async t
   await assert.rejects(()=>planLocalCopyOnlyImport(alias),/not a symlink/);
 });
 
-test('CLI is tokenless and returns aggregate-only JSON even with private env vars',async t=>{
+test('CLI refuses forged backup and keeps output private even with private env vars',async t=>{
   const {file}=await tmp(t);
   const script=fileURLToPath(new URL('../bin/vs-agent.mjs',import.meta.url));
   const env={...process.env,
@@ -186,24 +196,23 @@ test('CLI is tokenless and returns aggregate-only JSON even with private env var
   const run=spawnSync(process.execPath,[script,'plan-ledger-copy',file],{
     encoding:'utf8',env,timeout:15000
   });
-  assert.equal(run.status,0,run.stderr);
-  assert.equal(run.stderr,'');
-  const data=JSON.parse(run.stdout);
-  assert.equal(data.eligible_for_independent_owner_review,true);
-  assert.equal(data.submissions_to_copy,7);
-  assert.equal(data.changes_to_local_or_remote_data,0);
-  assert.doesNotMatch(run.stdout,/owner\/private|issue-|synthetic-session|invalid-local|Cesare-ml__/);
+  assert.equal(run.status,1,run.stderr);
+  assert.equal(run.stdout,'');
+  assert.match(run.stderr,/record inventory does not match frozen public Git tree/);
+  assert.doesNotMatch(run.stderr,
+    /owner\\/private|synthetic-session|astrological-charts|Cesare-ml__|invalid-local|issue-1\\.json/);
 });
 
-test('CLI fails closed for invalid flags and reports branch-not-created via exit 2',async t=>{
+test('CLI blocks fake source before branch planning and rejects extra flags',async t=>{
   const {file}=await tmp(t,fixture({branch:false}));
   const script=fileURLToPath(new URL('../bin/vs-agent.mjs',import.meta.url));
   const env={...process.env};delete env.GITHUB_TOKEN;
   const blocked=spawnSync(process.execPath,[script,'plan-ledger-copy',file],{
     encoding:'utf8',env,timeout:15000
   });
-  assert.equal(blocked.status,2,blocked.stderr);
-  assert.ok(JSON.parse(blocked.stdout).blockers.includes('PRIVATE_COORDINATION_BRANCH_NOT_YET_CREATED'));
+  assert.equal(blocked.status,1,blocked.stderr);
+  assert.equal(blocked.stdout,'');
+  assert.match(blocked.stderr,/record inventory does not match frozen public Git tree/);
   const illegal=spawnSync(process.execPath,[script,'plan-ledger-copy',file,'--confirm'],{
     encoding:'utf8',env,timeout:15000
   });
