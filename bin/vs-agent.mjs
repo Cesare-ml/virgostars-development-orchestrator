@@ -29,7 +29,7 @@ const usage = [
   'node bin/vs-agent.mjs fingerprint-tasks ABSOLUTE_LOCAL_FILE.json  # offline; no token or task data printed',
   'node bin/vs-agent.mjs alpha-doctor  # GET-only owner preflight; no claims, no merge',
   'node bin/vs-agent.mjs rehearse-two-agents  # offline synthetic claim→handoff→submit→release',
-  'node bin/vs-agent.mjs stress-fleet [--agents 2..40]  # offline synthetic concurrency only',
+  'node bin/vs-agent.mjs stress-fleet [--agents 2..40] [--batches 10,10]  # synthetic overlapping chat arrivals',
   'node bin/vs-agent.mjs discover',
   'node bin/vs-agent.mjs fleet-status  # read-only, all five repositories',
   'node bin/vs-agent.mjs audit-pr OWNER/REPO ISSUE PR_NUMBER  # read-only scope audit',
@@ -49,7 +49,7 @@ function parse(tokens) {
     const item=tokens[i];
     if (!item.startsWith('--')) {positionals.push(item);continue;}
     const name=item.slice(2);
-    if(!['kind','session','role','branch','summary','head-sha','confirm','repo','pr','agents'].includes(name))
+    if(!['kind','session','role','branch','summary','head-sha','confirm','repo','pr','agents','batches'].includes(name))
       throw new Error('Unknown option ' + item);
     if(name==='confirm') {flags.confirm=true;continue;}
     const next=tokens[++i];
@@ -91,13 +91,19 @@ async function main() {
     return;
   }
   if(command==='stress-fleet') {
-    if(positionals.length || Object.keys(flags).some(key=>key!=='agents'))
-      throw new Error('stress-fleet accepts only optional --agents 2..40.');
+    if(positionals.length || Object.keys(flags).some(key=>
+      key!=='agents'&&key!=='batches'))
+      throw new Error('stress-fleet accepts only --agents and --batches.');
     if(flags.agents!==undefined&&!/^[1-9][0-9]*$/.test(flags.agents))
       throw new Error('stress-fleet requires a positive whole agent count.');
-    const report=await runOfflineFleetStress({
-      agents:flags.agents===undefined?40:Number(flags.agents)
-    });
+    if(flags.batches!==undefined&&
+      !/^[1-9][0-9]*(,[1-9][0-9]*)+$/.test(flags.batches))
+      throw new Error('stress-fleet --batches requires comma-separated positive integers.');
+    const batches=flags.batches===undefined?null:
+      flags.batches.split(',').map(Number);
+    const agents=flags.agents!==undefined?Number(flags.agents):
+      batches===null?40:batches.reduce((sum,size)=>sum+size,0);
+    const report=await runOfflineFleetStress({agents,batches});
     process.stdout.write(JSON.stringify(report,null,2)+'\n');
     return;
   }
