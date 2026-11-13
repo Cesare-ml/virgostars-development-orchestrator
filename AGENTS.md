@@ -114,3 +114,7 @@ Before proposing the first two new developer chats, follow [docs/ALPHA_READINESS
 ## Offline two-agent rehearsal (synthetic only)
 
 Before a live owner-operated pilot, run `node bin/vs-agent.mjs rehearse-two-agents` and review [docs/OFFLINE_TWO_AGENT_REHEARSAL.md](docs/OFFLINE_TWO_AGENT_REHEARSAL.md). The command uses only synthetic in-memory GitHub data, even with private environment variables set. It exercises actual claim/handoff/submit/release functions, overlapping PR submission blockers and owner retry after interrupted release. Never represent synthetic pass as proof of a live private ledger, human code review, real branch tests, GitHub write concurrency or a deployed coordinator. No public ledger operations are authorized.
+
+## Submitted write-task orphan lock recovery (owner-only)
+
+A partial release may remove the issue claim but leave the exclusive resource partition locked. Do not create a replacement claim or manually delete an unverified resource. For an already-submitted write task only, the original session may repeat guarded `submit OWNER/REPO ISSUE --session SESSION --pr ORIGINAL_PR --confirm`, following [docs/SUBMITTED_ORPHAN_RECOVERY.md](docs/SUBMITTED_ORPHAN_RECOVERY.md). The implementation verifies unchanged private submission evidence and exact resource ownership before a SHA-checked delete. A different session, changed catalog, foreign resource or ambiguous result blocks recovery. Never use the historical PUBLIC ledger or interpret cleanup as review approval.
