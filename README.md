@@ -8,6 +8,8 @@ The initial objective is to let many independent ChatGPT and Codex conversations
 
 ## First usable owner-operated alpha (private ledger required)
 
+**New safety check:** GitHub submission create conflicts must match the exact existing handoff and audited PR evidence before an agent can release its locks. See [submission conflict recovery](docs/SUBMISSION_CONFLICT_SAFETY.md); mismatches require manual reconciliation, not forced release.
+
 **New: [offline two-agent end-to-end rehearsal](docs/OFFLINE_TWO_AGENT_REHEARSAL.md).** Run `node bin/vs-agent.mjs rehearse-two-agents` on Node 20+ with no GitHub token. It executes actual task claim, resource lock, handoff, PR scope/collision audit, submission and release functions using **synthetic, in-memory GitHub fixture data**. It demonstrates collision rejection and interrupted release recovery; it does **not** contact real GitHub, launch live browser chats or replace the separately approved PRIVATE ledger.
 
 
