@@ -1,11 +1,14 @@
+import {createHash} from 'node:crypto';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {makeGitHubClient,GitHubError} from '../src/github.mjs';
 
-const commit='a'.repeat(40),tree='b'.repeat(40),blob='c'.repeat(40);
+const commit='a'.repeat(40),tree='b'.repeat(40);
 const path='submissions/Cesare-ml__astrological-charts/issue-23.json';
 const marker={state:'submitted',target_repository:'Cesare-ml/astrological-charts',
  issue_number:23,session_id:'chat-test',role:'reviewer'};
+const bytes=Buffer.from(JSON.stringify(marker));
+const blob=createHash('sha1').update(Buffer.from('blob '+bytes.length+'\0')).update(bytes).digest('hex');
 const ok=x=>({ok:true,status:200,json:async()=>x});
 function client({truncated=false,failPath=null}={}) {
  const paths=[];
@@ -15,11 +18,11 @@ function client({truncated=false,failPath=null}={}) {
   if(url.includes('/git/ref/heads/'))return ok({object:{sha:commit}});
   if(url.includes('/git/commits/'))return ok({tree:{sha:tree}});
   if(url.includes('/git/trees/'))return ok({truncated,tree:[
-   {path,type:'blob',sha:blob,size:4096},
+   {path,type:'blob',mode:'100644',sha:blob,size:bytes.length},
    {path:'README.md',type:'blob',sha:'f'.repeat(40),size:200}
   ]});
   if(url.includes('/git/blobs/'))return ok({
-   encoding:'base64',content:Buffer.from(JSON.stringify(marker)).toString('base64')});
+   encoding:'base64',sha:blob,size:bytes.length,content:bytes.toString('base64')});
   throw new Error('Unexpected GitHub URL: '+url);
  }});
  return {api,paths};
