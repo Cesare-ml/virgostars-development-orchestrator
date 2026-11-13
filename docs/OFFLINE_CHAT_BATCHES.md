@@ -10,7 +10,8 @@ A single concurrency stress run of 20 agents cannot directly demonstrate what ha
 
 ```powershell
 node bin/vs-agent.mjs stress-fleet --batches 10,10
-node bin/vs-agent.mjs stress-fleet --agents 40 --batches 5,10,10,15
+node bin/vs-agent.mjs stress-fleet --batches 10,10 --reopen-after-wave 1
+node bin/vs-agent.mjs stress-fleet --agents 40 --batches 5,10,10,15 --reopen-after-wave 2
 node --test test/offline-chat-batches.test.mjs
 ```
 
@@ -25,6 +26,28 @@ Batches are **ordered, positive integers**, at least two groups, with a total of
 5. All submitted markers remain, zero locks remain, and no submitted task can be re-offered. Malformed batch input fails before any simulated work.
 
 Output is limited to aggregate counts such as `arrival_batch_sizes`, `earlier_session_resumes_verified` and `earlier_claims_preserved`. No task identities, session IDs, private filenames, tokens or repository names are printed.
+
+## Opt-in synthetic adapter reconstruction
+
+Pass `--reopen-after-wave N` together with `--batches`, where N is a 1-based
+wave index strictly before the last wave. After that wave claims its tasks,
+the harness copies its in-memory ledger and PR metadata into a **different**
+adapter instance. It then calls the real `claimNext` using only the
+original session IDs, confirms `already-owned` and the exact issue/partition
+identities, and rejects any extra lock or mutation of the reconstructed state.
+Subsequent waves, synthetic submissions and release proceed on that new
+adapter. Invalid, fractional, absent-batch and last-wave reopen indices fail
+closed.
+
+The report adds aggregate-only
+`reopened_after_wave`, `restored_session_resumes_verified`,
+`restored_ledger_entries_verified` and
+`real_external_storage_durability_proven:false`. The default run does
+**not** reconstruct an adapter and preserves the existing behavior.
+
+**This proves only in-memory reconstruction from a supplied snapshot.**
+It does not exercise durable GitHub storage, a database, process crashes,
+cross-process consistency, a network client or real account permissions.
 
 ## Limits and next milestone
 
