@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { claimNext } from '../src/queue.mjs';
-import { status, handoff, release, newSession } from '../src/claims.mjs';
+import { status, handoff, release, newSession, submissionKey } from '../src/claims.mjs';
 import { GitHubError } from '../src/github.mjs';
 
 const repo='Cesare-ml/astrological-charts';
@@ -89,4 +89,65 @@ test('a resumed write task rejects changing roots under same resource ID',async(
  await claimNext({api,config,tasks:original,session,role:'developer'});
  const changed=[{...original[0],resource_scope:{id:'render',roots:['src/other/']}}];
  await assert.rejects(()=>claimNext({api,config,tasks:changed,session,role:'developer'}),/resource scope changed/);
+});
+
+test('claim-next blocks a new task for a submitted-but-still-claimed session',async()=>{
+ const api=fake(),session=newSession();
+ const acquired=await claimNext(a(api,session));
+ assert.equal(acquired.claim.issue_number,12);
+ // Simulate interruption after the immutable submitted marker was created,
+ // but before the issue claim was deleted.
+ await api.createClaim(config.claim_store.repo,submissionKey(repo,12),
+   config.claim_store.branch,{state:'submitted',target_repository:repo,
+     issue_number:12,session_id:session});
+ const observed=await status({api,config,repo,issue:12});
+ assert.equal(observed.status,'claimed');
+ assert.equal(observed.submitted,true);
+ await assert.rejects(()=>claimNext(a(api,session)),/Submitted task still has an active claim/);
+ // A different session may take an independent READY task, but not the
+ // already-submitted one.
+ const other=await claimNext(a(api,newSession()));
+ assert.equal(other.result,'acquired');
+ assert.equal(other.claim.issue_number,13);
+});
+
+test('submitted write task with live resource lock cannot be bypassed by role switch',async()=>{
+ const api=fake(),session=newSession();
+ const acquired=await claimNext(a(api,session,'developer'));
+ assert.equal(acquired.claim.issue_number,14);
+ await api.createClaim(config.claim_store.repo,submissionKey(secondRepo,14),
+   config.claim_store.branch,{state:'submitted',target_repository:secondRepo,
+     issue_number:14,session_id:session});
+ await assert.rejects(()=>claimNext(a(api,session,'reviewer')),
+   /Submitted task still has an active claim/);
+ // No second issue claim is permitted to the same session.
+ assert.equal((await status({api,config,repo,issue:12})).status,'unclaimed');
+});
+
+test('active session cannot silently resume under another role or repo filter',async()=>{
+ const api=fake(),session=newSession();
+ const acquired=await claimNext(a(api,session));
+ assert.equal(acquired.claim.issue_number,12);
+ await assert.rejects(()=>claimNext(a(api,session,'developer')),
+   /different role/);
+ await assert.rejects(()=>claimNext({...a(api,session),repository:secondRepo}),
+   /different repository/);
+ const valid=await claimNext({...a(api,session),repository:repo});
+ assert.equal(valid.result,'already-owned');
+ assert.equal(valid.claim.issue_number,12);
+ assert.equal((await status({api,config,repo:secondRepo,issue:14})).status,'unclaimed');
+});
+
+test('a fully released submitted task does not block the original session from other tasks',async()=>{
+ const api=fake(),session=newSession();
+ await claimNext(a(api,session));
+ await handoff({api,config,repo,issue:12,session,
+   summary:'Finished reviewed work and saved the delivery.'});
+ await api.createClaim(config.claim_store.repo,submissionKey(repo,12),
+   config.claim_store.branch,{state:'submitted',target_repository:repo,
+     issue_number:12,session_id:session});
+ await release({api,config,repo,issue:12,session,confirm:true});
+ const next=await claimNext(a(api,session));
+ assert.equal(next.result,'acquired');
+ assert.equal(next.claim.issue_number,13);
 });
