@@ -44,7 +44,7 @@ function syntheticConfig() {
 function makeSyntheticGitHub(tasks) {
   const files=new Map();
   const pullRequests=new Map();
-  let sequence=0, failDeleteOnce=false, externalCalls=0;
+  let sequence=0, failDeleteOnce=false, failResourceDeleteOnce=false, externalCalls=0;
   const key=(repo,n)=>repo+'#'+n;
   const addPr=(repo,pr,changedFiles=[])=>{
     const all=pullRequests.get(repo)||new Map();
@@ -80,6 +80,10 @@ function makeSyntheticGitHub(tasks) {
         failDeleteOnce=false;
         throw new GitHubError(409);
       }
+      if(failResourceDeleteOnce && path.startsWith('resources/')) {
+        failResourceDeleteOnce=false;
+        throw new GitHubError(409);
+      }
       if(files.get(path)?.sha!==sha)throw new GitHubError(409);
       files.delete(path);
     },
@@ -102,6 +106,7 @@ function makeSyntheticGitHub(tasks) {
   return {
     api,files,
     failReleaseOnce(){failDeleteOnce=true;},
+    failResourceReleaseOnce(){failResourceDeleteOnce=true;},
     registerSyntheticDelivery(task,i){
       const number=21+i;
       const upstreamPr=pullRequests.get(task.repository).get(task.upstream_pr).pr;
@@ -221,12 +226,33 @@ export async function runOfflineTwoAgentRehearsal() {
     mock.files.has(resourceKey(second.task.repository,second.task.resource_scope.id)),
     'interrupted release must retain the owner claim, resource and submitted marker.');
 
+  // A second failure may occur one commit LATER: issue claim deletion
+  // succeeds but the resource deletion fails. The immutable submitted marker
+  // must authorize only the original owner to clean up the orphan on retry.
+  mock.failResourceReleaseOnce();
+  let interruptedResourceReleaseRejected=false;
+  try {
+    await submit({
+      api:mock.api,config,tasks,repo:second.task.repository,
+      issue:second.task.issue,session:second.session,prNumber:second.delivery.number,
+      confirm:true,now:()=> '2026-01-01T00:00:00.000Z'
+    });
+  } catch(e) {
+    interruptedResourceReleaseRejected=/Task released but resource remains locked/.test(e.message);
+  }
+  ensure(interruptedResourceReleaseRejected,'resource delete failure must be reported.');
+  ensure(mock.files.has(submissionKey(second.task.repository,second.task.issue))&&
+    !mock.files.has(taskKey(second.task.repository,second.task.issue))&&
+    mock.files.has(resourceKey(second.task.repository,second.task.resource_scope.id)),
+    'partial release retains immutable submission and blocked resource.');
+
   const retried=await submit({
     api:mock.api,config,tasks,repo:second.task.repository,
     issue:second.task.issue,session:second.session,prNumber:second.delivery.number,
     confirm:true,now:()=> '2026-01-01T00:00:00.000Z'
   });
-  ensure(retried.result==='submitted','original owner must finish retry safely.');
+  ensure(retried.result==='already-submitted'&&retried.recovered_resource_lock===true,
+    'original owner must safely finish orphaned resource release on retry.');
   ensure(mock.count('submissions')===2&&mock.count('claims')===0&&
     mock.count('resources')===0,'all submitted markers remain and all locks release.');
 
@@ -250,6 +276,8 @@ export async function runOfflineTwoAgentRehearsal() {
     competing_pr_recovery_submitted:true,
     interrupted_release_blocked:interruptedReleaseRejected,
     original_owner_retry_succeeded:true,
+    interrupted_resource_release_blocked:interruptedResourceReleaseRejected,
+    submitted_resource_recovery_succeeded:retried.recovered_resource_lock===true,
     submitted_markers:mock.count('submissions'),
     remaining_issue_claims:mock.count('claims'),
     remaining_resource_locks:mock.count('resources'),
