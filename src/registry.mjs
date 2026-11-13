@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { validateTaskCatalog } from './resources.mjs';
+import { loadOwnerTasks } from './owner-task-catalog.mjs';
 import { validateOperatorSelection } from './private-ledger-activation.mjs';
 
 const LEGACY_PUBLIC_LEDGER='Cesare-ml/virgostars-development-orchestrator';
@@ -29,7 +29,5 @@ export async function loadPilotConfig({
 }
 
 export async function loadPilotTasks() {
-  const data=JSON.parse(await readFile(
-    new URL('../config/pilot-tasks.json',import.meta.url),'utf8'));
-  return validateTaskCatalog(data.tasks);
+  return loadOwnerTasks();
 }
