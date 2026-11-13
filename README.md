@@ -8,6 +8,9 @@ The initial objective is to let many independent ChatGPT and Codex conversations
 
 ## First usable owner-operated alpha (private ledger required)
 
+**Owner-only private cutover preparation:** [verified local ledger export](docs/VERIFIED_LOCAL_LEDGER_EXPORT.md) fetches and checks immutable Git blobs from the frozen historical PUBLIC ledger and a separately approved PRIVATE target, creating an exclusively new LOCAL record-only backup. It **does not create a private repository, migrate records, change live configuration or write to GitHub**.
+
+
 **Offline fleet stress (2–40 simulated developers):** `node bin/vs-agent.mjs stress-fleet --agents 40` runs a tokenless, memory-only contention test through real claim/handoff/submit code without touching GitHub. It exercises unique assignments, resource locks, mock draft PR scopes and post-submission no-reassignment. See [stress guide](docs/OFFLINE_FLEET_STRESS.md). **It is not a live 40-chat capacity proof; a separate PRIVATE ledger and two actual pilot chats are still required.**
 
 
