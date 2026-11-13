@@ -64,18 +64,26 @@ function makeTasks(n) {
 }
 
 function inMemoryAdapter(tasks,snapshot=null) {
-  // A reopen is a NEW adapter with an independently cloned ledger; counters
-  // survive so later synthetic Git SHA updates cannot reuse old identifiers.
+  // A reopen reconstructs a NEW adapter from an independently cloned ledger
+  // AND public-safe synthetic PR snapshot. Never regenerate PR evidence after
+  // restore: changed PR heads/files must not silently revert to initial data.
+  // Counters survive so later synthetic Git SHA updates cannot reuse IDs.
   if(snapshot!==null&&(!Array.isArray(snapshot?.records)||
+    !Array.isArray(snapshot?.pulls)||
     !Number.isSafeInteger(snapshot.seq)||snapshot.seq<0||
     !Number.isSafeInteger(snapshot.attemptedWrites)||snapshot.attemptedWrites<0||
     snapshot.records.some(entry=>!Array.isArray(entry)||entry.length!==2||
       typeof entry[0]!=='string'||!entry[1]||
-      typeof entry[1].sha!=='string'))) {
+      typeof entry[1].sha!=='string')||
+    snapshot.pulls.some(entry=>!Array.isArray(entry)||entry.length!==2||
+      typeof entry[0]!=='string'||!entry[1]||
+      !entry[1].pr||!Array.isArray(entry[1].files)))) {
     throw new Error('Invalid synthetic snapshot.');
   }
-  const ledger=new Map(snapshot===null?[]:copy(snapshot.records)),pulls=new Map();
-  if(snapshot!==null&&ledger.size!==snapshot.records.length)
+  const ledger=new Map(snapshot===null?[]:copy(snapshot.records));
+  const pulls=new Map(snapshot===null?[]:copy(snapshot.pulls));
+  if(snapshot!==null&&(ledger.size!==snapshot.records.length||
+    pulls.size!==snapshot.pulls.length))
     throw new Error('Duplicate keys in synthetic snapshot.');
   let seq=snapshot===null?0:snapshot.seq;
   let attemptedWrites=snapshot===null?0:snapshot.attemptedWrites;
@@ -83,7 +91,7 @@ function inMemoryAdapter(tasks,snapshot=null) {
   const addPR=(repo,pr,files)=>{
     pulls.set(key(repo,pr.number),{pr:copy(pr),files:copy(files)});
   };
-  for(let i=0;i<tasks.length;i++) {
+  if(snapshot===null)for(let i=0;i<tasks.length;i++) {
     const task=tasks[i];
     addPR(task.repository,{
       number:task.upstream_pr,state:'open',draft:true,
@@ -158,7 +166,7 @@ function inMemoryAdapter(tasks,snapshot=null) {
   }
   return {
     api,registerDelivery,ledger,count,writes:()=>attemptedWrites,
-    snapshot:()=>copy({records:[...ledger],seq,attemptedWrites})
+    snapshot:()=>copy({records:[...ledger],pulls:[...pulls],seq,attemptedWrites})
   };
 }
 
@@ -191,6 +199,7 @@ export async function runOfflineFleetStress({
   let earlierResumes=0;
   let restoredResumes=0;
   let restoredCounts=null;
+  let restoredPRRecords=0;
   for(const [waveIndex,size] of arrivalBatches.entries()) {
     const batch=await Promise.all(Array.from({length:size},(_,i)=>
       claimNext(args(nextSession+i))));
@@ -240,6 +249,7 @@ export async function runOfflineFleetStress({
         'reopening and resuming must not create or change ledger entries.');
       restoredResumes=restored.length;
       restoredCounts=counts;
+      restoredPRRecords=before.pulls.length;
     }
     if(earlier.length) {
       // Resuming a chat must return its ORIGINAL assignment, not a new one.
@@ -334,6 +344,7 @@ export async function runOfflineFleetStress({
       restored_live_issue_claims:restoredCounts.claims,
       restored_live_resource_locks:restoredCounts.resources,
       restored_submission_markers:restoredCounts.submissions,
+      restored_synthetic_pr_records:restoredPRRecords,
       restored_ledger_entries_preserved:true
     }),
     simulated_repositories:REPOS.length,
