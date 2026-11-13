@@ -81,6 +81,50 @@ test('rejects traversal, unsafe roots, unapproved roles and unexpected fields', 
   assert.throws(() => make(data), /Invalid task definition/);
 });
 
+test('supports the real pilot shape: exact file roots in separate repositories', () => {
+  const data = base();
+  data.tasks[0] = {
+    repository: 'Cesare-ml/astrological-functions', issue: 5, role: 'developer',
+    roots: ['src/ephemeris-provider.js', 'test/pilot-provider-consumer-smoke.test.mjs']
+  };
+  data.tasks[1] = {
+    repository: 'Cesare-ml/astrological-charts', issue: 25, role: 'developer',
+    roots: ['tests/pilot-axis-canvas.browser.test.mjs']
+  };
+  const plan = make(data);
+  assert.equal(plan.agents.length, 3);
+  assert.match(plan.agents[0].prompt, /src\/ephemeris-provider\.js/);
+  assert.equal(plan.claims_acquired, false);
+});
+
+test('detects exact file collisions, including case-insensitive aliases', () => {
+  const data = base();
+  data.tasks[0].roots = ['src/motion.mjs'];
+  data.tasks[1].roots = ['SRC/MOTION.mjs'];
+  assert.throws(() => make(data), /Overlapping write roots/);
+  data.tasks[1].roots = ['src/motion.mjs.bak'];
+  assert.equal(make(data).agents.length, 3);
+});
+
+test('detects exact file overlap with parent directory but not adjacent names', () => {
+  const data = base();
+  data.tasks[0].roots = ['src/motion/'];
+  data.tasks[1].roots = ['SRC/MOTION/index.mjs'];
+  assert.throws(() => make(data), /Overlapping write roots/);
+  data.tasks[1].roots = ['SRC/MOTION-TEST/index.mjs'];
+  assert.equal(make(data).agents.length, 3);
+});
+
+test('rejects ambiguous bare directory scopes and unsafe Windows or hidden paths', () => {
+  const invalid = ['src', 'src/nested', 'src/.secret', 'README.', 'src/CON.txt',
+    'src/lpt1/', 'src/aux/config.json', 'src/../../secret.mjs', 'src/.github/workflows/', 'src/module.'];
+  for (const root of invalid) {
+    const data = base();
+    data.tasks[0].roots = [root];
+    assert.throws(() => make(data), /Invalid task definition/, root);
+  }
+});
+
 test('fails closed on UUID generator reuse or non-v4 IDs', () => {
   assert.throws(() => planAgentWave(base(), { uuid: () => uuid(1) }), /Duplicate generated session UUID/);
   assert.throws(() => planAgentWave(base(), { uuid: () => 'same-id' }), /Invalid generated session UUID/);
