@@ -263,3 +263,10 @@ No deploy, production mutation, release, automatic merge, or license change is i
 - [x] Add automated tests, public Node checks and a Windows quickstart with strict limitations.
 - [ ] Verify public Node 20/22 CI at final HEAD and independent source review.
 - [ ] After privately approved ledger cutover, perform an actual cross-chat GitHub integration test with 2 new tasks; do not claim the synthetic rehearsal proves live concurrency.
+
+## Write-submission audit freshness — issue #37 (2026-11-13)
+
+- [x] Compare the candidate PR HEAD/base SHA and branch across sequential scope and collision audits before writing submission evidence; a changed PR must fail closed while retaining the owner's issue/resource locks.
+- [x] Reject a concurrent same-session submission marker if its immutable task, handoff or PR evidence differs; an identical marker may complete safe release retry.
+- [ ] Confirm native Node 20/22 CI on draft stacked PR and independently review all changed files; no live private coordination lock or migration was attempted.
+- [ ] Prove the workflow with two real independently supervised agents on a separately authorized PRIVATE ledger. Separate GitHub GET requests do not provide a transactional or post-audit write fence.
