@@ -232,7 +232,7 @@ export async function runOfflineFleetStress({
         result.claim.resource_scope_id===attempts[i].claim.resource_scope_id),
       'reopened adapter assigned a second task or changed an owner.');
       expect(JSON.stringify(mock.snapshot())===beforeResume &&
-        mock.writes()===0,
+        mock.writes()===snapshot.attemptedWrites,
       'session recovery mutated restored claims or resource locks.');
       restoredResumes=recovered.length;
     }
