@@ -22,18 +22,27 @@ export async function claimNext({ api, config, tasks, session, role, repository 
   // tasks removed from READY remain owned until explicitly released.
   for (const task of inFleet) {
     const current = await status({ api, config, repo: task.repository, issue: task.issue });
-    if (current.status === 'submitted' || current.submitted) {
-      submitted.add(task.repository+'#'+task.issue);
-      continue;
-    }
     if (current.status === 'inconsistent')
       throw new Error('Inconsistent active task claim; manual recovery required.');
+    // A submitted marker does not imply the old claim/resource has been
+    // released. Never offer a second task to the same session while its
+    // prior submission is awaiting an owner-only release retry.
     if (current.status === 'claimed' && current.claim.session_id === session) {
+      if (current.submitted)
+        throw new Error('Submitted task still has an active claim; retry submit/release or request maintainer reconciliation before claim-next.');
+      if (current.claim.role !== role || task.role !== role)
+        throw new Error('Existing session claim has a different role; use the original role or request maintainer reconciliation.');
+      if (repository !== null && task.repository !== repository)
+        throw new Error('Existing session claim belongs to a different repository; resume it before claiming another task.');
       if (current.claim.access !== task.access ||
         (task.access === 'write' && (current.claim.resource_scope_id !== task.resource_scope.id ||
           JSON.stringify(current.claim.resource_roots) !== JSON.stringify([...task.resource_scope.roots].sort()))))
         throw new Error('Curated task resource scope changed; manual reconciliation required.');
       return { result: 'already-owned', claim: current.claim };
+    }
+    if (current.status === 'submitted' || current.submitted) {
+      submitted.add(task.repository+'#'+task.issue);
+      continue;
     }
   }
 
