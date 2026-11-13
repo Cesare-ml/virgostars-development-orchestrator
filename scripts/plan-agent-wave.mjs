@@ -124,7 +124,11 @@ export async function writeAgentWave(inputFile, outputFile, opts = {}) {
     await handle.writeFile(`${JSON.stringify(plan, null, 2)}\n`, 'utf8');
     await handle.sync();
   } catch (error) {
-    if (handle) await fs.unlink(outputFile).catch(() => {});
+    if (handle) {
+      await handle.close().catch(() => {});
+      handle = undefined;
+      await fs.unlink(outputFile).catch(() => {});
+    }
     throw error;
   } finally {
     await handle?.close();
