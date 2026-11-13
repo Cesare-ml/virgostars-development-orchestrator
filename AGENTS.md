@@ -114,3 +114,13 @@ Before proposing the first two new developer chats, follow [docs/ALPHA_READINESS
 ## Offline two-agent rehearsal (synthetic only)
 
 Before a live owner-operated pilot, run `node bin/vs-agent.mjs rehearse-two-agents` and review [docs/OFFLINE_TWO_AGENT_REHEARSAL.md](docs/OFFLINE_TWO_AGENT_REHEARSAL.md). The command uses only synthetic in-memory GitHub data, even with private environment variables set. It exercises actual claim/handoff/submit/release functions, overlapping PR submission blockers and owner retry after interrupted release. Never represent synthetic pass as proof of a live private ledger, human code review, real branch tests, GitHub write concurrency or a deployed coordinator. No public ledger operations are authorized.
+
+
+## Reject incomplete or misleading ledger snapshots
+
+The owner-only GitHub adapter must treat an invalid `claims/`, `resources/`
+or `submissions/` Git tree entry as a blocker, **not** as an absent task or
+available resource. Read [docs/LEDGER_SNAPSHOT_INTEGRITY.md](docs/LEDGER_SNAPSHOT_INTEGRITY.md).
+Do not bypass a snapshot validation failure by reading a different unpinned
+branch snapshot or clearing locks manually. The historical PUBLIC coordination
+branch is not an approved destination for new confidential claims.
