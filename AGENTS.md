@@ -118,3 +118,7 @@ Before a live owner-operated pilot, run `node bin/vs-agent.mjs rehearse-two-agen
 ## Synthetic fleet stress (bounded to 40)
 
 The optional `node bin/vs-agent.mjs stress-fleet --agents 40` is an offline, single-process regression harness using fictional repositories and in-memory GitHub data. Consult [docs/OFFLINE_FLEET_STRESS.md](docs/OFFLINE_FLEET_STRESS.md). Never claim that its green result proves multi-browser concurrency, a secure deployed coordinator, authenticated production permissions, or an owner-approved private ledger. Real issue/resource locks remain mandatory for every agent.
+
+## Owner-local historical staging is not a remote cutover
+
+`stage-ledger-copy` is strictly offline and creates a sensitive PRIVATE local folder from an exact SHA-approved historical backup. See [docs/OWNER_LOCAL_STAGING.md](docs/OWNER_LOCAL_STAGING.md). No public GitHub branch, PR, issue or test output may contain original staged records. The operator must independently approve a private destination, full backups and later copy-only transfer. Agents must not assume staging authorizes new task claims, merge or deployment.
