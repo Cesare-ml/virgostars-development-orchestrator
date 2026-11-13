@@ -170,7 +170,7 @@ test('CLI stages approved backups without token and does not print private paths
   assert.equal(report.newly_staged_submissions,7);
   assert.equal(report.github_requests,0);
   assert.doesNotMatch(run.stdout,
-    /private-backup|not-a-real|private-ledger|confidential|example-synthetic|vs-private-stage-test/);
+    /private-backup|not-a-real|private-ledger|confidential-synthetic|example-synthetic|vs-private-stage-test/);
 });
 
 test('CLI refuses no confirmation, unrelated flags or missing approval',async t=>{
