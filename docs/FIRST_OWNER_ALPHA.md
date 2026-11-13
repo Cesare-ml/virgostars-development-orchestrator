@@ -14,6 +14,8 @@ The old coordinator repository is now PUBLIC. Never create another private task 
 
 To prepare a local record-only comparison backup without manually transcribing seven submitted records, see [VERIFIED_LOCAL_LEDGER_EXPORT.md](VERIFIED_LOCAL_LEDGER_EXPORT.md). The exporter writes only a newly created protected LOCAL file after GitHub GET-only checks; a separate full Git mirror backup and an independently approved private copy-only migration remain mandatory.
 
+Before any manual private copy, use the verified owner-local record backup with the offline, no-write [copy-only plan](OFFLINE_LEDGER_COPY_PLAN.md). It counts seven expected submitted markers and blocks existing different bytes or destination-only records. **This does not transfer records or certify current private GitHub state.**
+
 ## Run the read-only activation check
 
 From a trusted checkout of the reviewed stacked feature branch with Node.js 20 or newer:
