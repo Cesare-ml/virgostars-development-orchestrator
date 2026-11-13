@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { makeGitHubClient } from '../src/github.mjs';
 import { loadPilotConfig, loadPilotTasks } from '../src/registry.mjs';
+import {inspectOwnerTaskFile,loadHistoricalPilotTasks} from '../src/owner-task-catalog.mjs';
 import {loadPublicDiscovery} from '../src/public-discovery.mjs';
 import {inspectPrivateDestination} from '../src/private-ledger-preflight.mjs';
 import {planPrivateCutover} from '../src/private-cutover-plan.mjs';
@@ -22,6 +23,7 @@ const usage = [
   'node bin/vs-agent.mjs verify-private-activation OWNER/PRIVATE-REPO  # read-only, preserves submitted work',
   'node bin/vs-agent.mjs rehearse-private-cutover LOCAL_BACKUP.json  # offline, no token/writes',
   'node bin/vs-agent.mjs session [--kind chat|codex]',
+  'node bin/vs-agent.mjs fingerprint-tasks ABSOLUTE_LOCAL_FILE.json  # offline; no token or task data printed',
   'node bin/vs-agent.mjs discover',
   'node bin/vs-agent.mjs fleet-status  # read-only, all five repositories',
   'node bin/vs-agent.mjs audit-pr OWNER/REPO ISSUE PR_NUMBER  # read-only scope audit',
@@ -63,6 +65,23 @@ async function main() {
       throw new Error('Public-discover takes no arguments.');
     const discovery=await loadPublicDiscovery();
     process.stdout.write(JSON.stringify(discovery,null,2)+'\n');
+    return;
+  }
+  if(command==='fingerprint-tasks') {
+    if(positionals.length!==1 || Object.keys(flags).length)
+      throw new Error('fingerprint-tasks requires exactly one absolute local JSON path.');
+    const report=await inspectOwnerTaskFile(positionals[0],{
+      legacyTasks:await loadHistoricalPilotTasks()
+    });
+    process.stdout.write(JSON.stringify({
+      schema_version:'1-local-task-fingerprint',
+      sha256:report.sha256,
+      tasks:report.count,
+      read_tasks:report.read_tasks,
+      write_tasks:report.write_tasks,
+      approved:false,
+      private_file_uploaded:false
+    },null,2)+'\n');
     return;
   }
   if(command==='rehearse-private-cutover') {
