@@ -8,6 +8,9 @@ The initial objective is to let many independent ChatGPT and Codex conversations
 
 ## First usable owner-operated alpha (private ledger required)
 
+**Offline fleet stress (2–40 simulated developers):** `node bin/vs-agent.mjs stress-fleet --agents 40` runs a tokenless, memory-only contention test through real claim/handoff/submit code without touching GitHub. It exercises unique assignments, resource locks, mock draft PR scopes and post-submission no-reassignment. See [stress guide](docs/OFFLINE_FLEET_STRESS.md). **It is not a live 40-chat capacity proof; a separate PRIVATE ledger and two actual pilot chats are still required.**
+
+
 **New: [offline two-agent end-to-end rehearsal](docs/OFFLINE_TWO_AGENT_REHEARSAL.md).** Run `node bin/vs-agent.mjs rehearse-two-agents` on Node 20+ with no GitHub token. It executes actual task claim, resource lock, handoff, PR scope/collision audit, submission and release functions using **synthetic, in-memory GitHub fixture data**. It demonstrates collision rejection and interrupted release recovery; it does **not** contact real GitHub, launch live browser chats or replace the separately approved PRIVATE ledger.
 
 
