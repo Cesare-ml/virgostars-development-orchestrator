@@ -19,14 +19,20 @@ const pr={number:6,state:'open',draft:true,changed_files:2,head:{ref:'pilot/cons
 const validFiles=task.resource_scope.roots.map(filename=>({filename,status:'added'}));
 
 function mock() {
- const store=new Map();let seq=0,changedFiles=validFiles,competing=false;
+ const store=new Map();let seq=0,changedFiles=validFiles,competing=false,submissionRace=null;
  const extra={...pr,number:7,head:{...pr.head,sha:'d'.repeat(40)}};
  return {store,
   setFiles(value){changedFiles=value;},
   setCompeting(value){competing=value;},
+  injectSubmissionRace(transform){submissionRace=transform;},
   async getIssue(){return {state:'open'};},
   async getClaim(_r,p){return store.has(p)?structuredClone(store.get(p)):null;},
   async createClaim(_r,p,_b,data){
+    if(p.startsWith('submissions/') && submissionRace) {
+      const transform=submissionRace;submissionRace=null;
+      store.set(p,{sha:String(++seq),data:structuredClone(transform(data))});
+      throw new GitHubError(422);
+    }
     if(store.has(p))throw new GitHubError(422);
     store.set(p,{sha:String(++seq),data:structuredClone(data)});
   },
@@ -101,4 +107,38 @@ test('another open PR adding the same file blocks a write submission',async()=>{
  assert.equal((await status(args)).status,'claimed');
  assert.ok(api.store.has(resourceKey(target,task.resource_scope.id)));
  assert.equal(api.store.has(submissionKey(target,5)),false);
+});
+
+test('same-session conflicting marker from create race retains the issue and resource locks',async()=>{
+ const api=mock(),session=newSession(),args=await assigned(api,session);
+ api.injectSubmissionRace(marker=>({...marker,audited_head_sha:'f'.repeat(40)}));
+ await assert.rejects(()=>submit({...args,prNumber:6,confirm:true}),
+   /Submission conflict: existing record has different task\/PR evidence/);
+ assert.equal((await status(args)).status,'claimed');
+ assert.ok(api.store.has(taskKey(target,5)));
+ assert.ok(api.store.has(resourceKey(target,task.resource_scope.id)));
+ assert.equal(api.store.get(submissionKey(target,5)).data.audited_head_sha,'f'.repeat(40));
+ await assert.rejects(()=>submit({...args,prNumber:6,confirm:true}),
+   /Existing submission marker differs from current handoff\/PR evidence/);
+ assert.ok(api.store.has(taskKey(target,5)));
+ assert.ok(api.store.has(resourceKey(target,task.resource_scope.id)));
+});
+
+test('same-session identical marker from create race is safely retryable',async()=>{
+ const api=mock(),session=newSession(),args=await assigned(api,session);
+ api.injectSubmissionRace(marker=>marker);
+ const result=await submit({...args,prNumber:6,confirm:true});
+ assert.equal(result.result,'submitted');
+ assert.equal(api.store.get(submissionKey(target,5)).data.audited_head_sha,A);
+ assert.equal(api.store.has(taskKey(target,5)),false);
+ assert.equal(api.store.has(resourceKey(target,task.resource_scope.id)),false);
+});
+
+test('create race with a marker for another task never releases an owned lock',async()=>{
+ const api=mock(),session=newSession(),args=await assigned(api,session);
+ api.injectSubmissionRace(marker=>({...marker,issue_number:999}));
+ await assert.rejects(()=>submit({...args,prNumber:6,confirm:true}),
+   /Submission conflict: existing record has different task\/PR evidence/);
+ assert.ok(api.store.has(taskKey(target,5)));
+ assert.ok(api.store.has(resourceKey(target,task.resource_scope.id)));
 });
