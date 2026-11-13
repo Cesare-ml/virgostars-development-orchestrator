@@ -91,7 +91,8 @@ test('previous slots fail closed on duplicate claims, tampering and reused sessi
   const badSession = [{ ...plan.slots[0], session_id: 'chat-INVALID' }];
   assert.throws(() => planOfflineWave({ tasks, agents: 2, previousSlots: badSession }),
     /invalid previous/);
-  assert.throws(() => planOfflineWave({ tasks, agents: 2,
+  const expandedTasks = [...tasks, write(b, 800, 'addon', 'test/addon/')];
+  assert.throws(() => planOfflineWave({ tasks: expandedTasks, agents: 2,
     previousSlots: plan.slots, sessionFactory: () => plan.slots[0].session_id }),
     /duplicate or invalid/);
 });
