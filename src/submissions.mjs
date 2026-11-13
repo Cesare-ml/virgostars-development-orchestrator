@@ -3,6 +3,22 @@ import {GitHubError} from './github.mjs';
 import {auditTaskPullRequest} from './pr-audit.mjs';
 import {auditOpenPullRequestCollisions} from './pr-collisions.mjs';
 
+// Compare immutable task/PR evidence after a create-if-absent race. Session
+// identity alone is insufficient: another writer can publish a different
+// submission marker before our create reaches GitHub.
+const SUBMISSION_EVIDENCE_FIELDS=[
+  'schema_version','state','target_repository','issue_number','session_id',
+  'role','access','resource_scope_id','pull_request','audited_head_sha',
+  'audited_base_sha','scope_verdict','collision_audit'
+];
+function matchesSubmissionEvidence(actual,expected) {
+  return actual && typeof actual==='object' &&
+    SUBMISSION_EVIDENCE_FIELDS.every(key=>actual[key]===expected[key]) &&
+    actual.last_handoff?.at===expected.last_handoff?.at &&
+    actual.last_handoff?.summary===expected.last_handoff?.summary &&
+    actual.last_handoff?.head_sha===expected.last_handoff?.head_sha;
+}
+
 /**
  * Persist "submitted for review", then release the owner claim.
  * Submission is NOT maintainer approval or DONE.
@@ -45,9 +61,6 @@ export async function submit({api,config,tasks,repo,issue,session,prNumber=null,
         '. Review the overlapping branches before submitting.');
     if(claim.last_handoff.head_sha!==scopedAudit.pull_request_head)
       throw new Error('Handoff head SHA is missing or differs from audited PR head; revalidate work.');
-    if(prior && (prior.data.pull_request!==prNumber ||
-       prior.data.audited_head_sha!==scopedAudit.pull_request_head))
-      throw new Error('Existing submission marker refers to different PR evidence.');
   }
   const marker={
     schema_version:1,state:'submitted',target_repository:repo,issue_number:issue,
@@ -58,14 +71,18 @@ export async function submit({api,config,tasks,repo,issue,session,prNumber=null,
       collision_audit:'single-candidate'}:{}),
     note:'Awaiting independent review; not automatically approved or DONE'
   };
+  // A previous interrupted submit may be retried only for the exact same
+  // handoff and audited PR evidence. Never release a claim for stale markers.
+  if(prior && !matchesSubmissionEvidence(prior.data,marker))
+    throw new Error('Existing submission marker differs from current handoff/PR evidence; manual reconciliation required.');
   if(!prior) {
     try {await api.createClaim(ledger,path,branch,marker);}
     catch(error) {
       if(!(error instanceof GitHubError) || ![409,422].includes(error.status))
         throw new Error('Submission outcome unknown; inspect ledger before retrying.',{cause:error});
       const concurrent=await api.getClaim(ledger,path,branch);
-      if(concurrent?.data?.session_id!==session || concurrent.data.state!=='submitted')
-        throw new Error('Submission conflict; manual review required.');
+      if(!matchesSubmissionEvidence(concurrent?.data,marker))
+        throw new Error('Submission conflict: existing record has different task/PR evidence; manual reconciliation required.');
     }
   }
   await release({api,config,repo,issue,session,confirm:true});
