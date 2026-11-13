@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFile} from 'node:fs/promises';
+import {readFile,copyFile,mkdir,mkdtemp,rm,writeFile} from 'node:fs/promises';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
 import {buildPublicDiscovery,loadPublicDiscovery} from '../src/public-discovery.mjs';
 
 const path=(name)=>new URL('../config/'+name,import.meta.url);
@@ -141,5 +143,38 @@ test('unrecognized or drifted public policy fields fail closed before projection
     const catalog=clone(source);
     change(catalog);
     assert.throws(()=>buildPublicDiscovery(catalog),/Public discovery is unavailable/);
+  }
+});
+
+test('public-discover runs from a minimal checkout with NO private modules',async()=>{
+  const dir=await mkdtemp(join(tmpdir(),'vs-public-only-'));
+  try {
+    // Only public entrypoint, public schema and public registry are present.
+    // In particular, claims.mjs, github.mjs, registry.mjs, ledger state and
+    // the entire private task/claim dependency graph are absent by design.
+    for(const directory of ['bin','src','config'])
+      await mkdir(join(dir,directory));
+    for(const fileName of ['bin/vs-agent.mjs','src/public-discovery.mjs',
+      'config/fleet.json']) {
+      await copyFile(fileURLToPath(new URL('../'+fileName,import.meta.url)),
+        join(dir,...fileName.split('/')));
+    }
+    await writeFile(join(dir,'package.json'),'{"type":"module"}\n');
+    const script=join(dir,'bin','vs-agent.mjs');
+    const run=args=>spawnSync(process.execPath,[script,...args],{
+      cwd:dir,encoding:'utf8',timeout:15000,
+      // No GitHub token or special access is required.
+      env:{PATH:process.env.PATH||'',SystemRoot:process.env.SystemRoot||''}
+    });
+    const output=run(['public-discover']);
+    assert.equal(output.status,0,output.stderr);
+    assert.equal(output.stderr,'');
+    assert.deepEqual(JSON.parse(output.stdout),await loadPublicDiscovery());
+    const rejected=run(['public-discover','--confirm']);
+    assert.equal(rejected.status,1);
+    assert.match(rejected.stderr,/Public-discover takes no arguments/);
+    assert.doesNotMatch(rejected.stderr,/ERR_MODULE_NOT_FOUND|GITHUB_TOKEN/);
+  } finally {
+    await rm(dir,{recursive:true,force:true});
   }
 });
