@@ -40,6 +40,14 @@ export function validateArrivalBatches(batches,agents) {
   return [...batches];
 }
 
+/** Only a completed, non-final synthetic wave may trigger a state reopen. */
+export function validateReopenAfterWave(value,batches) {
+  if(value===null||value===undefined) return null;
+  if(!Number.isSafeInteger(value)||value<1||value>=batches.length)
+    throw new Error('Reopen-after-wave must be a wave index from 1 to batch count minus 1.');
+  return value;
+}
+
 function makeTasks(n) {
   return Array.from({length:n},(_,i)=>{
     const repository=REPOS[i%REPOS.length];
@@ -54,10 +62,13 @@ function makeTasks(n) {
   });
 }
 
-function inMemoryAdapter(tasks) {
-  const ledger=new Map(),pulls=new Map();
-  let seq=0;
-  let attemptedWrites=0;
+function inMemoryAdapter(tasks,snapshot=null) {
+  // Snapshot clones represent synthetic persisted GitHub Contents records.
+  // Building a fresh adapter discards client state but preserves the mock ledger.
+  const ledger=new Map(snapshot?copy(snapshot.records):[]);
+  const pulls=new Map();
+  let seq=snapshot?.seq??0;
+  let attemptedWrites=snapshot?.attemptedWrites??0;
   const key=(repo,number)=>repo+'#'+number;
   const addPR=(repo,pr,files)=>{
     pulls.set(key(repo,pr.number),{pr:copy(pr),files:copy(files)});
@@ -135,7 +146,11 @@ function inMemoryAdapter(tasks) {
   function count(prefix) {
     return [...ledger.keys()].filter(x=>x.startsWith(prefix+'/')).length;
   }
-  return {api,registerDelivery,ledger,count,writes:()=>attemptedWrites};
+  const reopen=()=>inMemoryAdapter(tasks,{
+    records:[...ledger.entries()].map(([path,record])=>[path,copy(record)]),
+    seq,attemptedWrites
+  });
+  return {api,registerDelivery,ledger,count,reopen,writes:()=>attemptedWrites};
 }
 
 /**
@@ -143,11 +158,12 @@ function inMemoryAdapter(tasks) {
  * functions, against a single-event-loop memory adapter. NO remote GitHub
  * atomicity or concurrent browser session guarantees are implied.
  */
-export async function runOfflineFleetStress({agents=40,batches=null}={}) {
+export async function runOfflineFleetStress({agents=40,batches=null,reopenAfterWave=null}={}) {
   const n=validateFleetSize(agents);
   const arrivalBatches=validateArrivalBatches(batches,n);
+  const reopenIndex=validateReopenAfterWave(reopenAfterWave,arrivalBatches);
   const tasks=makeTasks(n);
-  const mock=inMemoryAdapter(tasks);
+  let mock=inMemoryAdapter(tasks);
   const config={
     claim_store:{repo:LEDGER,branch:BRANCH},
     active_repositories:REPOS.map(full_name=>({
@@ -162,7 +178,8 @@ export async function runOfflineFleetStress({agents=40,batches=null}={}) {
   const attempts=[];
   let nextSession=1;
   let earlierResumes=0;
-  for(const size of arrivalBatches) {
+  let reopenedSessionResumes=0;
+  for(const [waveIndex,size] of arrivalBatches.entries()) {
     const batch=await Promise.all(Array.from({length:size},(_,i)=>
       claimNext(args(nextSession+i))));
     nextSession+=size;
@@ -190,6 +207,34 @@ export async function runOfflineFleetStress({agents=40,batches=null}={}) {
       expect(mock.count('claims')===attempts.length &&
         mock.count('resources')===attempts.length,
       'resuming earlier sessions must not acquire extra locks.');
+    }
+    if(reopenIndex===waveIndex+1) {
+      const previous=mock;
+      const countBefore=previous.count('claims');
+      const resourceCountBefore=previous.count('resources');
+      mock=previous.reopen();
+      expect(mock!==previous && mock.api!==previous.api,
+        'new synthetic client must not reuse the original adapter.');
+      expect(mock.count('claims')===countBefore &&
+        mock.count('resources')===resourceCountBefore &&
+        mock.count('submissions')===0,
+        'simulated reopening lost claims, resources or marker state.');
+      // Recovered sessions have no client object from the previous wave;
+      // they supply only the original session ID to a fresh API adapter.
+      const recovered=await Promise.all(attempts.map(r=>claimNext({
+        api:mock.api,config,tasks,session:r.claim.session_id,
+        role:'developer'
+      })));
+      expect(recovered.every((r,i)=>r.result==='already-owned' &&
+        r.claim.session_id===attempts[i].claim.session_id &&
+        r.claim.target_repository===attempts[i].claim.target_repository &&
+        r.claim.issue_number===attempts[i].claim.issue_number &&
+        r.claim.resource_scope_id===attempts[i].claim.resource_scope_id),
+        'reopened synthetic client changed session ownership.');
+      reopenedSessionResumes=recovered.length;
+      expect(mock.count('claims')===countBefore &&
+        mock.count('resources')===resourceCountBefore,
+        'reopened session recovery created duplicate locks.');
     }
   }
   expect(attempts.every(r=>r.result==='acquired'),
@@ -259,6 +304,8 @@ export async function runOfflineFleetStress({agents=40,batches=null}={}) {
     mode:'synthetic-single-process-only',
     requested_agents:n,
     arrival_batch_sizes:arrivalBatches,
+    adapter_reopened_after_wave:reopenIndex,
+    reopened_session_resumes_verified:reopenedSessionResumes,
     earlier_session_resumes_verified:earlierResumes,
     earlier_claims_preserved:true,
     simulated_repositories:REPOS.length,
