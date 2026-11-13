@@ -78,18 +78,32 @@ export function verifyWaveReport(report, waves) {
   return {agents, expectedResumes};
 }
 
-export async function runOfflineWaveMatrix({runStress = runOfflineFleetStress} = {}) {
-  if (typeof runStress !== 'function') {
-    throw new Error('Invalid synthetic stress runner.');
+export async function runOfflineWaveMatrix({
+  runStress = runOfflineFleetStress, repeat = false
+} = {}) {
+  if (typeof runStress !== 'function' || typeof repeat !== 'boolean') {
+    throw new Error('Invalid synthetic wave matrix options.');
   }
   let sessionsExercised = 0;
   let resumeChecks = 0;
+  let repeatedScenarios = 0;
   for (const waves of WAVE_SCENARIOS) {
     const agents = waves.reduce((sum, size) => sum + size, 0);
     const args = waves.length === 1 ?
       {agents} : {agents, batches: [...waves]};
     const evidence = await runStress(args);
     const verified = verifyWaveReport(evidence, waves);
+    if (repeat) {
+      // Validate the second run independently before comparing whole reports.
+      // The aggregate check detects unstable simulator results but cannot
+      // prove a particular task/session assignment is deterministic.
+      const repeated = await runStress(args);
+      verifyWaveReport(repeated, waves);
+      if (JSON.stringify(repeated) !== JSON.stringify(evidence)) {
+        throw new Error('Synthetic wave repeat evidence changed.');
+      }
+      repeatedScenarios++;
+    }
     sessionsExercised += verified.agents;
     resumeChecks += verified.expectedResumes;
   }
@@ -101,6 +115,8 @@ export async function runOfflineWaveMatrix({runStress = runOfflineFleetStress} =
     scenarios_passed: WAVE_SCENARIOS.length,
     synthetic_sessions_exercised: sessionsExercised,
     earlier_session_resumes_verified: resumeChecks,
+    repeated_scenarios_verified: repeatedScenarios,
+    repeat_consistency_verified: repeat,
     maximum_sessions_in_one_scenario: 40,
     remaining_issue_claims: 0,
     remaining_resource_locks: 0,
