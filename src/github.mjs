@@ -1,3 +1,58 @@
+import {createHash} from 'node:crypto';
+
+const RECORD_FILE=/^(?:claims|submissions)\/[A-Za-z0-9][A-Za-z0-9_.-]*__[A-Za-z0-9][A-Za-z0-9_.-]*\/issue-[1-9][0-9]*\.json$|^resources\/[A-Za-z0-9][A-Za-z0-9_.-]*__[A-Za-z0-9][A-Za-z0-9_.-]*\/[a-z][a-z0-9_-]*\.json$/;
+const RECORD_DIR=/^(?:claims|resources|submissions)(?:\/[A-Za-z0-9][A-Za-z0-9_.-]*__[A-Za-z0-9][A-Za-z0-9_.-]*)?$/;
+const SHA40=/^[a-f0-9]{40}$/i;
+const B64=/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+
+function validatedLedgerTreeEntries(listing) {
+  if(listing?.truncated!==false || !Array.isArray(listing.tree))
+    throw new Error('Ledger tree is truncated or malformed; status cannot be trusted.');
+  const paths=new Set(),files=[];
+  for(const item of listing.tree) {
+    if(typeof item?.path!=='string')throw new Error('Ledger tree contains malformed entry.');
+    const path=item.path;
+    const lower=path.toLowerCase();
+    if(!/^(claims|resources|submissions)(\/|$)/.test(lower))continue;
+    if(paths.has(lower))throw new Error('Ledger contains duplicate or case-conflicting records.');
+    paths.add(lower);
+    if(item.type==='tree' && RECORD_DIR.test(path) && item.mode==='040000')continue;
+    if(item.type!=='blob' || !RECORD_FILE.test(path) || item.mode!=='100644' ||
+       !SHA40.test(item.sha||'') || !Number.isSafeInteger(item.size) ||
+       item.size<1 || item.size>65536)
+      throw new Error('Ledger contains unexpected record path, mode or metadata.');
+    files.push(item);
+  }
+  if(files.length>250)throw new Error('Ledger contains too many entries for the pilot.');
+  return files;
+}
+
+function decodeLedgerBlob(blob,entry) {
+  if(blob?.encoding!=='base64'||typeof blob.content!=='string' ||
+     !SHA40.test(blob.sha||'') || blob.sha.toLowerCase()!==entry.sha.toLowerCase() ||
+     !Number.isSafeInteger(blob.size)||blob.size!==entry.size)
+    throw new Error('Git blob metadata differs from pinned ledger tree.');
+  const normalized=blob.content.replace(/\s/g,'');
+  if(!B64.test(normalized))throw new Error('Invalid Git blob base64 encoding.');
+  const bytes=Buffer.from(normalized,'base64');
+  if(bytes.length!==entry.size||bytes.toString('base64')!==normalized)
+    throw new Error('Git blob bytes differ from pinned ledger tree size.');
+  const digest=createHash('sha1')
+    .update(Buffer.from('blob '+bytes.length+'\0'))
+    .update(bytes).digest('hex');
+  if(digest!==entry.sha.toLowerCase())
+    throw new Error('Git blob content does not match pinned SHA-1.');
+  let data;
+  try {
+    data=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
+  } catch {
+    throw new Error('Ledger record is not valid UTF-8 JSON.');
+  }
+  if(data===null||typeof data!=='object'||Array.isArray(data))
+    throw new Error('Ledger record must be a JSON object.');
+  return data;
+}
+
 export class GitHubError extends Error {
   constructor(status) {
     super('GitHub request failed (HTTP ' + status + ')');
@@ -58,19 +113,10 @@ export function makeGitHubClient({ token, fetchImpl = fetch, baseUrl = 'https://
       const treeSha=commit?.tree?.sha;
       if(!/^[0-9a-f]{40}$/i.test(treeSha||'')) throw new Error('Invalid ledger tree.');
       const listing=await request('GET','/repos/'+repo+'/git/trees/'+treeSha+'?recursive=1');
-      if(listing?.truncated || !Array.isArray(listing?.tree))
-        throw new Error('Ledger tree is truncated or malformed; status cannot be trusted.');
-      const relevant=listing.tree.filter(e=>e.type==='blob' &&
-        /^(claims|resources|submissions)\//.test(e.path));
-      if(relevant.length>250) throw new Error('Ledger contains too many entries for the pilot.');
-      const entries=await Promise.all(relevant.map(async e=>{
-        if(!/^[0-9a-f]{40}$/i.test(e.sha||'') || e.size>65536)
-          throw new Error('Invalid or oversized ledger entry.');
-        const blob=await request('GET','/repos/'+repo+'/git/blobs/'+e.sha);
-        if(blob?.encoding!=='base64' || typeof blob.content!=='string')
-          throw new Error('Invalid Git blob encoding for ledger entry.');
-        const raw=Buffer.from(blob.content.replace(/\s/g,''),'base64').toString('utf8');
-        return {path:e.path,sha:e.sha,data:JSON.parse(raw)};
+      const relevant=validatedLedgerTreeEntries(listing);
+      const entries=await Promise.all(relevant.map(async entry=>{
+        const blob=await request('GET','/repos/'+repo+'/git/blobs/'+entry.sha);
+        return {path:entry.path,sha:entry.sha,data:decodeLedgerBlob(blob,entry)};
       }));
       return {head,entries};
     },
