@@ -8,7 +8,7 @@ The initial objective is to let many independent ChatGPT and Codex conversations
 
 ## First usable owner-operated alpha (private ledger required)
 
-A guarded first-alpha CLI path is now proposed in a **stacked draft**, not merged into main. See [FIRST_OWNER_ALPHA.md](docs/FIRST_OWNER_ALPHA.md) for the owner-only Windows quickstart: prepare a separate PRIVATE GitHub ledger, preserve the seven original submitted records byte-for-byte, run the read-only `verify-private-activation` check and only then select the private repository through two matching local environment variables. The old public claim store remains blocked. No automatic migration, hosted scheduler or authorization for public agent writes is provided. Do not reassign already-submitted historic tasks.
+A guarded first-alpha CLI path and a locally SHA-approved task queue are now proposed in a **stacked draft**, not merged into main. See [FIRST_OWNER_ALPHA.md](docs/FIRST_OWNER_ALPHA.md) for the owner-only Windows quickstart: prepare a separate PRIVATE GitHub ledger, preserve the seven original submitted records byte-for-byte, run the read-only `verify-private-activation` check and only then select the private repository through two matching local environment variables. The old public claim store remains blocked. No automatic migration, hosted scheduler or authorization for public agent writes is provided. Do not reassign already-submitted historic tasks. **New work can be curated in an owner-held local JSON outside the public repository**, approved by SHA-256 via the offline `fingerprint-tasks` command. See [OWNER_TASK_QUEUE.md](docs/OWNER_TASK_QUEUE.md); no automatic task enrollment or permission grants.
 
 ## Future design
 
