@@ -34,3 +34,14 @@ The public CLI command `public-discover` is isolated from the legacy owner-pilot
 The owner-only Node CLI now requires a **live GitHub visibility preflight** before any legacy pilot command and before each ledger read/write. The configured ledger currently resides in this **public** repository, so these commands intentionally fail closed until a separate **verified private** ledger is selected and its records and clients are reconciled. A YAML/JSON setting that says "private" does not prove GitHub repository visibility. The `public-discover`, `session` and help commands remain independent and tokenless.
 
 This gate does **not** hide historical Git data or prevent a ChatGPT connector/third-party client from writing directly to the public branch. Agents must not create new confidential claims there. Migration is tracked under [issue #19](https://github.com/Cesare-ml/virgostars-development-orchestrator/issues/19); never publish credentials or detailed old operational records as part of that work.
+
+
+## Git coordination snapshot trust boundary
+
+A private-ledger snapshot is safe to use for readiness checks only when **all**
+claim/resource/submission tree entries are inspected, not filtered by `blob`
+type. The read-only Node adapter now rejects symlinks, malformed Git paths,
+colliding filenames and corrupt Git blobs, and checks the branch ref after
+loading the pinned snapshot. See [LEDGER_SNAPSHOT_INTEGRITY.md](LEDGER_SNAPSHOT_INTEGRITY.md).
+These checks do not themselves authorize any private ledger cutover, clear
+resource locks, onboard agents or approve PR integration.
