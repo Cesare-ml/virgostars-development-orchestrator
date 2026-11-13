@@ -102,3 +102,7 @@ An owner can now run `node bin/vs-agent.mjs plan-private-cutover OWNER/PRIVATE-R
 ## Offline backup reconciliation rehearsal
 
 For owner-held local record exports, `node bin/vs-agent.mjs rehearse-private-cutover LOCAL_BACKUP.json` verifies every listed record's Git blob SHA-1 and produces **counts-only** differences, safety blockers and a human rollback sequence. It uses no GitHub token or network and cannot migrate, overwrite, release locks or modify a repo. The result explicitly **cannot** establish that the backup contains the complete Git tree or matches a current remote commit. Keep real backup files private. See [OFFLINE_CUTOVER_REHEARSAL.md](docs/OFFLINE_CUTOVER_REHEARSAL.md).
+
+### Submitted write-task orphan resource recovery
+
+If a write submission was saved and the issue claim was deleted but GitHub failed to remove its resource lock, the **original owner** can retry `submit` with the exact saved `--pr` and `--confirm` after the private-ledger gates pass. The implementation verifies the saved submission, original session, partition roots, absent issue claim and unchanged blob SHAs before deleting only that orphaned lock. Failures stay blocked. See [submitted orphan recovery](docs/SUBMITTED_ORPHAN_RECOVERY.md); no merge or automatic claim is implied.
