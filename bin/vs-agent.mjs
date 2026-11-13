@@ -29,7 +29,7 @@ const usage = [
   'node bin/vs-agent.mjs fingerprint-tasks ABSOLUTE_LOCAL_FILE.json  # offline; no token or task data printed',
   'node bin/vs-agent.mjs alpha-doctor  # GET-only owner preflight; no claims, no merge',
   'node bin/vs-agent.mjs rehearse-two-agents  # offline synthetic claim→handoff→submit→release',
-  'node bin/vs-agent.mjs stress-fleet [--agents 2..40] [--batches 10,10]  # synthetic overlapping chat arrivals',
+  'node bin/vs-agent.mjs stress-fleet [--agents 2..40] [--batches 10,10] [--reopen-after-wave 1]  # synthetic only',
   'node bin/vs-agent.mjs discover',
   'node bin/vs-agent.mjs fleet-status  # read-only, all five repositories',
   'node bin/vs-agent.mjs audit-pr OWNER/REPO ISSUE PR_NUMBER  # read-only scope audit',
@@ -49,7 +49,7 @@ function parse(tokens) {
     const item=tokens[i];
     if (!item.startsWith('--')) {positionals.push(item);continue;}
     const name=item.slice(2);
-    if(!['kind','session','role','branch','summary','head-sha','confirm','repo','pr','agents','batches'].includes(name))
+    if(!['kind','session','role','branch','summary','head-sha','confirm','repo','pr','agents','batches','reopen-after-wave'].includes(name))
       throw new Error('Unknown option ' + item);
     if(name==='confirm') {flags.confirm=true;continue;}
     const next=tokens[++i];
@@ -92,18 +92,24 @@ async function main() {
   }
   if(command==='stress-fleet') {
     if(positionals.length || Object.keys(flags).some(key=>
-      key!=='agents'&&key!=='batches'))
-      throw new Error('stress-fleet accepts only --agents and --batches.');
+      key!=='agents'&&key!=='batches'&&key!=='reopen-after-wave'))
+      throw new Error('stress-fleet accepts only --agents, --batches and --reopen-after-wave.');
     if(flags.agents!==undefined&&!/^[1-9][0-9]*$/.test(flags.agents))
       throw new Error('stress-fleet requires a positive whole agent count.');
     if(flags.batches!==undefined&&
       !/^[1-9][0-9]*(,[1-9][0-9]*)+$/.test(flags.batches))
       throw new Error('stress-fleet --batches requires comma-separated positive integers.');
+    if(flags['reopen-after-wave']!==undefined &&
+      (!/^[1-9][0-9]*$/.test(flags['reopen-after-wave']) ||
+      flags.batches===undefined))
+      throw new Error('stress-fleet --reopen-after-wave requires --batches and a positive wave index.');
     const batches=flags.batches===undefined?null:
       flags.batches.split(',').map(Number);
     const agents=flags.agents!==undefined?Number(flags.agents):
       batches===null?40:batches.reduce((sum,size)=>sum+size,0);
-    const report=await runOfflineFleetStress({agents,batches});
+    const reopenAfterWave=flags['reopen-after-wave']===undefined?null:
+      Number(flags['reopen-after-wave']);
+    const report=await runOfflineFleetStress({agents,batches,reopenAfterWave});
     process.stdout.write(JSON.stringify(report,null,2)+'\n');
     return;
   }
