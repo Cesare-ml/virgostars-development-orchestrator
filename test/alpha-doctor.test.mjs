@@ -159,6 +159,21 @@ test('closed target issue and stale upstream branch stop two-agent readiness',as
   assert.ok(report2.blockers.includes('WRITE_UPSTREAM_PR_MISSING_OR_CHANGED'));
 });
 
+test('two task issues sharing the same resource partition are NOT two simultaneous writers',async()=>{
+  const x=fixture();
+  const samePartition=clone(tasks);
+  samePartition[1].repository=repoChart;
+  samePartition[1].resource_scope.id=samePartition[0].resource_scope.id;
+  samePartition[1].upstream_pr=22;
+  samePartition[1].upstream_branch='feature/charts-tests';
+  x.issues.set(repoChart+'#402',{number:402,state:'open'});
+  const report=await inspectAlphaLaunch({api:x.api,config,tasks:samePartition});
+  assert.equal(report.write_tasks_without_pr_overlap,2);
+  assert.equal(report.independent_writer_partitions,1);
+  assert.equal(report.ready_for_manual_pilot,false);
+  assert.ok(report.blockers.includes('TWO_DISJOINT_WRITE_TASKS_REQUIRED'));
+});
+
 test('open competing PR touching exact task root blocks launch',async()=>{
   const x=fixture();
   x.pullRequests['competing-'+repoChart]={
