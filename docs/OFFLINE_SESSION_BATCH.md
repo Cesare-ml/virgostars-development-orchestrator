@@ -29,3 +29,7 @@ Before any session attempts claim-next or changes code, follow [FIRST_OWNER_ALPH
 - No safety guarantee against two clients deliberately copying the same ID, leaked ID impersonation, stale tasks or concurrent GitHub writes. The existing owner-only protocol must still check live ledger state.
 - This is a preparation tool for the first two independent agents and potential later 5–40 agent trials; throughput and real multi-chat concurrency are **not verified**.
 - No merges, releases, deployments, private records, secret credentials or public volunteer onboarding are involved.
+
+## Follow-up: audit separate saved waves
+
+For a second wave of 10 sessions after the first 10, save each generation output in a distinct owner-local JSON file, then run the [offline cross-batch audit](OFFLINE_SESSION_BATCH_AUDIT.md) before manually distributing prompts. The audit fails on reused UUIDs or edited safety markers, reports only aggregate counts, and does not claim the chats are alive or the private ledger is ready. Keep the saved files outside this PUBLIC checkout.
