@@ -14,7 +14,11 @@ const PRIVATE_TREE='c'.repeat(40),BLOB='d'.repeat(40);
 const repoChart='Cesare-ml/astrological-charts';
 const repoFunctions='Cesare-ml/astrological-functions';
 const config={repository_visibility_required:'private',
-  claim_store:{repo:PRIVATE,branch:'coordination/claims'}};
+  claim_store:{repo:PRIVATE,branch:'coordination/claims'},
+  active_repositories:[
+    {full_name:repoChart,pilot_enabled:true},
+    {full_name:repoFunctions,pilot_enabled:true}
+  ]};
 const tasks=[
   {
     repository:repoChart,issue:401,status:'ready',role:'developer',
@@ -199,6 +203,31 @@ test('first-alpha readiness rejects non-ready tasks before contacting GitHub',as
   candidate[0].status='planned';
   await assert.rejects(()=>inspectAlphaLaunch({api:x.api,config,tasks:candidate}),
     /all curated first-alpha tasks must be ready/);
+  assert.deepEqual(x.calls,[]);
+});
+
+test('first-alpha readiness refuses disabled and outside-fleet tasks before any API reads',async()=>{
+  for(const variant of ['disabled','unlisted','missing-fleet','duplicate']) {
+    const x=fixture(),candidate=clone(tasks),pilot=clone(config);
+    if(variant==='disabled') pilot.active_repositories[0].pilot_enabled=false;
+    if(variant==='unlisted') candidate[0].repository='owner/unapproved-synthetic';
+    if(variant==='missing-fleet') delete pilot.active_repositories;
+    if(variant==='duplicate') pilot.active_repositories.push({
+      full_name:repoChart.toUpperCase(),pilot_enabled:true
+    });
+    await assert.rejects(
+      ()=>inspectAlphaLaunch({api:x.api,config:pilot,tasks:candidate}),
+      /Alpha launch readiness blocked:/
+    );
+    assert.deepEqual(x.calls,[]);
+  }
+});
+
+test('first-alpha readiness refuses malformed fleet enablement flags',async()=>{
+  const x=fixture(),pilot=clone(config);
+  pilot.active_repositories[0].pilot_enabled='true';
+  await assert.rejects(()=>inspectAlphaLaunch({api:x.api,config:pilot,tasks}),
+    /approved first-alpha repository fleet is malformed/);
   assert.deepEqual(x.calls,[]);
 });
 
