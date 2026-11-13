@@ -11,6 +11,7 @@ import {assertPrivateLedgerActivation} from '../src/private-ledger-activation.mj
 import {inspectAlphaLaunch} from '../src/alpha-doctor.mjs';
 import {runOfflineTwoAgentRehearsal} from '../src/offline-two-agent-rehearsal.mjs';
 import {runOfflineFleetStress} from '../src/offline-fleet-stress.mjs';
+import {exportVerifiedLocalLedgerBackup} from '../src/verified-local-ledger-export.mjs';
 import { newSession, claim, status, release, handoff, discover } from '../src/claims.mjs';
 import { claimNext } from '../src/queue.mjs';
 import { submit } from '../src/submissions.mjs';
@@ -30,6 +31,7 @@ const usage = [
   'node bin/vs-agent.mjs alpha-doctor  # GET-only owner preflight; no claims, no merge',
   'node bin/vs-agent.mjs rehearse-two-agents  # offline synthetic claim→handoff→submit→release',
   'node bin/vs-agent.mjs stress-fleet [--agents 2..40]  # offline synthetic concurrency only',
+  'node bin/vs-agent.mjs export-verified-ledger OWNER/PRIVATE-REPO --output ABSOLUTE_BACKUP.json --confirm  # GitHub GET-only; private LOCAL file',
   'node bin/vs-agent.mjs discover',
   'node bin/vs-agent.mjs fleet-status  # read-only, all five repositories',
   'node bin/vs-agent.mjs audit-pr OWNER/REPO ISSUE PR_NUMBER  # read-only scope audit',
@@ -49,7 +51,7 @@ function parse(tokens) {
     const item=tokens[i];
     if (!item.startsWith('--')) {positionals.push(item);continue;}
     const name=item.slice(2);
-    if(!['kind','session','role','branch','summary','head-sha','confirm','repo','pr','agents'].includes(name))
+    if(!['kind','session','role','branch','summary','head-sha','confirm','repo','pr','agents','output'].includes(name))
       throw new Error('Unknown option ' + item);
     if(name==='confirm') {flags.confirm=true;continue;}
     const next=tokens[++i];
@@ -88,6 +90,19 @@ async function main() {
       approved:false,
       private_file_uploaded:false
     },null,2)+'\n');
+    return;
+  }
+  if(command==='export-verified-ledger') {
+    if(positionals.length!==1||Object.keys(flags).some(k=>!['output','confirm'].includes(k))||
+       typeof flags.output!=='string'||flags.confirm!==true)
+      throw new Error('export-verified-ledger requires OWNER/PRIVATE-REPO --output ABSOLUTE_BACKUP.json --confirm.');
+    const api=makeGitHubClient({token:process.env.GITHUB_TOKEN});
+    const result=await exportVerifiedLocalLedgerBackup({
+      api,destination:positionals[0],
+      acknowledgedDestination:process.env.VS_PRIVATE_LEDGER_APPROVED_REPO,
+      output:flags.output,confirm:flags.confirm
+    });
+    process.stdout.write(JSON.stringify(result,null,2)+'\n');
     return;
   }
   if(command==='stress-fleet') {
