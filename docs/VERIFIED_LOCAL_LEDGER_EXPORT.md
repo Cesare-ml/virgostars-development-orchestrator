@@ -43,3 +43,7 @@ The normal report always states full_git_repository_backup:false, github_writes:
 ## Next step
 
 With independently verified full backups and the record-only manifest, perform a separately approved **copy-only** transfer of all seven historical submissions byte-for-byte to the new PRIVATE coordination/claims branch. Then use verify-private-activation, load the SHA-approved owner local task queue, run alpha-doctor and supervise two real agent sessions. Never re-enable legacy public ledger writes to shortcut the process.
+
+## Offline copy-only review before any authorized transfer
+
+Once the record-only backup is locally present, run `node bin/vs-agent.mjs plan-ledger-copy ABSOLUTE_BACKUP.json` as documented in [OFFLINE_LEDGER_COPY_PLAN.md](OFFLINE_LEDGER_COPY_PLAN.md). This verifies that the seven historical submitted records have exact byte identities, counts precisely which submissions are missing/identical in the **local** destination snapshot, and blocks conflicting/extra markers. It makes **no GitHub requests or writes**. A green local comparison cannot replace independent live private-ledger verification and explicit owner cutover approval.
