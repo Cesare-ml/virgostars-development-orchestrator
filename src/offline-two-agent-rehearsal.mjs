@@ -44,7 +44,7 @@ function syntheticConfig() {
 function makeSyntheticGitHub(tasks) {
   const files=new Map();
   const pullRequests=new Map();
-  let sequence=0, failDeleteOnce=false, externalCalls=0;
+  let sequence=0, failDeleteOnce=false, failIssueCreateOnce=null, externalCalls=0;
   const key=(repo,n)=>repo+'#'+n;
   const addPr=(repo,pr,changedFiles=[])=>{
     const all=pullRequests.get(repo)||new Map();
@@ -69,6 +69,14 @@ function makeSyntheticGitHub(tasks) {
     },
     async createClaim(_repo,path,_branch,data) {
       if(files.has(path))throw new GitHubError(422);
+      if(failIssueCreateOnce?.path===path) {
+        const {when}=failIssueCreateOnce;
+        failIssueCreateOnce=null;
+        // An HTTP timeout can happen either before or after GitHub commits
+        // the issue claim. Both cases must keep the resource reserved.
+        if(when==='after')files.set(path,{sha:HASH(++sequence),data:copy(data)});
+        throw new Error('Synthetic transport interruption during issue create.');
+      }
       files.set(path,{sha:HASH(++sequence),data:copy(data)});
     },
     async updateClaim(_repo,path,_branch,sha,data) {
@@ -102,6 +110,10 @@ function makeSyntheticGitHub(tasks) {
   return {
     api,files,
     failReleaseOnce(){failDeleteOnce=true;},
+    failIssueCreateOnce(task,when) {
+      ensure(['before','after'].includes(when),'unknown synthetic issue-create failure mode.');
+      failIssueCreateOnce={path:taskKey(task.repository,task.issue),when};
+    },
     registerSyntheticDelivery(task,i){
       const number=21+i;
       const upstreamPr=pullRequests.get(task.repository).get(task.upstream_pr).pr;
@@ -133,6 +145,63 @@ function makeSyntheticGitHub(tasks) {
     noteExternalCalls(){externalCalls++;},
     externalCalls(){return externalCalls;}
   };
+}
+
+
+/**
+ * An indeterminate issue-create response is not evidence that the resource
+ * lock was released. Exercise BOTH outcomes of an interrupted remote write:
+ * no issue blob persisted, or issue blob persisted but its response was lost.
+ * A different chat cannot take ownership in either state.
+ */
+async function rehearseAmbiguousIssueClaim(tasks,config,when) {
+  const task=tasks[0],mock=makeSyntheticGitHub(tasks);
+  const original={api:mock.api,config,tasks:[task],session:SESSIONS[0],role:'developer'};
+  const contender={...original,session:SESSIONS[2]};
+  mock.failIssueCreateOnce(task,when);
+  let failClosed=false;
+  try {
+    await claimNext(original);
+  } catch(error) {
+    failClosed=/Issue claim outcome uncertain/.test(error.message);
+  }
+  ensure(failClosed,'ambiguous issue-create result must stop the original agent.');
+  ensure(mock.files.has(resourceKey(task.repository,task.resource_scope.id)),
+    'resource must stay reserved after an uncertain issue-create response.');
+  ensure(mock.count('claims')===(when==='after'?1:0),
+    'synthetic issue persistence must match the injected failure point.');
+
+  const denied=await claimNext(contender);
+  ensure(denied.result==='no-task',
+    'a different agent must not claim while the issue create is uncertain.');
+  const resumed=await claimNext(original);
+  ensure(resumed.result===(when==='after'?'already-owned':'acquired'),
+    'only the original owner may resume/retry its uncertain claim.');
+  ensure(mock.count('claims')===1&&mock.count('resources')===1,
+    'recovery must not duplicate the issue or resource reservation.');
+
+  const delivery=mock.registerSyntheticDelivery(task,0);
+  const saved=await handoff({
+    api:mock.api,config,repo:task.repository,issue:task.issue,
+    session:SESSIONS[0],branchName:'agent/synthetic-0',
+    headSha:delivery.head,
+    summary:'Synthetic recovery after interrupted issue claim.',
+    now:()=> '2026-01-01T00:00:00.000Z'
+  });
+  ensure(saved.result==='handoff-saved','recovered owner must be able to hand off.');
+  const submitted=await submit({
+    api:mock.api,config,tasks:[task],repo:task.repository,
+    issue:task.issue,session:SESSIONS[0],prNumber:delivery.number,
+    confirm:true,now:()=> '2026-01-01T00:00:00.000Z'
+  });
+  ensure(submitted.result==='submitted','recovered owner must submit once.');
+  ensure(mock.count('submissions')===1&&mock.count('claims')===0&&
+    mock.count('resources')===0,
+    'recovered task must leave one marker and no active locks.');
+  ensure((await claimNext(contender)).result==='no-task',
+    'recovered submission must never be reoffered.');
+  ensure(mock.externalCalls()===0,'ambiguous-claim rehearsal must remain offline.');
+  return true;
 }
 
 /**
@@ -234,6 +303,9 @@ export async function runOfflineTwoAgentRehearsal() {
   ensure(after.result==='no-task','submitted tasks cannot be reassigned.');
   ensure(mock.externalCalls()===0,'no external requests may occur.');
 
+  const beforeWriteRecovered=await rehearseAmbiguousIssueClaim(tasks,config,'before');
+  const afterWriteResumed=await rehearseAmbiguousIssueClaim(tasks,config,'after');
+
   return {
     schema_version:'1-offline-two-agent-rehearsal',
     mode:'synthetic-in-memory-only',
@@ -250,6 +322,10 @@ export async function runOfflineTwoAgentRehearsal() {
     competing_pr_recovery_submitted:true,
     interrupted_release_blocked:interruptedReleaseRejected,
     original_owner_retry_succeeded:true,
+    ambiguous_issue_create_before_write_recovered:beforeWriteRecovered,
+    ambiguous_issue_create_after_write_resumed:afterWriteResumed,
+    uncertain_claim_contender_denied:true,
+    uncertain_claim_final_locks_cleared:true,
     submitted_markers:mock.count('submissions'),
     remaining_issue_claims:mock.count('claims'),
     remaining_resource_locks:mock.count('resources'),
