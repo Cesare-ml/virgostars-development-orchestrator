@@ -8,6 +8,9 @@ The initial objective is to let many independent ChatGPT and Codex conversations
 
 ## First usable owner-operated alpha (private ledger required)
 
+**New owner-only staging gate:** after verified record export and offline copy planning, `node bin/vs-agent.mjs stage-ledger-copy ABSOLUTE_BACKUP.json --output ABSOLUTE_NEW_FOLDER --confirm` creates a new LOCAL folder of *only missing* historic submissions. Requires `VS_PRIVATE_BACKUP_APPROVED_SHA256` matching the reviewed backup exactly; no GitHub reads/writes. See [the guide](docs/OWNER_LOCAL_STAGING.md). **Never commit private staged files to this public repository.**
+
+
 **Owner-only private cutover preparation:** [verified local ledger export](docs/VERIFIED_LOCAL_LEDGER_EXPORT.md) fetches and checks immutable Git blobs from the frozen historical PUBLIC ledger and a separately approved PRIVATE target, creating an exclusively new LOCAL record-only backup. It **does not create a private repository, migrate records, change live configuration or write to GitHub**.
 
 
