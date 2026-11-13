@@ -1,6 +1,6 @@
 import {GitHubError} from './github.mjs';
 import {claimNext} from './queue.mjs';
-import {handoff,status,submissionKey,taskKey} from './claims.mjs';
+import {handoff,release,status,submissionKey,taskKey} from './claims.mjs';
 import {resourceKey} from './resources.mjs';
 import {submit} from './submissions.mjs';
 
@@ -234,6 +234,59 @@ export async function runOfflineTwoAgentRehearsal() {
   ensure(after.result==='no-task','submitted tasks cannot be reassigned.');
   ensure(mock.externalCalls()===0,'no external requests may occur.');
 
+
+  // A separate, fresh catalog deliberately assigns two different issues
+  // to ONE permitted shared resource partition. This tests the resource-first
+  // race across task IDs, rather than merely exhausting the initial queue.
+  const sharedRoot='tests/synthetic-shared-smoke.test.mjs';
+  const sharedScope={id:'synthetic-shared-partition',roots:[sharedRoot]};
+  const contentionTasks=[201,202].map((issue,i)=>({
+    ...tasks[0],issue,scope:[sharedRoot],resource_scope:copy(sharedScope),
+    upstream_pr:41+i,upstream_branch:'feature/shared-upstream-'+i
+  }));
+  const contention=makeSyntheticGitHub(contentionTasks);
+  const raceArgs=session=>({
+    api:contention.api,config,tasks:contentionTasks,session,role:'developer'
+  });
+  const competitors=await Promise.all(
+    SESSIONS.slice(0,2).map(session=>claimNext(raceArgs(session)))
+  );
+  const winningIndex=competitors.findIndex(result=>result.result==='acquired');
+  const losingIndex=competitors.findIndex(result=>result.result==='no-task');
+  ensure(winningIndex!==-1&&losingIndex!==-1&&winningIndex!==losingIndex,
+    'exactly one competing writer must acquire the shared partition.');
+  ensure(contention.count('claims')===1&&contention.count('resources')===1,
+    'shared resource contention must create only one issue and resource lock.');
+
+  const finishRaceClaim=async (owner,session)=>{
+    const repo=owner.claim.target_repository,issue=owner.claim.issue_number;
+    const saved=await handoff({
+      api:contention.api,config,repo,issue,session,
+      summary:'Synthetic same-partition contention handoff (no real PR or tests).',
+      branchName:'agent/synthetic-contention',
+      now:()=> '2026-01-01T00:00:00.000Z'
+    });
+    ensure(saved.result==='handoff-saved',
+      'shared-partition owner must save a handoff before releasing.');
+    const released=await release({
+      api:contention.api,config,repo,issue,session,confirm:true
+    });
+    ensure(released.result==='released','shared-partition owner release must succeed.');
+  };
+  await finishRaceClaim(competitors[winningIndex],SESSIONS[winningIndex]);
+  ensure(contention.count('claims')===0&&contention.count('resources')===0,
+    'shared resource lock must become available after owner release.');
+  const acquiredAfterRelease=await claimNext(raceArgs(SESSIONS[losingIndex]));
+  ensure(acquiredAfterRelease.result==='acquired',
+    'previously blocked writer must be able to acquire after release.');
+  ensure(contention.count('claims')===1&&contention.count('resources')===1,
+    'retry must acquire one issue and one matching shared resource lock.');
+  await finishRaceClaim(acquiredAfterRelease,SESSIONS[losingIndex]);
+  ensure(contention.count('claims')===0&&contention.count('resources')===0,
+    'contention rehearsal must finish with no outstanding locks.');
+  ensure(contention.externalCalls()===0,
+    'shared-partition race must remain fully offline.');
+
   return {
     schema_version:'1-offline-two-agent-rehearsal',
     mode:'synthetic-in-memory-only',
@@ -244,6 +297,11 @@ export async function runOfflineTwoAgentRehearsal() {
     agents_started_in_parallel:2,
     independently_claimed_tasks:2,
     exclusive_issue_and_resource_locks_verified:true,
+    shared_partition_concurrent_writers:2,
+    shared_partition_exclusive_claim_verified:true,
+    blocked_writer_reacquired_after_owner_release:true,
+    remaining_contention_issue_claims:contention.count('claims'),
+    remaining_contention_resource_locks:contention.count('resources'),
     third_agent_denied:true,
     competing_pr_submission_blocked:conflictRejected,
     original_owner_retained_on_conflict:true,
