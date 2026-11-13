@@ -118,6 +118,17 @@ async function getCompleteRuns(sha, request) {
   throw new AuditFailure('INCOMPLETE_CHECK_INVENTORY');
 }
 
+function sameCheckInventory(a, b) {
+  if (a.length !== b.length) return false;
+  // Pagination order can change without changing evidence; compare by stable
+  // GitHub check-run IDs and all fields used by the decision.
+  const signature = runs => JSON.stringify(runs.map(run => [
+    String(run.id), run.name, run.head_sha, run.status,
+    run.conclusion, run.app.slug,
+  ]).sort((left, right) => left[0].localeCompare(right[0])));
+  return signature(a) === signature(b);
+}
+
 function inspectCheck(runs, sha, checkName) {
   const matches = runs.filter(run => run.name === checkName);
   if (matches.length === 0) return { state: 'missing', blocker: 'MISSING_REQUIRED_CHECK' };
@@ -139,11 +150,17 @@ export async function auditPublicPrCi(prNumbers, { request = fetch } = {}) {
   const results = [];
   for (const number of numbers) {
     const first = normalizePr(await getJson(`/pulls/${number}`, request), number);
-    const runs = await getCompleteRuns(first.head, request);
-    const second = normalizePr(await getJson(`/pulls/${number}`, request), number);
-    if (!sameSnapshot(first, second)) throw new AuditFailure('PR_SNAPSHOT_DRIFT');
+    const firstRuns = await getCompleteRuns(first.head, request);
+    const middle = normalizePr(await getJson(`/pulls/${number}`, request), number);
+    if (!sameSnapshot(first, middle)) throw new AuditFailure('PR_SNAPSHOT_DRIFT');
+    const secondRuns = await getCompleteRuns(first.head, request);
+    const last = normalizePr(await getJson(`/pulls/${number}`, request), number);
+    if (!sameSnapshot(first, last)) throw new AuditFailure('PR_SNAPSHOT_DRIFT');
+    if (!sameCheckInventory(firstRuns, secondRuns)) {
+      throw new AuditFailure('CHECK_SNAPSHOT_DRIFT');
+    }
     const checks = Object.fromEntries(EXPECTED_CHECKS.map(([key, name]) => [
-      key, inspectCheck(runs, first.head, name),
+      key, inspectCheck(secondRuns, first.head, name),
     ]));
     const blockers = [...new Set(Object.values(checks)
       .map(item => item.blocker).filter(Boolean))].sort();
