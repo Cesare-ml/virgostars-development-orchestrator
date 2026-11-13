@@ -15,6 +15,11 @@ test('two real claim/submit/release paths complete on synthetic in-memory fixtur
   assert.equal(result.independently_claimed_tasks,2);
   assert.equal(result.third_agent_denied,true);
   assert.equal(result.exclusive_issue_and_resource_locks_verified,true);
+  assert.equal(result.shared_partition_concurrent_writers,2);
+  assert.equal(result.shared_partition_exclusive_claim_verified,true);
+  assert.equal(result.blocked_writer_reacquired_after_owner_release,true);
+  assert.equal(result.remaining_contention_issue_claims,0);
+  assert.equal(result.remaining_contention_resource_locks,0);
   assert.equal(result.competing_pr_submission_blocked,true);
   assert.equal(result.original_owner_retained_on_conflict,true);
   assert.equal(result.competing_pr_recovery_submitted,true);
