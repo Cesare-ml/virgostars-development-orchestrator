@@ -282,3 +282,12 @@ No deploy, production mutation, release, automatic merge, or license change is i
 - [x] Add synthetic tests for byte corruption, public destination, missing permission, drift, symlink/overwrite and the CLI no-token failure.
 - [ ] Confirm public Node 20/22 CI and independent code review; no private credentials in CI.
 - [ ] Create and independently audit a **complete** immutable Git mirror backup and PRIVATE destination, then conduct owner-approved copy-only migration before any live two-chat pilot.
+
+## Offline owner-approved copy-only staging plan — issue #69 (2026-11-13)
+
+- [x] Check a privately held record-only manifest against frozen historic public commit and tree, exactly seven submitted records, and valid record/issue path identities.
+- [x] Use existing Git blob verification to count missing, exact-identical, conflicting and destination-only submissions; reject any active destination locks or missing private branch.
+- [x] Expose read-only tokenless `plan-ledger-copy ABSOLUTE_BACKUP.json` with no record/identity disclosure and explicit no-GitHub/no-import status.
+- [x] Add synthetic tests for byte drift, partial/replayed backups, active records, safe local filesystem reading and CLI exit codes.
+- [ ] Verify public Node 20/22 CI and independent source review.
+- [ ] Private repository, full Git mirror backups and explicit owner-approved remote copy-only transfer remain incomplete; do not activate live agents until verified.
