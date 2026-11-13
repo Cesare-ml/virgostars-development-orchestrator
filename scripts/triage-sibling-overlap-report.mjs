@@ -144,7 +144,7 @@ export function main(args=process.argv.slice(2)) {
 if (process.argv[1] && resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
   try { process.exitCode=main(); }
   catch (error) {
-    process.stderr.write('ERROR: Unable to validate public sibling audit: '+error.message+'\n');
+    process.stderr.write('ERROR: public sibling report is invalid, incomplete or inaccessible.\n');
     process.exitCode=1;
   }
 }
