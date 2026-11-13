@@ -106,6 +106,10 @@ test('reopening after first 10-chat wave preserves ownership with a fresh adapte
   assert.equal(result.remaining_issue_claims,0);
   assert.equal(result.remaining_resource_locks,0);
   assert.equal(result.real_external_storage_durability_proven,false);
+  const uninterrupted=await runOfflineFleetStress({agents:20,batches:[10,10]});
+  assert.equal(result.synthetic_ledger_mutations,
+    uninterrupted.synthetic_ledger_mutations,
+    'reopened adapter must retain the full pre-reopen mutation count');
   assert.equal(result.real_github_requests,0);
 });
 
@@ -119,6 +123,11 @@ test('reopening after wave two retains all earlier owners through later waves',a
   assert.equal(result.earlier_session_resumes_verified,45);
   assert.equal(result.submitted_markers,40);
   assert.equal(result.remaining_resource_locks,0);
+  const uninterrupted=await runOfflineFleetStress({
+    agents:40,batches:[5,10,10,15]
+  });
+  assert.equal(result.synthetic_ledger_mutations,
+    uninterrupted.synthetic_ledger_mutations);
 });
 
 test('reopen index is strictly between the first and last wave',async()=>{
