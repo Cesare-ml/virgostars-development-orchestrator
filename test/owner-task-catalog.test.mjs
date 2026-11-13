@@ -57,7 +57,7 @@ test('missing, wrong, uppercase or stale approved SHA fails closed',async t=>{
   for(const approvedSha256 of [undefined,'',sha256.toUpperCase(),'0'.repeat(64)])
     await assert.rejects(()=>loadOwnerTasks({file,approvedSha256}),
       /Owner task catalog blocked/);
-  assert.rejects(()=>loadOwnerTasks({file:undefined,approvedSha256:sha256}),
+  await assert.rejects(()=>loadOwnerTasks({file:undefined,approvedSha256:sha256}),
     /Owner task catalog blocked/);
   await writeFile(file,JSON.stringify({...payload(),status:'changed'}));
   await assert.rejects(()=>loadOwnerTasks({file,approvedSha256:sha256}),
