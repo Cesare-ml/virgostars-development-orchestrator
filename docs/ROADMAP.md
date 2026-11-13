@@ -244,3 +244,12 @@ No deploy, production mutation, release, automatic merge, or license change is i
 - [ ] Verify full Node 20/22 CI on the final PR head and independently review all new paths.
 - [ ] After private ledger migration approval, curate two **new** real issues with disjoint root scopes and demonstrate two concurrent sessions.
 - [ ] Do not claim public coordination safety, autonomous scheduling or 40-chat capacity before real testing.
+
+## First alpha readiness command — issue #32 (2026-11-13)
+
+- [x] Add a read-only `alpha-doctor` under the existing private-ledger and SHA-approved local queue gates.
+- [x] Audit private ledger snapshot locks, new-task submitted markers, live target issues, upstream PR refs, changed-file overlaps and final ledger drift; emit counts/blocker codes only.
+- [x] Require two independently eligible developer write tasks before a green result. Explicitly state the result does not acquire a reservation or authorize a merge.
+- [x] Add synthetic Node test coverage and Windows first-alpha instructions.
+- [ ] Run and verify public Node 20/22 CI on final PR HEAD and obtain independent source review.
+- [ ] Validate on a *real owner-held private ledger* after an independently reviewed cutover; then run two live agent sessions with safe claim → submit → release.
