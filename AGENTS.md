@@ -114,3 +114,7 @@ Before proposing the first two new developer chats, follow [docs/ALPHA_READINESS
 ## Offline two-agent rehearsal (synthetic only)
 
 Before a live owner-operated pilot, run `node bin/vs-agent.mjs rehearse-two-agents` and review [docs/OFFLINE_TWO_AGENT_REHEARSAL.md](docs/OFFLINE_TWO_AGENT_REHEARSAL.md). The command uses only synthetic in-memory GitHub data, even with private environment variables set. It exercises actual claim/handoff/submit/release functions, overlapping PR submission blockers and owner retry after interrupted release. Never represent synthetic pass as proof of a live private ledger, human code review, real branch tests, GitHub write concurrency or a deployed coordinator. No public ledger operations are authorized.
+
+## Submitted write-task partial-release retry
+
+If `submit --confirm` reports that its **issue claim was deleted but the write resource remains locked**, do **not** start another task or manually erase the lock. The exact original session can retry `submit OWNER/REPO ISSUE --session SAME_SESSION --pr PR --confirm` only against the approved PRIVATE ledger and still-approved local catalog. The CLI verifies the immutable scope-audited submission, matching session/issue/resource roots, and absence of an active issue claim before SHA-conditional cleanup. Foreign/changed locks, missing submission evidence, changed catalog, and unsubmitted orphan locks require maintainer reconciliation. See `src/submission-release-recovery.mjs` and `docs/RESOURCE_LOCKS.md`; this does not enable public-ledger writes.
