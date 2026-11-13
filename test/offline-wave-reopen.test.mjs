@@ -28,6 +28,7 @@ test('10+10 reopening reconstructs an independent ledger and preserves old owner
   assert.equal(reopened.restored_live_issue_claims,10);
   assert.equal(reopened.restored_live_resource_locks,10);
   assert.equal(reopened.restored_submission_markers,0);
+  assert.equal(reopened.restored_synthetic_pr_records,20);
   assert.equal(reopened.restored_ledger_entries_preserved,true);
   assert.equal(reopened.earlier_session_resumes_verified,10);
   assert.equal(reopened.unique_claims,20);
@@ -38,6 +39,7 @@ test('10+10 reopening reconstructs an independent ledger and preserves old owner
   assert.equal(reopened.synthetic_ledger_mutations,ordinary.synthetic_ledger_mutations);
   assert.equal(Object.hasOwn(ordinary,'reopened_after_wave'),false);
   assert.equal(Object.hasOwn(ordinary,'restored_live_issue_claims'),false);
+  assert.equal(Object.hasOwn(ordinary,'restored_synthetic_pr_records'),false);
 });
 
 test('reopening works at any non-final boundary of four arrival waves',async()=>{
@@ -50,6 +52,7 @@ test('reopening works at any non-final boundary of four arrival waves',async()=>
     assert.equal(result.restored_live_issue_claims,expectedClaims);
     assert.equal(result.restored_live_resource_locks,expectedClaims);
     assert.equal(result.restored_submission_markers,0);
+    assert.equal(result.restored_synthetic_pr_records,40);
     assert.equal(result.earlier_session_resumes_verified,45);
     assert.equal(result.unique_claims,40);
     assert.equal(result.submitted_markers,40);
