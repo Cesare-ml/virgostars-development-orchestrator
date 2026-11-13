@@ -12,6 +12,27 @@ function invalid(reason) {
   throw new Error('Alpha launch readiness blocked: '+reason);
 }
 
+function assertActiveTaskFleet(config,tasks) {
+  if(!Array.isArray(config?.active_repositories) ||
+     config.active_repositories.length<1 ||
+     config.active_repositories.length>40)
+    invalid('approved first-alpha repository fleet is missing or malformed.');
+  const seen=new Set(),enabled=new Set();
+  for(const entry of config.active_repositories) {
+    if(!entry||typeof entry.full_name!=='string'||
+       !/^[a-z\d][a-z\d_.-]*\/[a-z\d][a-z\d_.-]*$/i.test(entry.full_name)||
+       typeof entry.pilot_enabled!=='boolean')
+      invalid('approved first-alpha repository fleet is malformed.');
+    const key=entry.full_name.toLowerCase();
+    if(seen.has(key))
+      invalid('approved first-alpha repository fleet has duplicate entries.');
+    seen.add(key);
+    if(entry.pilot_enabled===true)enabled.add(key);
+  }
+  if(tasks.some(task=>!enabled.has(task.repository.toLowerCase())))
+    invalid('curated task targets a repository not enabled in the approved pilot.');
+}
+
 function validHead(ref) {
   if(ref?.object?.type!=='commit'||!SHA.test(ref?.object?.sha||''))
     invalid('private ledger branch reference is missing or malformed.');
@@ -81,6 +102,7 @@ export async function inspectAlphaLaunch({api,config,tasks}) {
     invalid('two or more independently curated tasks are required.');
   if(tasks.some(task=>task.status!=='ready'))
     invalid('all curated first-alpha tasks must be ready.');
+  assertActiveTaskFleet(config,tasks);
 
   const preservation=await assertPrivateLedgerActivation({api,config});
   if(preservation.status!=='readiness_verified'||
