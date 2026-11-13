@@ -60,7 +60,7 @@ test('reopening works at any non-final boundary of four arrival waves',async()=>
 test('invalid reopening boundaries fail before synthetic work',async()=>{
   assert.equal(validateReopenAfterWave(null,null,[40]),null);
   assert.equal(validateReopenAfterWave(1,[10,10],[10,10]),1);
-  for(const value of [0,-1,2,1.5,NaN,Infinity,'1',null===undefined?0:'01']) {
+  for(const value of [0,-1,2,1.5,NaN,Infinity,'1','01']) {
     assert.throws(()=>validateReopenAfterWave(value,[10,10],[10,10]),
       /Reopen-after-wave/);
   }
