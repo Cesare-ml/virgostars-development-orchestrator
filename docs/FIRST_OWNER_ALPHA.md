@@ -62,3 +62,7 @@ The five original reviewer tasks and two developer tasks are already submitted. 
 No central API is deployed. There is no transactional multi-resource scheduler, automatic stale-lock recovery, community authentication or proven 40-chat capacity. GitHub Contents API exclusivity is cooperative, not a strong isolation boundary against untrusted writers.
 
 The next acceptance milestone is: independently reviewed private migration, read-only readiness passing against a real private ledger, all seven historic submissions preserved, and **two new disjoint agents** completing the entire claim-to-handoff lifecycle safely.
+
+### Owner-only staging before any private import
+
+Use [OWNER_LOCAL_STAGING.md](OWNER_LOCAL_STAGING.md) after the reviewed record-only export and offline copy plan to prepare exact missing submissions locally, with an explicit reviewed manifest SHA-256 and exclusive, non-overwriting output directory. This command does not write to any GitHub repository or prove live private permissions. Obtain complete Git mirror backups and independently approve any eventual copy into the actual PRIVATE coordination branch.
