@@ -1,7 +1,8 @@
-import {assertSession, status, release, submissionKey} from './claims.mjs';
+import {assertSession, status, release, submissionKey, taskKey} from './claims.mjs';
 import {GitHubError} from './github.mjs';
 import {auditTaskPullRequest} from './pr-audit.mjs';
 import {auditOpenPullRequestCollisions} from './pr-collisions.mjs';
+import {resourceKey,resourceMatches,validateTaskCatalog} from './resources.mjs';
 
 /**
  * Persist "submitted for review", then release the owner claim.
@@ -22,7 +23,44 @@ export async function submit({api,config,tasks,repo,issue,session,prNumber=null,
   if(observed.status==='submitted') {
     if(!prior || prior.data.session_id!==session)
       throw new Error('Submission belongs to another session.');
-    return {result:'already-submitted',task:repo+'#'+issue};
+    // Contents API deletion spans two independent files. If issue deletion
+    // succeeded but resource deletion failed, a same-owner retry may safely
+    // release ONLY the orphaned resource backed by an intact submission.
+    if(prior.data.access!=='write')
+      return {result:'already-submitted',task:repo+'#'+issue};
+    const scopeId=prior.data.resource_scope_id;
+    const resourcePath=resourceKey(repo,scopeId);
+    const held=await api.getClaim(ledger,resourcePath,branch);
+    if(!held) return {result:'already-submitted',task:repo+'#'+issue};
+    if(!Array.isArray(tasks))
+      throw new Error('Orphan recovery needs the approved task catalog.');
+    validateTaskCatalog(tasks);
+    const task=tasks.find(t=>t.repository===repo&&t.issue===issue);
+    const evidence=prior.data;
+    if(task?.access!=='write' || task.resource_scope.id!==scopeId ||
+      task.role!==evidence.role || prNumber!==evidence.pull_request ||
+      !Number.isSafeInteger(prNumber) || prNumber<1 ||
+      evidence.scope_verdict!=='scope-clean' ||
+      evidence.collision_audit!=='single-candidate' ||
+      !/^[0-9a-f]{40}$/i.test(evidence.audited_head_sha||'') ||
+      evidence.last_handoff?.head_sha!==evidence.audited_head_sha)
+      throw new Error('Submitted write evidence or task scope changed; manual recovery required.');
+    const expected={...evidence,resource_roots:[...task.resource_scope.roots].sort()};
+    if(!resourceMatches(held,expected))
+      throw new Error('Orphan resource belongs to a different owner or scope; manual recovery required.');
+    const [active,latestSubmission,latestResource]=await Promise.all([
+      api.getClaim(ledger,taskKey(repo,issue),branch),
+      api.getClaim(ledger,path,branch),
+      api.getClaim(ledger,resourcePath,branch)
+    ]);
+    if(active || latestSubmission?.sha!==prior.sha ||
+      latestResource?.sha!==held.sha || !resourceMatches(latestResource,expected))
+      throw new Error('Ledger changed during orphan recovery; manual reconciliation required.');
+    try {await api.deleteClaim(ledger,resourcePath,branch,held.sha,held.data);}
+    catch(error) {
+      throw new Error('Orphan resource release failed; inspect the private ledger before retrying.',{cause:error});
+    }
+    return {result:'recovered-submitted-resource',task:repo+'#'+issue,review_required:true};
   }
   if(observed.status!=='claimed' || observed.claim.session_id!==session)
     throw new Error('Only the current task owner may submit.');
