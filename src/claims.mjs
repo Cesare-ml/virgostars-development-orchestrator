@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { isDeepStrictEqual } from 'node:util';
 import { GitHubError } from './github.mjs';
 import { resourceKey, resourceMatches, validateTaskCatalog } from './resources.mjs';
 import { assertResumableOwnerClaim } from './claim-resume-integrity.mjs';
@@ -208,6 +209,11 @@ export async function handoff({api,config,repo,issue,session,summary,branchName,
   if(!isOwner(current,session,repo,issue)) throw new Error('Not the current owner; stop work.');
   const observed=await status({api,config,repo,issue});
   if(observed.status!=='claimed') throw new Error('Resource lock invalid; handoff blocked.');
+  // Both pre-write reads must describe the same record. A stale first read
+  // cannot be promoted into a handoff even when its session ID matches.
+  if(!current.sha || observed.blob_sha!==current.sha ||
+     !isDeepStrictEqual(observed.claim,current.data))
+    throw new Error('Claim changed between handoff reads; recheck private ledger.');
   const updated={...current.data,state:'in_progress',branch:branchName||current.data.branch,
     last_handoff:{at:now(),summary,head_sha:headSha||null}};
   try { await api.updateClaim(ledger,path,branch,current.sha,updated); }
@@ -216,7 +222,20 @@ export async function handoff({api,config,repo,issue,session,summary,branchName,
       throw new Error('Claim was changed concurrently; re-read before continuing.');
     throw error;
   }
-  return {result:'handoff-saved',claim:updated};
+  // A successful PUT is not proof that the handoff is durably available
+  // to the next chat. Verify exact current JSON and the matching resource
+  // lock, without deleting or overwriting records on uncertain outcomes.
+  let persisted;
+  try { persisted=await status({api,config,repo,issue}); }
+  catch(error) {
+    throw new Error('Handoff readback unavailable; keep owner locks for reconciliation.',{cause:error});
+  }
+  if(persisted?.status!=='claimed' ||
+     typeof persisted.blob_sha!=='string'||!persisted.blob_sha||
+     persisted.blob_sha===current.sha ||
+     !isDeepStrictEqual(persisted.claim,updated))
+    throw new Error('Handoff readback inconsistent; keep owner locks for reconciliation.');
+  return {result:'handoff-saved',claim:persisted.claim};
 }
 
 export async function release({api,config,repo,issue,session,confirm}) {
