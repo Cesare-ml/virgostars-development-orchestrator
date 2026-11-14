@@ -91,7 +91,7 @@ function makeStore() {
   let sequence=0,requests=0;
   const keyCheck=(repo,path,branch)=>{
     if(repo!==LEDGER || branch!==BRANCH ||
-      !/^(claims|resources)\/example-synthetic__queue-process\/[a-z0-9.-]+\.json$/.test(path))
+      !/^(claims|resources|submissions)\/example-synthetic__queue-process\/[a-z0-9.-]+\.json$/.test(path))
       throw new Error('Unexpected synthetic claim path.');
   };
   const service=(method,args)=>{
