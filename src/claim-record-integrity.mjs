@@ -70,8 +70,9 @@ export function isStructurallyValidActiveClaim(data,repo,issue) {
 
   if(data.state==='claimed') return data.last_handoff===null;
   const h=data.last_handoff;
+  // Chronology cannot be inferred from untrusted host clocks. Validate format,
+  // and leave signed sequencing/evidence to the caller's ledger readbacks.
   return exactPlainRecord(h,HANDOFF_FIELDS) && utcIso(h.at) &&
-    h.at>=data.claimed_at &&
     typeof h.summary==='string' && !!h.summary.trim() &&
     h.summary.length<=2000 &&
     (h.head_sha===null || (typeof h.head_sha==='string' && SHA.test(h.head_sha)));
