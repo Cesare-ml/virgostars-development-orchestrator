@@ -62,3 +62,7 @@ A new strictly GET-only `node bin/vs-agent.mjs check-private-destination OWNER/R
 ## Public/private cutover dry-run checks (issue #24)
 
 A read-only `plan-private-cutover OWNER/PRIVATE-REPO` command now compares **aggregate Git tree metadata** between the fixed public historical `coordination/claims` branch and an owner-selected verified private destination. It rechecks both repositories' visibility and Git branch refs, reports active-lock/existing-record/missing-branch blockers, does not read any blob contents or print private paths and always denies automatic migration. Public CI uses mocks only. See [PRIVATE_CUTOVER_PLAN.md](PRIVATE_CUTOVER_PLAN.md). This is **not** a transfer, privacy remediation of Git history or the approval to set up the destination.
+
+## Local backup reconciliation rehearsal (issue #26)
+
+After the public source/private destination metadata comparison, a separate offline `rehearse-private-cutover LOCAL_BACKUP.json` tool can validate the **listed** local record bytes against their Git blob SHA-1 and count identical, would-copy, conflicting and destination-only entries without revealing any records. It is strictly tokenless/no-network and does not create or move data. It reports `ready_to_migrate:false` and cannot prove full backup completeness or a current remote Git commit. The operator must privately produce and verify a full-tree backup, freeze writers, reconcile IDs and authorize a separate cutover and rollback plan. See [OFFLINE_CUTOVER_REHEARSAL.md](OFFLINE_CUTOVER_REHEARSAL.md).
