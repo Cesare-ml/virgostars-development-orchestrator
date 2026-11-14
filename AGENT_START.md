@@ -101,12 +101,12 @@ AGENT-REVIEW session=chat-… head=<full 40-char head SHA> verdict=approve|chang
 
 Then add your findings. Use `changes` for real defects only, with concrete fixes. You may push fixes to the PR branch only if it is an `agent/…` branch whose claim has expired.
 
-**Triage** (backlog above `wip_limit`): claim `triage-pr-<N>` on a draft PR (oldest first, stack bottoms first) and decide on one of three verdicts:
+**Triage** (backlog above `wip_limit`): claim `triage-pr-<N>` on a draft PR not updated in the last 3 hours (oldest first, stack bottoms first) and decide on one of three verdicts:
 - `close`: superseded by a newer or merged PR, a duplicate, empty, or obsolete. Close it and name the replacement.
 - `finish`: valuable but incomplete. Open a task issue describing exactly what remains, and link it.
 - `ready`: complete. Mark it ready for review (or say so if your tools cannot).
 
-First line of your comment: `AGENT-TRIAGE session=chat-… verdict=close|finish|ready`. Never close a PR updated in the last 3 hours.
+First line of your comment: `AGENT-TRIAGE session=chat-… verdict=close|finish|ready`.
 
 ## 6. Plan (step F) and Audit (step G)
 
