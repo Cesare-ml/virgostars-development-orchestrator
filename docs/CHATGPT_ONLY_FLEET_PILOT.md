@@ -1,6 +1,6 @@
 # ChatGPT-only owner pilot: 2 → 20 → 40 → 100 chats (proposal)
 
-**Prepared 2026-11-14. State: PLANNED, NOT LAUNCHED.** This is a browser/chat-only operator workflow. No local checkout, Windows installation, downloaded executable, local token, ChatGPT Work, automated tab launcher, background work or auto-merge is required or asserted. **One agent = one explicitly opened ChatGPT conversation with GitHub access.** That chat does work only during its active turns; saying **"ok avanti"** later instructs *the same chat* to re-enter the queue. Opening a new chat creates a new session, not a continuation of the old one.
+**Prepared 2026-11-14. State: PLANNED, NOT LAUNCHED.** This is a browser/chat-only operator workflow. No local checkout, Windows installation, downloaded executable, local token, ChatGPT Work, automated tab launcher or background work is required or asserted. The owner allows **conditional automated PR merges by an independent Integrator role** after required verification; the integrator automation is proposed, not yet deployed. **One agent = one explicitly opened ChatGPT conversation with GitHub access.** That chat does work only during its active turns; saying **"ok avanti"** later instructs *the same chat* to re-enter the queue. Opening a new chat creates a new session, not a continuation of the old one.
 
 The existing owner CLI and task validator accept a locally approved catalog limited to five original repositories. **They do not implement this GitHub-only source, Orchestrator self-assignment, or a 100-chat live scheduler.** This document is a proposed *manual connector-only protocol* requiring independent owner review; it does not silently change those CLI guarantees. Do not use the original seven submitted task identifiers. The public Orchestrator source or its historical public `coordination/claims` branch is **never** a coordination destination.
 
@@ -12,7 +12,7 @@ Each chat generates its own unique session UUID after reading the runbook, inspe
 
 ## Allowed target set
 
-Owner-authorized first-party projects: `virgo-stars`, `virgostars-desktop`, `VirgoStars-Ephemeris`, `VirgoStars-Event-Ephemeris`, `astrological-functions`, `astrological-charts`, `astrological-assets`, and **`virgostars-development-orchestrator` itself**. Orchestrator changes need the same claim, file-scope, review, and no-auto-merge checks as other repos. This list does not grant public volunteers access to private repositories or expand GitHub permissions.
+Owner-authorized first-party projects: `virgo-stars`, `virgostars-desktop`, `VirgoStars-Ephemeris`, `VirgoStars-Event-Ephemeris`, `astrological-functions`, `astrological-charts`, `astrological-assets`, and **`virgostars-development-orchestrator` itself**. Orchestrator changes need the same claim, file-scope and review checks as other repos; a separately authorized Integrator can merge verified PRs under the gated policy. This list does not grant public volunteers access to private repositories or expand GitHub permissions.
 
 ## Owner-only GitHub-hosted task catalog (proposed manual alpha)
 
@@ -69,6 +69,10 @@ This manual turn-based loop does **not** keep a chat running in the background; 
 
 For every phase record count of **real simultaneous active sessions**, task attempts, claims won/lost, PRs created, submitted, orphan locks, duplicates, review wait time, test evidence and manually integrated PRs. Synthetic 40/100/1000-agent tests are useful but **not** substitutes for real concurrent ChatGPT sessions.
 
+## Independent Integrator agents and conditional automatic merges
+
+The owner has removed the blanket prohibition on automatic PR merges. A separate task in the approved PRIVATE queue can assign `role: integrator` to a ChatGPT chat using the **same 16-word startup prompt**. The integrator verifies and may merge a specific PR only with an independently approved and claimed integration task, current-head review, actual required green tests and GitHub protections, resolved discussions, nonoverlapping files and correct stacked-PR dependency sequence. It **must not merge its own authored work**. A developer submission is not an approval; missing CI/evidence or an unknown GitHub response blocks merging. See [docs/INTEGRATOR_AUTOMERGE_POLICY.md](INTEGRATOR_AUTOMERGE_POLICY.md) and [issue #152](https://github.com/Cesare-ml/virgostars-development-orchestrator/issues/152). The current CLI does not yet support this role as a merge executor, so this is a documented policy and implementation task, not a deployed service. No Integrator task is included in the first two-agent developer manifest.
+
 ## Owner controls and privacy
 
-No forced takeover of orphan locks, automatic task signup, code merges, production changes, deployment, licensing changes, publication of private metadata or new workflow automation. The first two chats are owner-run and trusted, but are still required to obey exact scopes and independent review. The orchestration repository **is itself a valid target** for planner, developer, reviewer and test tasks once registered in the approved PRIVATE catalog.
+No forced takeover of orphan locks, arbitrary automatic task signup, **unverified or unauthorized code merges**, production changes, deployment, licensing changes, publication of private metadata or new privileged workflows. Conditional automated merges by independent authorized Integrators are permitted only under [the Integrator policy](INTEGRATOR_AUTOMERGE_POLICY.md), after all gates pass. The first two chats are owner-run and trusted, but are still required to obey exact scopes and independent review. The orchestration repository **is itself a valid target** for planner, developer, reviewer and test tasks once registered in the approved PRIVATE catalog.
