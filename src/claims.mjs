@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { GitHubError } from './github.mjs';
 import { resourceKey, resourceMatches, validateTaskCatalog } from './resources.mjs';
+import { assertResumableOwnerClaim } from './claim-resume-integrity.mjs';
 
 const VALID_REPO = /^[a-z\d][a-z\d_.-]*\/[a-z\d][a-z\d_.-]*$/i;
 const VALID_SESSION = /^(chat|codex)-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -105,11 +106,14 @@ export async function claim({api,config,tasks,repo,issue,session,role='developer
     if(observed.status==='inconsistent') throw new Error('Inconsistent active claim: manual recovery required.');
     if(isOwner(existing,session,repo,issue)) {
       if(observed.submitted) return {result:'submitted',task:repo+'#'+issue};
-      if(existing.data.access!==task.access ||
-        (task.access==='write' && (existing.data.resource_scope_id!==task.resource_scope.id ||
-          JSON.stringify(existing.data.resource_roots)!==JSON.stringify([...task.resource_scope.roots].sort()))))
-        throw new Error('Curated task scope changed during active assignment.');
-      return {result:'already-owned',claim:observed.claim};
+      if(observed.status!=='claimed')
+        throw new Error('Cannot resume an inconsistent or unverified claim.');
+      // Recheck against the FRESH ledger read, not the first possibly stale
+      // getClaim result. Identical session alone never grants ownership.
+      const resumed=assertResumableOwnerClaim({
+        claim:observed.claim,task,session
+      });
+      return {result:'already-owned',claim:resumed};
     }
     return {result:'busy',task:repo+'#'+issue};
   }
@@ -162,14 +166,12 @@ export async function claim({api,config,tasks,repo,issue,session,role='developer
     const saved=await api.getClaim(ledger,path,branch);
     if(isOwner(saved,session,repo,issue)) {
       const observed=await status({api,config,repo,issue});
-      if(observed.status!=='claimed'||observed.submitted||
-         observed.claim.role!==role || observed.claim.access!==task.access ||
-         (task.access==='write' &&
-           (observed.claim.resource_scope_id!==task.resource_scope.id ||
-            JSON.stringify(observed.claim.resource_roots)!==
-              JSON.stringify([...task.resource_scope.roots].sort()))))
+      if(observed.status!=='claimed'||observed.submitted)
         throw new Error('Contended claim ownership or resource scope inconsistent; reconcile manually.');
-      return {result:'already-owned',claim:observed.claim};
+      const resumed=assertResumableOwnerClaim({
+        claim:observed.claim,task,session
+      });
+      return {result:'already-owned',claim:resumed};
     }
     if(newResource) {
       const current=await api.getClaim(ledger,resourcePath,branch);
