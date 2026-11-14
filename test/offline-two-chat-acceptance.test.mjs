@@ -200,6 +200,56 @@ test('CLI rejects malformed and oversized files with generic output', async () =
   }
 });
 
+
+test('CLI rejects duplicate owner check even when a later true hides a false', async () => {
+  const evidence = JSON.stringify(fixture()).replace(
+    '"private_ledger_verified":true',
+    '"private_ledger_verified":false,"private_ledger_verified":true',
+  );
+  const result = await runCli(evidence);
+  assert.equal(result.code, 2);
+  assert.deepEqual(JSON.parse(result.stdout).blockers, ['INVALID_EVIDENCE']);
+  assert.doesNotMatch(result.stdout + result.stderr, /synthetic-task|TOKEN_DO_NOT_ECHO/);
+});
+
+test('CLI rejects duplicate nested agent checks with Unicode-equivalent key spellings', async () => {
+  const plain = JSON.stringify(fixture()).replace(
+    '"claim_released":true',
+    '"claim_released":false,"claim_released":true',
+  );
+  const escaped = JSON.stringify(fixture()).replace(
+    '"claim_released":true',
+    '"claim_released":false,"\\u0063laim_released":true',
+  );
+  for (const content of [plain, escaped]) {
+    const result = await runCli(content);
+    assert.equal(result.code, 2);
+    assert.deepEqual(JSON.parse(result.stdout).blockers, ['INVALID_EVIDENCE']);
+    assert.doesNotMatch(result.stdout + result.stderr, /11111111|TOKEN_DO_NOT_ECHO/);
+  }
+});
+
+test('CLI permits a single Unicode-escaped key without a duplicate', async () => {
+  const evidence = JSON.stringify(fixture()).replace(
+    '"claim_released":true',
+    '"\\u0063laim_released":true',
+  );
+  const result = await runCli(evidence);
+  assert.equal(result.code, 0, result.stderr);
+  assert.equal(JSON.parse(result.stdout).self_reported_requirements_met, true);
+  assert.equal(result.stderr, '');
+});
+
+test('CLI rejects duplicated fleet counter rather than accepting the final zero', async () => {
+  const evidence = JSON.stringify(fixture()).replace(
+    '"active_claims":0',
+    '"active_claims":5,"active_claims":0',
+  );
+  const result = await runCli(evidence);
+  assert.equal(result.code, 2);
+  assert.deepEqual(JSON.parse(result.stdout).blockers, ['INVALID_EVIDENCE']);
+});
+
 test('CLI rejects checkout-local data, relative paths and extra arguments', () => {
   for (const args of [
     [CHECKOUT_FILE],
