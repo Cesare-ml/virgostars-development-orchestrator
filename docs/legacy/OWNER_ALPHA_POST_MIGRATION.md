@@ -52,4 +52,4 @@ After both finish, use the read-only fleet monitor and inspect the two GitHub PR
 
 ## Gate for expanding beyond two
 
-**Not demonstrated as of this checkpoint:** an actual pair of independent chats completing the whole claim → scoped PR → submission → release lifecycle. Do not claim reliable 10-, 20- or 40-session operation, browser auto-launch, automated failover or unattended merges. See [MVP_ACTIVATION.md](MVP_ACTIVATION.md), [FIRST_OWNER_ALPHA.md](FIRST_OWNER_ALPHA.md), [OWNER_TASK_QUEUE.md](OWNER_TASK_QUEUE.md), and [ROADMAP.md](ROADMAP.md).
+**Not demonstrated as of this checkpoint:** an actual pair of independent chats completing the whole claim → scoped PR → submission → release lifecycle. Do not claim reliable 10-, 20- or 40-session operation, browser auto-launch, automated failover or unattended merges. See [MVP_ACTIVATION.md](MVP_ACTIVATION.md), [FIRST_OWNER_ALPHA.md](FIRST_OWNER_ALPHA.md), [OWNER_TASK_QUEUE.md](OWNER_TASK_QUEUE.md), and [ROADMAP.md](../ROADMAP.md).

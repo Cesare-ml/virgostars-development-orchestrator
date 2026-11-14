@@ -26,9 +26,16 @@ import { auditFleet } from '../src/fleet-status.mjs';
 import { auditTaskPullRequest } from '../src/pr-audit.mjs';
 import { auditOpenPullRequestCollisions } from '../src/pr-collisions.mjs';
 import {assertLiveWriteTaskAdmission} from '../src/live-write-admission.mjs';
+import { readFile } from 'node:fs/promises';
+import { nextWork, fleetBoard, SESSION_RE } from '../src/agent-work.mjs';
+import { makeGet, loadSnapshot } from '../src/agent-github.mjs';
 
 const usage = [
-  'VirgoStars private pilot — Node.js 20+',
+  'VirgoStars agent fleet — Node.js 20+ (agents follow AGENT_START.md)',
+  'node bin/vs-agent.mjs fleet-board  # GET-only overview of all registered repos (GITHUB_TOKEN recommended)',
+  'node bin/vs-agent.mjs next-work [--session chat-xxxxxxxx]  # GET-only: what AGENT_START.md says this chat should do now',
+  '',
+  'Legacy owner-only private pilot (docs/legacy/):',
   'node bin/vs-agent.mjs public-discover  # read-only, no token, public repos only',
   'node bin/vs-agent.mjs check-private-destination OWNER/REPO  # GET-only, token required',
   'node bin/vs-agent.mjs plan-private-cutover OWNER/PRIVATE-REPO  # metadata-only, no migration',
@@ -72,6 +79,17 @@ async function main() {
   const [command,...rest]=process.argv.slice(2);
   if(!command || command==='--help' || command==='help') {process.stdout.write(usage);return;}
   const {positionals,flags}=parse(rest);
+  if(command==='fleet-board' || command==='next-work') {
+    if(positionals.length) throw new Error(command+' takes no positional arguments.');
+    if(flags.session && !SESSION_RE.test(flags.session)) throw new Error('Session must look like chat-xxxxxxxx (8 hex).');
+    const fleet=JSON.parse(await readFile(new URL('../config/agent-fleet.json',import.meta.url),'utf8'));
+    const snapshot=await loadSnapshot({fleet,get:makeGet(),session:flags.session||'chat-00000000'});
+    const result=command==='fleet-board'
+      ? {generated_at:new Date(snapshot.now).toISOString(),repos:fleetBoard(snapshot),
+         live_claims:Object.keys(snapshot.claims).length,next_for_new_chat:nextWork(snapshot)}
+      : nextWork(snapshot);
+    process.stdout.write(JSON.stringify(result,null,2)+'\n');return;
+  }
   if(command==='session') {
     if(positionals.length) throw new Error('Session takes no target.');
     process.stdout.write(newSession(flags.kind||'chat')+'\n');return;

@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - feat/distributed-agent-coordination-v0
   pull_request:
   workflow_dispatch:
 

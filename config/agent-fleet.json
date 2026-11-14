@@ -1,0 +1,80 @@
+{
+  "schema": "virgostars-agent-fleet/1",
+  "owner_authorization": {
+    "date": "2026-11-14",
+    "owner": "Cesare-ml",
+    "summary": "Any ChatGPT/Codex chat started with the standard prompt may pick, plan, develop, review, triage and integrate work in the repositories below, following AGENT_START.md. Integrator merges are authorized only through the merge gate in AGENT_START.md. This authorization supersedes 'no merge' and 'no GitHub Actions' lines in target AGENTS.md files only where a repo below sets merge or ci_allowed; every other target-repository rule still applies."
+  },
+  "ledger": {
+    "repo": "Cesare-ml/virgostars-development-orchestrator",
+    "branch": "agent-ledger",
+    "root": "claims"
+  },
+  "limits": {
+    "claim_ttl_minutes": {
+      "develop": 180,
+      "review": 60,
+      "merge": 30,
+      "triage": 60,
+      "plan": 30
+    },
+    "min_ready_tasks_per_repo": 5,
+    "max_new_tasks_per_plan_cycle": 3
+  },
+  "repos": [
+    {
+      "name": "Cesare-ml/VirgoStars-Ephemeris",
+      "priority": 1,
+      "default_branch": "main",
+      "domain": "Rust astronomical ephemerides",
+      "ci": true,
+      "ci_allowed": true,
+      "merge": "ci+review",
+      "wip_limit": 25
+    },
+    {
+      "name": "Cesare-ml/astrological-charts",
+      "priority": 2,
+      "default_branch": "main",
+      "domain": "Angular/Three.js chart rendering",
+      "ci": false,
+      "ci_allowed": true,
+      "merge": "docs-only",
+      "wip_limit": 20
+    },
+    {
+      "name": "Cesare-ml/VirgoStars-Event-Ephemeris",
+      "priority": 3,
+      "default_branch": "main",
+      "domain": "Astrological event ephemerides (VSEPH format)",
+      "ci": false,
+      "ci_allowed": false,
+      "merge": "docs-only",
+      "wip_limit": 10,
+      "note": "The repository intentionally avoids GitHub Actions; code PRs are merged by the owner."
+    },
+    {
+      "name": "Cesare-ml/astrological-assets",
+      "priority": 4,
+      "default_branch": "main",
+      "domain": "Vetted astrological artwork and asset tooling",
+      "ci": false,
+      "ci_allowed": true,
+      "merge": "docs-only",
+      "wip_limit": 15,
+      "note": "Never add, publish or relicense artwork; rights decisions are owner-only."
+    },
+    {
+      "name": "Cesare-ml/virgostars-development-orchestrator",
+      "priority": 9,
+      "default_branch": "main",
+      "domain": "This coordinator (fleet rules and tooling)",
+      "ci": true,
+      "ci_allowed": true,
+      "merge": "ci+review",
+      "wip_limit": 5,
+      "only_labels": ["bug", "fleet-blocker"],
+      "note": "Work here only on issues labelled bug or fleet-blocker. Never weaken AGENT_START.md rules."
+    }
+  ]
+}

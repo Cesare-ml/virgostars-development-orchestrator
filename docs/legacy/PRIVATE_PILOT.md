@@ -51,7 +51,7 @@ Roles are not bound to a number of chats or a repository. A planner triages and 
 
 ## Owner's starter prompt for an individual chat
 
-> You are an agent of my private VirgoStars development pilot. Read `Cesare-ml/virgostars-development-orchestrator` `AGENTS.md`, `docs/PRIVATE_PILOT.md` and `config/fleet.private.json`. Pick a suitable role and a non-conflicting task in one of the five active repositories. Read that repository's AGENTS.md, issues, PRs and roadmap. If you will change code, acquire a task claim on the `coordination/claims` branch using atomic GitHub create-file. If unsuccessful, do not work on that task. Use a feature branch and draft PR, run actual tests where possible, leave a factual handoff, and never deploy or merge to main; read-only test Actions are permitted on public repositories only. Do not change licensing/visibility. If no safe work is available, propose a bounded task for a planner to approve.
+> You are an agent of my private VirgoStars development pilot. Read `Cesare-ml/virgostars-development-orchestrator` `AGENTS.md`, `docs/legacy/PRIVATE_PILOT.md` and `config/fleet.private.json`. Pick a suitable role and a non-conflicting task in one of the five active repositories. Read that repository's AGENTS.md, issues, PRs and roadmap. If you will change code, acquire a task claim on the `coordination/claims` branch using atomic GitHub create-file. If unsuccessful, do not work on that task. Use a feature branch and draft PR, run actual tests where possible, leave a factual handoff, and never deploy or merge to main; read-only test Actions are permitted on public repositories only. Do not change licensing/visibility. If no safe work is available, propose a bounded task for a planner to approve.
 
 This can be reused as the initial prompt for each chat; after that `ottimo, avanti con lo sviluppo` should trigger revalidation, not blind continuation.
 
@@ -61,7 +61,7 @@ The pilot is not considered fully functional until task discovery, claim, collis
 
 ## Runnable private pilot and five real assignments
 
-The Node.js CLI, `config/pilot-tasks.json` and `docs/CLI_PRIVATE_PILOT.md` now provide an initial curated work queue: five read-only PR review tasks, one per target repo. The CLI implements session, discover, status, claim, handoff and release with direct GitHub Contents API. The tool pins claim reads to a branch **commit SHA** before reading the claim file, because a connector smoke test observed a stale immediate branch-path read after update (the stale-SHA delete failed closed with HTTP 409). The fresh content was verified by its commit SHA and successfully released. This is still an owner-only pilot, not automatic cross-issue resource fencing or a hosted service.
+The Node.js CLI, `config/pilot-tasks.json` and `docs/legacy/CLI_PRIVATE_PILOT.md` now provide an initial curated work queue: five read-only PR review tasks, one per target repo. The CLI implements session, discover, status, claim, handoff and release with direct GitHub Contents API. The tool pins claim reads to a branch **commit SHA** before reading the claim file, because a connector smoke test observed a stale immediate branch-path read after update (the stale-SHA delete failed closed with HTTP 409). The fresh content was verified by its commit SHA and successfully released. This is still an owner-only pilot, not automatic cross-issue resource fencing or a hosted service.
 
 
 ## Automatic next-task command
@@ -82,11 +82,11 @@ The first five reviewer chats submitted their curated tasks, with each handoff p
 
 ## Wave 2 after completed reviewer submissions
 
-The first five reviewer submissions are persisted and must not be automatically reassigned. The next approved pilot experiment is **two developer sessions on two different repositories**, constrained to new, non-overlapping files. Read `docs/LAUNCH_DEVELOPERS_WAVE2.md` and `config/pilot-tasks.json`. The developer prompt takes precedence over the initial read-only reviewer-only launch prompt for these two tasks. Do not silently extend the resource scopes if source changes would be required.
+The first five reviewer submissions are persisted and must not be automatically reassigned. The next approved pilot experiment is **two developer sessions on two different repositories**, constrained to new, non-overlapping files. Read `docs/legacy/LAUNCH_DEVELOPERS_WAVE2.md` and `config/pilot-tasks.json`. The developer prompt takes precedence over the initial read-only reviewer-only launch prompt for these two tasks. Do not silently extend the resource scopes if source changes would be required.
 
 ## Wave-2 PR diff safety
 
-The latest private CLI includes `audit-pr` and a mandatory `--pr PR_NUMBER` for `access:write` submissions. This verifies a draft stacked PR's current branch/base and complete changed-file names against the curated partition; changes outside the allowed roots block CLI submission. See `docs/PR_SCOPE_AUDIT.md`. Connector-only chats must perform and describe an equivalent manual inspection, without claiming they ran the CLI. Missing audited write-submission metadata appears as `needs-scope-audit` in the private fleet monitor.
+The latest private CLI includes `audit-pr` and a mandatory `--pr PR_NUMBER` for `access:write` submissions. This verifies a draft stacked PR's current branch/base and complete changed-file names against the curated partition; changes outside the allowed roots block CLI submission. See `docs/legacy/PR_SCOPE_AUDIT.md`. Connector-only chats must perform and describe an equivalent manual inspection, without claiming they ran the CLI. Missing audited write-submission metadata appears as `needs-scope-audit` in the private fleet monitor.
 
 ## Review overlapping developer PRs
 

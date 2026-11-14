@@ -49,5 +49,5 @@ private task names, ledger paths or catalog contents.
   ChatGPT sessions are still required for the first live owner alpha.
 
 Run the native Node 20/22 tests and inspect the actual GitHub PR changed
-files before integrating. See \`docs/PRIVATE_GITHUB_CLI_TASKS.md\` and
-\`docs/PRIVATE_GITHUB_ALPHA_READINESS.md\`.
+files before integrating. See \`docs/legacy/PRIVATE_GITHUB_CLI_TASKS.md\` and
+\`docs/legacy/PRIVATE_GITHUB_ALPHA_READINESS.md\`.

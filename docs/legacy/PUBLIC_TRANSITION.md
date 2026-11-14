@@ -4,7 +4,7 @@
 
 ## GitHub Actions now authorized for public repositories
 
-The owner has authorized GitHub Actions on **public VirgoStars repositories**. This repository uses [Node CI](../.github/workflows/node-ci.yml):
+The owner has authorized GitHub Actions on **public VirgoStars repositories**. This repository uses [Node CI](../../.github/workflows/node-ci.yml):
 
 - Triggers: PRs, pushes to `main` and the current feature branch, and manual `workflow_dispatch`.
 - Runs the real `npm run check` suite on Ubuntu with Node.js **20 and 22**.
@@ -29,7 +29,7 @@ The existing feature-branch history contains files originally intended for a pri
 5. Independently review repository licensing and contributor policy. **The public repository currently has no LICENSE file**; visibility by itself does not grant an open-source license or third-party reuse rights.
 6. Enable outside contributors only after the owner explicitly approves the public scope and documentation. Public CI does **not** enable public write-task claiming or auto-merge.
 
-The repository's `config/fleet.private.json` and `docs/PRIVATE_PILOT.md` are **legacy owner-only pilot descriptions**, not evidence that the repository itself is still private. Current pilot code has not yet been migrated to a privacy-safe public coordinator.
+The repository's `config/fleet.private.json` and `docs/legacy/PRIVATE_PILOT.md` are **legacy owner-only pilot descriptions**, not evidence that the repository itself is still private. Current pilot code has not yet been migrated to a privacy-safe public coordinator.
 
 ## Maintainer release and safety policy
 

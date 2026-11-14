@@ -79,8 +79,8 @@ and release exactly their own claims. No automatic merges/deployments.
 
 The first two real chats, their failures and lock cleanup must be
 measured before expanding to 5–10, 20 or 40 chats. See
-\`docs/MVP_ACTIVATION.md\`, \`docs/ALPHA_READINESS.md\` and
-\`docs/PRIVATE_GITHUB_OWNER_CATALOG.md\`.
+\`docs/legacy/MVP_ACTIVATION.md\`, \`docs/legacy/ALPHA_READINESS.md\` and
+\`docs/legacy/PRIVATE_GITHUB_OWNER_CATALOG.md\`.
 
 This branch is stacked on the still-draft private GitHub catalog PR,
 which is itself stacked on the owner self-task eligibility PR. The

@@ -14,7 +14,7 @@
 
 The adapter only talks to the fixed HTTPS GitHub API host, rejects redirect following, does not allow the caller to inject arbitrary paths, and preserves a memory-only token. It never serializes credentials to result objects or error messages. It uses HTTP `GET` and a GraphQL `query` POST — **no GraphQL mutation, PUT, PATCH, DELETE, or GitHub merge endpoint**.
 
-The read-only [v2 snapshot collector](../src/integrator-live-pr-evidence.mjs) calls the adapter's five methods and rereads the PR after evidence collection. If a commit changes, data is missing or malformed, the checks are stale, the review is not valid for the current head, or pagination cannot be verified, the collector stops or reports a blocked candidate.
+The read-only [v2 snapshot collector](../../src/integrator-live-pr-evidence.mjs) calls the adapter's five methods and rereads the PR after evidence collection. If a commit changes, data is missing or malformed, the checks are stale, the review is not valid for the current head, or pagination cannot be verified, the collector stops or reports a blocked candidate.
 
 ## Limits and security boundary
 

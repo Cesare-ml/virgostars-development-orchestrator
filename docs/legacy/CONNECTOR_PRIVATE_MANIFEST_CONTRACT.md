@@ -79,4 +79,4 @@ Output contains only fixed aggregate values, never private repository identities
 
 Run node --test test/connector-manifest-contract.test.mjs and full npm run check on Node 20 and 22 at the exact integration head. Tests are synthetic and tokenless. This PR must remain draft until independent review and explicit integration authorization. No new GitHub Actions workflow, merge, deployment, private claim or access-control change is included.
 
-Related references: docs/OWNER_TASK_QUEUE.md, docs/RESOURCE_LOCKS.md, docs/MVP_ACTIVATION.md, issues #140 and #138, and the separate ChatGPT-only fleet proposal.
+Related references: docs/legacy/OWNER_TASK_QUEUE.md, docs/legacy/RESOURCE_LOCKS.md, docs/legacy/MVP_ACTIVATION.md, issues #140 and #138, and the separate ChatGPT-only fleet proposal.
