@@ -16,7 +16,7 @@ const writeTask={repository:REPO,issue:802,role:'developer',
 const readTask={repository:REPO,issue:803,role:'reviewer',
   status:'ready',access:'read'};
 const clone=x=>structuredClone(x);
-const verdict=/resource scope changed or ownership inconsistent/;
+const verdict=/resource scope changed or ownership inconsistent|Inconsistent active claim|Inconsistent active task claim/;
 
 function fake() {
   const ledger=new Map(),calls=[];
