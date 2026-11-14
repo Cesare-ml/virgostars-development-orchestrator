@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { collectFleetMergeEvidence } from '../src/agent-merge-evidence.mjs';
 import { mergeGate } from '../src/agent-work.mjs';
+import { loadSnapshot } from '../src/agent-github.mjs';
 
 const REPO = 'Cesare-ml/virgostars-development-orchestrator';
 const HEAD = 'a'.repeat(40), BASE = 'b'.repeat(40);
@@ -136,4 +137,32 @@ test('denied GitHub reads stop instead of manufacturing review approval', async 
   const f = fixture();
   f.s.denied = true;
   await assert.rejects(() => inspect(f), /HTTP 403/);
+});
+
+test('real fleet snapshot integration cannot promote marker text into merge authority', async () => {
+  const f = fixture();
+  const get = async path => {
+    if (path.startsWith('repos/' + REPO + '/pulls?state=open')) return [clone(f.listing)];
+    if (path.startsWith('repos/' + REPO + '/issues?state=open')) return [];
+    if (path.includes('/git/trees/')) return null;
+    return f.get(path);
+  };
+  get.authenticated = true;
+  const fleet = {
+    repos: [{ name: REPO, default_branch: 'main', priority: 9,
+      merge: 'ci+review', ci: true, wip_limit: 5, only_labels: ['bug'] }],
+    ledger: { repo: REPO, branch: 'agent-ledger', root: 'claims' },
+    limits: { claim_ttl_minutes: { develop: 180, review: 60, merge: 30,
+      triage: 60, plan: 30 }, min_ready_tasks_per_repo: 5,
+      max_new_tasks_per_plan_cycle: 3 }
+  };
+  const snap = await loadSnapshot({ fleet, get, session: 'chat-abcd1234' });
+  assert.equal(snap.repos[0].prs.length, 1);
+  const item = snap.repos[0].prs[0];
+  assert.equal(item.evidence.kind, 'authenticated-github');
+  assert.equal(item.changed_files, 1);
+  assert.equal(item.github_reviews.length, 1);
+  const decision = mergeGate(item, fleet.repos[0], 'chat-abcd1234');
+  assert.equal(decision.ok, false);
+  assert.ok(decision.reasons.includes('merge-evidence-unverified'));
 });
