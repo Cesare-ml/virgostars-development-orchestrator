@@ -69,7 +69,7 @@ test('matrix rejects partial, contradictory and over-permissive reports', () => 
     const bad = {...good};
     delete bad[field];
     assert.throws(() => verifyWaveReport(bad, [10, 10]),
-      /evidence|schedule|mutation/);
+      /evidence|schedule|mutation|report fields/);
   }
   for (const [field, value] of [
     ['remaining_issue_claims', 1],
