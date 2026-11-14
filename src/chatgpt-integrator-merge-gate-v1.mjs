@@ -1,3 +1,6 @@
+import {assertSession} from './claims.mjs';
+import {inspectIntegratorChangedFile} from './integrator-changed-file-safety.mjs';
+
 /** Read-only, fail-closed Integrator merge candidate gate. Never merges, approves, or contacts GitHub. */
 export function inspectIntegratorMergeGate({task,pr,approval,reviews,checks,requiredChecks,files,dependencies,conflicts,discussions,protection,session}={}) {
   const SHA=/^[0-9a-f]{40}$/i;
@@ -12,8 +15,9 @@ export function inspectIntegratorMergeGate({task,pr,approval,reviews,checks,requ
     block('INVALID_INTEGRATOR_TASK');
   if(approval?.verified!==true||approval?.manifest_sha!==task?.approved_manifest_sha||
      approval?.owner_reviewed!==true)block('OWNER_APPROVAL_NOT_VERIFIED');
-  if(typeof session?.integrator_id!=='string'||!/^chat-[\w-]{8,100}$/i.test(session.integrator_id)||
-     session?.author_id===session.integrator_id||!session?.author_id||
+  const validSession=(id)=>{try { assertSession(id); return true; } catch { return false; }};
+  if(!validSession(session?.integrator_id)||!session.integrator_id.startsWith('chat-')||
+     !validSession(session?.author_id)||session.author_id===session.integrator_id||
      session?.independent_identity_verified!==true)
     block('INDEPENDENT_INTEGRATOR_NOT_VERIFIED');
   if(!SHA.test(head||'')||!SHA.test(pr?.base?.sha||'')||
@@ -27,15 +31,14 @@ export function inspectIntegratorMergeGate({task,pr,approval,reviews,checks,requ
      protection.allowed_merge_method!==task?.merge_method)
     block('BRANCH_PROTECTION_UNVERIFIED');
   if(!Array.isArray(files)||!Number.isSafeInteger(pr?.changed_files)||
-     files.length!==pr.changed_files||files.length<1||files.length>200||
-     files.some(f=>typeof f?.filename!=='string'||!f.filename||f.filename.startsWith('/')||
-     f.filename.includes('\\')||f.filename.split('/').some(x=>!x||x==='.'||x==='..')))
+     files.length!==pr.changed_files||files.length<1||files.length>200)
     block('INCOMPLETE_OR_INVALID_FILE_INVENTORY');
   else {
-    const keys=files.map(f=>f.filename.toLowerCase());
-    if(new Set(keys).size!==keys.length)block('DUPLICATE_CHANGED_PATHS');
-    if(files.some(f=>/(^|\/)(\.github\/workflows\/|\.env(?:\.|$)|secrets?\/|credentials?\/|migrations?\/|deploy\/|LICENSE$)/i.test(f.filename)))
-      block('SENSITIVE_CHANGE_REQUIRES_OWNER');
+    const findings=files.map(inspectIntegratorChangedFile);
+    if(findings.some(f=>!f.valid))block('INCOMPLETE_OR_INVALID_FILE_INVENTORY');
+    const names=files.map(f=>String(f?.filename||'').toLowerCase());
+    if(new Set(names).size!==names.length)block('DUPLICATE_CHANGED_PATHS');
+    if(findings.some(f=>f.sensitive))block('SENSITIVE_CHANGE_REQUIRES_OWNER');
   }
   if(!Array.isArray(requiredChecks)||requiredChecks.length<1||
      requiredChecks.some(x=>typeof x!=='string'||!x)||new Set(requiredChecks).size!==requiredChecks.length||
@@ -47,8 +50,9 @@ export function inspectIntegratorMergeGate({task,pr,approval,reviews,checks,requ
       block('REQUIRED_HEAD_CHECK_MISSING_OR_FAILED');
   }
   if(!Array.isArray(reviews)||!reviews.some(r=>r?.state==='APPROVED'&&
-     r?.head_sha===head&&r?.source==='github'&&r?.reviewer_session!==session?.author_id&&
-     r?.reviewer_session!==session?.integrator_id&&r?.independence_verified===true))
+     r?.head_sha===head&&r?.source==='github'&&validSession(r?.reviewer_session)&&
+     r?.reviewer_session!==session?.author_id&&r?.reviewer_session!==session?.integrator_id&&
+     r?.independence_verified===true))
     block('INDEPENDENT_HEAD_REVIEW_MISSING');
   if(!Array.isArray(dependencies)||dependencies.some(d=>d?.merged!==true||
      !SHA.test(d?.merge_sha||'')||d?.target_branch!==task?.target_branch))
