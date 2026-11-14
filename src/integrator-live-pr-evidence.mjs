@@ -1,3 +1,5 @@
+import {inspectIntegratorChangedFile} from './integrator-changed-file-safety.mjs';
+
 /**
  * Conservative, read-only GitHub PR evidence snapshot.
  * The injected API must be an owner-reviewed authenticated GitHub adapter that
@@ -80,12 +82,11 @@ export async function collectIntegratorLivePrEvidence({api,repository,prNumber,r
   const filenames=new Set();
   for(const file of files) {
     const path=file?.filename;
-    if(!simple(path) || path.length>120 || path.startsWith('/') || path.includes('\\') ||
-       path.split('/').some(x=>!x || x==='.' || x==='..') ||
-       filenames.has(path.toLowerCase())) block('UNSAFE_OR_DUPLICATE_CHANGED_FILE');
+    const finding=inspectIntegratorChangedFile(file);
+    if(!simple(path) || !finding.valid || filenames.has(String(path||'').toLowerCase()))
+      block('UNSAFE_OR_DUPLICATE_CHANGED_FILE');
     else filenames.add(path.toLowerCase());
-    if(typeof path==='string' && /(^|\/)(\.github\/workflows\/|\.env(?:\.|$)|secrets?\/|credentials?\/|migrations?\/|deploy\/|LICENSE$)/i.test(path))
-      block('HIGH_RISK_FILE_REQUIRES_OWNER');
+    if(finding.sensitive)block('HIGH_RISK_FILE_REQUIRES_OWNER');
   }
 
   const seenCheckNames=new Set();
