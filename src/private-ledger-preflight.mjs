@@ -48,9 +48,16 @@ export async function inspectPrivateDestination({api,destination}) {
     // Only an explicitly absent branch (after a verified private repo) is
     // classified as uninitialized. All other errors remain hard failures.
     if(!(error instanceof GitHubError)||error.status!==404)throw error;
-    inspectMeta(repo,await api.getRepository(repo));
-    return {
-      schema_version:'1-private-destination-preflight',
+    // A branch created after the first 404 must not be mistaken for an
+    // empty target. Recheck absence before claiming a stable snapshot.
+    try {
+      await api.getBranchRef(repo,DESTINATION_BRANCH);
+    } catch(recheckError) {
+      if(!(recheckError instanceof GitHubError)||recheckError.status!==404)
+        throw recheckError;
+      inspectMeta(repo,await api.getRepository(repo));
+      return {
+        schema_version:'1-private-destination-preflight',
       private_visibility_verified:true,
       branch_exists:false,
       status:'private_branch_needs_setup',
@@ -58,7 +65,9 @@ export async function inspectPrivateDestination({api,destination}) {
       ready_to_migrate:false,write_enabled:false,
       requires_owner_reconciliation:true,
       next_step:'Create the private coordination branch only after explicit owner approval.'
-    };
+      };
+    }
+    invalid('destination branch appeared during the private metadata scan.');
   }
   const commitSha=ref?.object?.sha;
   if(ref?.object?.type!=='commit'||!sha(commitSha))
@@ -96,6 +105,11 @@ export async function inspectPrivateDestination({api,destination}) {
     }
   }
 
+  // Re-fetch the ref after enumeration: a moving branch invalidates the
+  // counts even if all objects themselves were individually well formed.
+  const lastRef=await api.getBranchRef(repo,DESTINATION_BRANCH);
+  if(lastRef?.object?.type!=='commit'||lastRef.object.sha!==commitSha)
+    invalid('destination branch changed while its records were inspected.');
   // A visibility change during the scan invalidates the result.
   inspectMeta(repo,await api.getRepository(repo));
   const hasRecords=Object.values(records).some(x=>x>0);
