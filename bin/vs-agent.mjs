@@ -132,7 +132,7 @@ async function main() {
       throw new Error('alpha-doctor takes no arguments.');
     const selection=selectOwnerTaskSource();
     if(selection.mode==='historical-submitted-only')
-      throw new Error('alpha-doctor requires an independently approved NEW owner catalog.');
+      throw new Error('alpha-doctor requires an approved local owner task catalog or approved private GitHub catalog.');
     const config=await loadPilotConfig();
     const api=makeGitHubClient({token:process.env.GITHUB_TOKEN});
     if(selection.mode==='owner-private-github') {
@@ -213,14 +213,19 @@ async function main() {
     ? await loadApprovedPrivateTaskSource({api:baseApi,config})
     : null;
   const tasks=source?.tasks;
-  const guarded=guardLegacyLedgerClient({api:baseApi,config});
-  const api=source?.mode==='owner-private-github'
-    ? guardPinnedOwnerCatalogWrites({
-      api:guarded,refApi:baseApi,
+  const api=guardLegacyLedgerClient({api:baseApi,config});
+  if(source?.mode==='owner-private-github') {
+    // Preserve the original live PRIVATE visibility guard for all modes.
+    // The pinned wrapper captures the original methods in a separate object
+    // before substitution, so the forwarding calls cannot recurse.
+    const pinned=guardPinnedOwnerCatalogWrites({
+      api:{...api},refApi:baseApi,
       repository:config.claim_store.repo,
       approvedMainSha:source.approvedMainSha
-    })
-    : guarded;
+    });
+    for(const method of ['createClaim','updateClaim','deleteClaim'])
+      api[method]=pinned[method];
+  }
   let result;
   if(command==='discover') {
     if(positionals.length) throw new Error('Discover takes no target.');
