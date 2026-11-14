@@ -29,10 +29,13 @@ import {assertLiveWriteTaskAdmission} from '../src/live-write-admission.mjs';
 import { readFile } from 'node:fs/promises';
 import { nextWork, fleetBoard, SESSION_RE } from '../src/agent-work.mjs';
 import { makeGet, loadSnapshot } from '../src/agent-github.mjs';
+import { loadReport, boardMarkdown, reportMarkdown } from '../src/agent-report.mjs';
 
 const usage = [
   'VirgoStars agent fleet — Node.js 20+ (agents follow AGENT_START.md)',
   'node bin/vs-agent.mjs fleet-board  # GET-only overview of all registered repos (GITHUB_TOKEN recommended)',
+  'node bin/vs-agent.mjs fleet-report [--hours 2]  # GET-only: what agents did recently + rule violations',
+  'Add --markdown to fleet-board / fleet-report for a Markdown summary.',
   'node bin/vs-agent.mjs next-work [--session chat-xxxxxxxx]  # GET-only: what AGENT_START.md says this chat should do now',
   '',
   'Legacy owner-only private pilot (docs/legacy/):',
@@ -66,9 +69,10 @@ function parse(tokens) {
     const item=tokens[i];
     if (!item.startsWith('--')) {positionals.push(item);continue;}
     const name=item.slice(2);
-    if(!['kind','session','role','branch','summary','head-sha','confirm','repo','pr','output'].includes(name))
+    if(!['kind','session','role','branch','summary','head-sha','confirm','repo','pr','output','hours','markdown'].includes(name))
       throw new Error('Unknown option ' + item);
     if(name==='confirm') {flags.confirm=true;continue;}
+    if(name==='markdown') {flags.markdown=true;continue;}
     const next=tokens[++i];
     if(!next || next.startsWith('--')) throw new Error('Missing option value for ' + item);
     flags[name]=next;
@@ -79,16 +83,24 @@ async function main() {
   const [command,...rest]=process.argv.slice(2);
   if(!command || command==='--help' || command==='help') {process.stdout.write(usage);return;}
   const {positionals,flags}=parse(rest);
-  if(command==='fleet-board' || command==='next-work') {
+  if(command==='fleet-board' || command==='next-work' || command==='fleet-report') {
     if(positionals.length) throw new Error(command+' takes no positional arguments.');
     if(flags.session && !SESSION_RE.test(flags.session)) throw new Error('Session must look like chat-xxxxxxxx (8 hex).');
     const fleet=JSON.parse(await readFile(new URL('../config/agent-fleet.json',import.meta.url),'utf8'));
+    if(command==='fleet-report') {
+      const hours=Number(flags.hours ?? 2);
+      if(!(hours>0 && hours<=168)) throw new Error('--hours must be between 0 and 168.');
+      const report=await loadReport({fleet,get:makeGet(),hours});
+      process.stdout.write(flags.markdown?reportMarkdown(report):JSON.stringify(report,null,2)+'\n');return;
+    }
     const snapshot=await loadSnapshot({fleet,get:makeGet(),session:flags.session||'chat-00000000'});
     const result=command==='fleet-board'
       ? {generated_at:new Date(snapshot.now).toISOString(),repos:fleetBoard(snapshot),
-         live_claims:Object.keys(snapshot.claims).length,next_for_new_chat:nextWork(snapshot)}
+         live_claims:Object.values(snapshot.claims).filter(l=>{const c=l.slice().sort((a,b)=>a.attempt-b.attempt).at(-1);
+           return Date.parse(c.claimed_at)+(fleet.limits.claim_ttl_minutes[c.step]??60)*60000>snapshot.now;}).length,
+         next_for_new_chat:nextWork(snapshot)}
       : nextWork(snapshot);
-    process.stdout.write(JSON.stringify(result,null,2)+'\n');return;
+    process.stdout.write(flags.markdown && command==='fleet-board'?boardMarkdown(result):JSON.stringify(result,null,2)+'\n');return;
   }
   if(command==='session') {
     if(positionals.length) throw new Error('Session takes no target.');

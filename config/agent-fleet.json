@@ -26,16 +26,19 @@
       "name": "Cesare-ml/VirgoStars-Ephemeris",
       "priority": 1,
       "default_branch": "main",
+      "integration_branch": "dev/ephemeris",
       "domain": "Rust astronomical ephemerides",
       "ci": true,
       "ci_allowed": true,
       "merge": "ci+review",
-      "wip_limit": 25
+      "wip_limit": 25,
+      "note": "Agents integrate into dev/ephemeris; promoting dev/ephemeris to the protected main branch is owner-only."
     },
     {
       "name": "Cesare-ml/astrological-charts",
       "priority": 2,
       "default_branch": "main",
+      "integration_branch": "main",
       "domain": "Angular/Three.js chart rendering",
       "ci": false,
       "ci_allowed": true,
@@ -46,6 +49,7 @@
       "name": "Cesare-ml/VirgoStars-Event-Ephemeris",
       "priority": 3,
       "default_branch": "main",
+      "integration_branch": "main",
       "domain": "Astrological event ephemerides (VSEPH format)",
       "ci": false,
       "ci_allowed": false,
@@ -57,6 +61,7 @@
       "name": "Cesare-ml/astrological-assets",
       "priority": 4,
       "default_branch": "main",
+      "integration_branch": "main",
       "domain": "Vetted astrological artwork and asset tooling",
       "ci": false,
       "ci_allowed": true,
@@ -68,12 +73,16 @@
       "name": "Cesare-ml/virgostars-development-orchestrator",
       "priority": 9,
       "default_branch": "main",
+      "integration_branch": "main",
       "domain": "This coordinator (fleet rules and tooling)",
       "ci": true,
       "ci_allowed": true,
       "merge": "ci+review",
       "wip_limit": 5,
-      "only_labels": ["bug", "fleet-blocker"],
+      "only_labels": [
+        "bug",
+        "fleet-blocker"
+      ],
       "note": "Work here only on issues labelled bug or fleet-blocker. Never weaken AGENT_START.md rules."
     }
   ]

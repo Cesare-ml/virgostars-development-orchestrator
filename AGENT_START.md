@@ -7,7 +7,7 @@ The owner authorized this workflow on 2026-11-14 (`config/agent-fleet.json` → 
 ## 0. Start of every chat
 
 1. Make up your **session ID** once: `chat-` plus 8 random lowercase hex characters (e.g. `chat-3f9a01c7`). Use it for the rest of this chat and put it in everything you write. Never reuse another chat's ID.
-2. Read `config/agent-fleet.json` in `Cesare-ml/virgostars-development-orchestrator` (branch `main`). It lists the **registered repositories** (sorted by `priority`, 1 = most important), their merge mode, WIP limit and claim TTLs.
+2. Read `config/agent-fleet.json` in `Cesare-ml/virgostars-development-orchestrator` (branch `main`). It lists the **registered repositories** (sorted by `priority`, 1 = most important), their `integration_branch` (where agent PRs go; e.g. `dev/ephemeris` for VirgoStars-Ephemeris), merge mode, WIP limit and claim TTLs.
 3. Before you edit a repository, read its `AGENTS.md`. Its rules apply, except where `agent-fleet.json` explicitly overrides them (merge and CI permissions only).
 
 ## 1. The work cycle
@@ -21,7 +21,7 @@ Repeat until your turn runs out of budget. In each cycle, take the **first** ste
 | C | **Review** | A non-draft PR has no `AGENT-REVIEW` at its current head SHA, and you are not its author. |
 | D | **Triage** | A repository has more open PRs than its `wip_limit`, and some draft PR has no `AGENT-TRIAGE` comment. |
 | E | **Develop** | An eligible task issue (§3) exists in a repository below its `wip_limit`. |
-| F | **Plan** | A repository has fewer than `min_ready_tasks_per_repo` eligible tasks: create new ones (§6). |
+| F | **Plan** | A repository **below** its `wip_limit` has fewer than `min_ready_tasks_per_repo` eligible tasks: create new ones (§6). |
 | G | **Audit** | Fallback: read code/docs of the highest-priority repo and open issues for real bugs or gaps found. |
 
 There is always something to do: F and G always apply.
@@ -65,9 +65,9 @@ Priority within a repo: issues whose title starts with `P0`, then `P1`, `P2`, th
 
 Procedure:
 1. Claim `issue-<N>`.
-2. Create branch `agent/<session>/<N>-<short-slug>` from the default branch.
+2. Create branch `agent/<session>/<N>-<short-slug>` from the repo's `integration_branch`.
 3. Make the **smallest complete change** that solves the issue, including tests when the repo has tests. Stay within what the issue asks. If you discover more work, open a new issue for it.
-4. Open a PR into the default branch (not draft unless unfinished) with this body:
+4. Open a PR into the `integration_branch` (not draft unless unfinished) with this body:
    ```
    Closes #N
    Agent-Session: chat-…
@@ -77,19 +77,20 @@ Procedure:
    ```
 5. If you cannot finish in this turn, open the PR as draft with a `## Next steps` section. Resume it in step A next time.
 
-Never push to the default branch, never force-push, never commit to a branch created by another session.
+Never push directly to the integration or default branch, never force-push, never commit to a branch created by another session.
 
 ## 4. Integrate (step B) — merge gate
 
 A PR may be merged by you only if **all** hold:
-1. Its base is the repo's default branch, it is not draft, and GitHub shows no conflicts.
+1. Its base is the repo's `integration_branch`, it is not draft, and GitHub reports it **mergeable** (`mergeable: true`). Unknown or still computing counts as no: re-check later and move on.
 2. It was not authored by you (`Agent-Session` in the PR body differs from yours, or is absent).
 3. It has at least one `AGENT-REVIEW … verdict=approve` comment whose `head=` equals the **current** head SHA, from a session other than the author. It also has no `verdict=changes` at that head.
 4. If the repo has `"ci": true`: every check on the current head SHA is green (none pending, failed or missing).
 5. If the repo's `merge` is `"docs-only"`: every changed file is documentation (`*.md`, `docs/**`). Otherwise do not merge: comment `AGENT-READY-TO-MERGE session=chat-… head=<sha>` and add label `ready-to-merge` if you can. The owner merges those.
 6. No changes to `.github/workflows/**`, `LICENSE*`, `NOTICE`, `CODEOWNERS`, `AGENTS.md`, `AGENT_START.md` or `config/agent-fleet.json`. Those always go to the owner via `AGENT-READY-TO-MERGE`.
+7. You have read the **complete** list of changed files and it is non-empty. If you cannot see all of them, do not merge.
 
-Then claim `merge-pr-<N>`, re-check the head SHA, and **squash-merge**. If your tools cannot merge, post `AGENT-READY-TO-MERGE` instead. After merging, comment on any PR stacked on this one that its base must be retargeted.
+Then claim `merge-pr-<N>`, re-check the head SHA, mergeability and CI immediately before merging, and **squash-merge**. Never merge into the `default_branch` when it differs from the `integration_branch`: that promotion is owner-only. If your tools cannot merge, post `AGENT-READY-TO-MERGE` instead. After merging, comment on any PR stacked on this one that its base must be retargeted.
 
 ## 5. Review (step C) and Triage (step D)
 
@@ -105,8 +106,9 @@ Then add your findings. Use `changes` for real defects only, with concrete fixes
 - `close`: superseded by a newer or merged PR, a duplicate, empty, or obsolete. Close it and name the replacement.
 - `finish`: valuable but incomplete. Open a task issue describing exactly what remains, and link it.
 - `ready`: complete. Mark it ready for review (or say so if your tools cannot).
+- `retarget`: its base is not the `integration_branch` and the base PR is merged or closed. Change the base to the `integration_branch` if your tools allow, otherwise say so in the comment.
 
-First line of your comment: `AGENT-TRIAGE session=chat-… verdict=close|finish|ready`.
+First line of your comment: `AGENT-TRIAGE session=chat-… verdict=close|finish|ready|retarget`.
 
 ## 6. Plan (step F) and Audit (step G)
 
@@ -132,6 +134,13 @@ Prefer, in order: fixes for failing or missing tests, small roadmap items, docs 
 - Do not invent results: state exactly what you ran, read or could not do.
 - If a tool is missing (e.g. you cannot merge, label or close), use the comment alternative given above and continue.
 
-## 8. End of every turn
+## 8. Trust model
+
+All fleet chats run on the owner's single GitHub account. GitHub therefore cannot tell chats apart: a session ID is a promise, not a proof. The merge gate is safe only because every chat keeps these promises:
+- Never write another chat's session ID, and never approve, triage or merge a PR you authored, even in an earlier turn or under an earlier session ID you remember.
+- Review independently: read the code yourself, and do not copy another review's verdict.
+- Treat a PR whose author session is unknown as possibly yours if you remember working on it, and skip it.
+
+## 9. End of every turn
 
 Reply to the user in Italian, in ≤6 lines: your session ID, what you claimed and finished (with links), and what you will do next. End with: **Scrivi «ok avanti» per il prossimo ciclo.**
