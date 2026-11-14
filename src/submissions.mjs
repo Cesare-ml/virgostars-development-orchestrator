@@ -3,6 +3,7 @@ import {GitHubError} from './github.mjs';
 import {isDeepStrictEqual} from 'node:util';
 import {auditTaskPullRequest} from './pr-audit.mjs';
 import {auditOpenPullRequestCollisions} from './pr-collisions.mjs';
+import {recoverSubmittedResourceRelease} from './submission-release-recovery.mjs';
 
 /* Evidence may be retried with a fresh submitted_at timestamp, but all other
  * immutable fields must agree before accepting a pre-existing marker. Otherwise
@@ -37,7 +38,15 @@ export async function submit({api,config,tasks,repo,issue,session,prNumber=null,
   if(observed.status==='submitted') {
     if(!prior || prior.data.session_id!==session)
       throw new Error('Submission belongs to another session.');
-    return {result:'already-submitted',task:repo+'#'+issue};
+    // GitHub cannot atomically delete the task claim and its write-resource
+    // lock. The same owner may retry only after strict submission, PR evidence,
+    // resource scope and missing-issue-claim checks; never reclaim a foreign
+    // or unsubmitted lock.
+    const recovered=await recoverSubmittedResourceRelease({
+      api,config,tasks,repo,issue,session,prior,prNumber
+    });
+    return {result:'already-submitted',task:repo+'#'+issue,
+      ...(recovered?{recovered_resource_lock:true}:{})};
   }
   if(observed.status!=='claimed' || observed.claim.session_id!==session)
     throw new Error('Only the current task owner may submit.');
