@@ -56,6 +56,14 @@ node bin/vs-agent.mjs alpha-doctor
 
 The old seven tasks are already submitted and **must never be re-offered**. Use two entirely new, small, disjoint, explicitly approved developer tasks, with a pinned upstream PR and exact allowed files. The local catalog must be owner-reviewed and its SHA-256 explicitly approved. The readiness doctor is **GET-only** and does not claim or authorize a merge.
 
+Before the remote `alpha-doctor`, run the zero-network local setup guard once the owner-private task file and its reviewed SHA-256 are configured:
+
+```powershell
+node scripts/check-owner-alpha-local.mjs
+```
+
+The local report must show two **ready developer tasks in independent resource partitions** to be eligible to run the remote check. A local pass cannot verify a PRIVATE repository, actual GitHub permission, seven copied records or real chat operation. See [owner local check](OWNER_ALPHA_LOCAL_CHECK.md).
+
 ## 5. First two independent ChatGPT sessions
 
 Start two different GitHub-connected owner-controlled chats, each with its own durable UUID/session ID and exactly one ready task. For write tasks, acquire the approved exclusive resource lock **before** the issue claim. Verify lock ownership and current PR HEAD/scope, develop on separate draft branches, record actual test results, create immutable submitted handoff markers and release only one's own locks. Stop on any 409/422 ambiguity, stale source, already-submitted task, duplicate active session or resource overlap. Have an independent reviewer inspect both outcomes and the private ledger.
