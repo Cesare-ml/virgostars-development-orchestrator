@@ -11,7 +11,12 @@ const goodEnv = () => ({
   VS_PRIVATE_TASKS_APPROVED_SHA256: 'a'.repeat(64),
   GITHUB_TOKEN: 'SECRET_NEVER_PRINT'
 });
-const twoWriters = () => [{access: 'write'}, {access: 'write'}];
+const twoWriters = () => [
+  {access:'write',role:'developer',status:'ready',
+    repository:'example/synthetic',resource_scope:{id:'first'}},
+  {access:'write',role:'developer',status:'ready',
+    repository:'example/synthetic',resource_scope:{id:'second'}}
+];
 const validateSelection = ({repository, acknowledgedRepository}) => {
   if (repository !== acknowledgedRepository ||
       repository === 'Cesare-ml/virgostars-development-orchestrator')
@@ -43,6 +48,8 @@ test('valid local inputs permit only a later remote doctor, never launch', async
   assert.equal(result.result, 'local-preflight-pass');
   assert.equal(result.eligible_for_remote_alpha_doctor, true);
   assert.equal(result.configured_write_tasks, 2);
+  assert.equal(result.configured_developer_tasks, 2);
+  assert.equal(result.independent_developer_partitions, 2);
   assert.equal(result.private_ledger_verified, false);
   assert.equal(result.historical_submissions_verified, false);
   assert.equal(result.real_multi_chat_pilot_proven, false);
@@ -74,6 +81,31 @@ test('wrong SHA, invalid catalog and only one writer are all blocked', async () 
   assert.ok(one.blockers.includes('TWO_WRITE_TASKS_REQUIRED'));
   assert.equal(one.private_task_file_validated,true);
   assert.equal(one.eligible_for_remote_alpha_doctor,false);
+});
+
+test('two tester writers cannot falsely pass developer pilot readiness', async () => {
+  for (const roles of [['tester','tester'], ['developer','tester']]) {
+    const tasks=twoWriters().map((task,i)=>({...task,role:roles[i]}));
+    const result=await run(goodEnv(),{loadApprovedTasks:async()=>tasks});
+    assert.equal(result.configured_write_tasks,2);
+    assert.equal(result.configured_developer_tasks,roles.filter(r=>r==='developer').length);
+    assert.ok(result.blockers.includes('TWO_DISTINCT_DEVELOPER_TASKS_REQUIRED'));
+    assert.equal(result.eligible_for_remote_alpha_doctor,false);
+    assert.equal(result.ready_to_launch,false);
+  }
+});
+
+test('duplicate resource partition and nonready developer cannot pass local preflight', async () => {
+  const duplicate=twoWriters();
+  duplicate[1].resource_scope.id='FIRST';
+  const same=await run(goodEnv(),{loadApprovedTasks:async()=>duplicate});
+  assert.equal(same.independent_developer_partitions,1);
+  assert.ok(same.blockers.includes('TWO_DISTINCT_DEVELOPER_TASKS_REQUIRED'));
+  const notReady=twoWriters();
+  notReady[1].status='planned';
+  const staged=await run(goodEnv(),{loadApprovedTasks:async()=>notReady});
+  assert.equal(staged.configured_developer_tasks,1);
+  assert.ok(staged.blockers.includes('TWO_DISTINCT_DEVELOPER_TASKS_REQUIRED'));
 });
 
 test('unsupported Node major and malformed validator are rejected', async () => {
