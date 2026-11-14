@@ -248,12 +248,27 @@ export async function release({api,config,repo,issue,session,confirm}) {
     throw new Error('Save an owner handoff before release; do not abandon work silently.');
   const observed=await status({api,config,repo,issue});
   if(observed.status!=='claimed') throw new Error('Resource lock invalid; release blocked.');
+  if(!current.sha || observed.blob_sha!==current.sha ||
+     !isDeepStrictEqual(observed.claim,current.data))
+    throw new Error('Claim changed during release checks; manual reconciliation required.');
+
   try { await api.deleteClaim(ledger,path,branch,current.sha,current.data); }
   catch(error) {
     if(error instanceof GitHubError && [409,422].includes(error.status))
       throw new Error('Claim changed concurrently; re-read before release.');
     throw error;
   }
+  // An acknowledged GitHub DELETE is not confirmation of a missing record.
+  // In particular, never delete the write resource if the issue claim may
+  // still exist. A stale read leaves the resource safely reserved.
+  let afterIssue;
+  try { afterIssue=await api.getClaim(ledger,path,branch); }
+  catch(error) {
+    throw new Error('Issue deletion readback unavailable; keep resource reserved for recovery.',{cause:error});
+  }
+  if(afterIssue!==null)
+    throw new Error('Issue deletion not confirmed; keep resource reserved for manual recovery.');
+
   if(current.data.access==='write') {
     const resourcePath=resourceKey(repo,current.data.resource_scope_id);
     const resource=await api.getClaim(ledger,resourcePath,branch);
@@ -263,7 +278,27 @@ export async function release({api,config,repo,issue,session,confirm}) {
     catch(error) {
       throw new Error('Task released but resource remains locked; manual recovery required.',{cause:error});
     }
+    let afterResource;
+    try { afterResource=await api.getClaim(ledger,resourcePath,branch); }
+    catch(error) {
+      throw new Error('Resource deletion readback unavailable; manual recovery required.',{cause:error});
+    }
+    if(afterResource!==null)
+      throw new Error('Resource deletion not confirmed; manual recovery required.');
   }
+  // Recheck the task after resource release as well, and confirm an existing
+  // immutable submitted marker was neither lost nor rewritten. This is a
+  // fresh consistency check, not an atomic lock-release transaction.
+  let final;
+  try { final=await status({api,config,repo,issue}); }
+  catch(error) {
+    throw new Error('Final release status unavailable; manual reconciliation required.',{cause:error});
+  }
+  if(observed.submitted
+    ? final.status!=='submitted' ||
+      !isDeepStrictEqual(final.submission,observed.submission)
+    : final.status!=='unclaimed')
+    throw new Error('Final release status inconsistent; manual reconciliation required.');
   return {result:'released',task:repo+'#'+issue};
 }
 
