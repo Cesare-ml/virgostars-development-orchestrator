@@ -62,6 +62,10 @@ export async function loadSnapshot({ fleet, get, session = null, now = Date.now(
       if (deep && reviewsAtHead(pr).some(r => r.verdict === 'approve')) {
         pr.files = (await pages(get, `repos/${name}/pulls/${p.number}/files`)).map(f => f.filename);
         pr.mergeable = (await get(`repos/${name}/pulls/${p.number}`)).mergeable;
+        if (pr.mergeable === null) { // GitHub computes mergeability lazily; ask once more
+          await new Promise(r => setTimeout(r, 2000));
+          pr.mergeable = (await get(`repos/${name}/pulls/${p.number}`)).mergeable;
+        }
         if (config.ci) pr.ci = await ciState(get, name, p.head.sha);
       }
       prs.push(pr);
