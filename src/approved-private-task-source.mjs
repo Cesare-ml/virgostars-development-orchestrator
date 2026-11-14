@@ -65,12 +65,15 @@ export async function loadApprovedPrivateTaskSource({
      config?.claim_store?.branch!=='coordination/claims' ||
      config?.repository_visibility_required!=='private')
     blocked();
-  const verified=await readVerifiedPrivateGitHubCatalog({
-    api,repository,acknowledgedRepository,
-    approvedMainSha:selected.approvedMainSha,
-    approvedSha256:selected.approvedSha256,
-    legacyTasks:await loadHistoricalPilotTasks()
-  });
+  let verified;
+  try {
+    verified=await readVerifiedPrivateGitHubCatalog({
+      api,repository,acknowledgedRepository,
+      approvedMainSha:selected.approvedMainSha,
+      approvedSha256:selected.approvedSha256,
+      legacyTasks:await loadHistoricalPilotTasks()
+    });
+  } catch {blocked();}
   return {mode:selected.mode,tasks:verified.tasks,
     approvedMainSha:selected.approvedMainSha};
 }
