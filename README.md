@@ -2,7 +2,7 @@
 
 ## Owner-operated alpha: source integrated, private ledger still required (2026-11-14)
 
-Selected merged PRs: **#1, #23, #25, #27, #30, #33, #35, #90, #80, #96, #114, #77, #59, #60, #62, #115, #116 and #117**. The Node CLI, scoped task locks, duplicate-session detection, pinned ledger integrity, read-only alpha doctor and owner-local verified backup/copy planner are now on `main`. Individual integration heads passed Node 20/22 tests. **No deployed scheduler or live multi-chat coordination is asserted.**
+The reviewed owner-operated CLI, privacy protections, backup/copy planner and local alpha preflight have been integrated into `main`. The Node CLI, scoped task locks, duplicate-session detection, pinned ledger integrity, read-only alpha doctor and owner-local verified backup/copy planner are now on `main`. Individual integration heads passed Node 20/22 tests. **No deployed scheduler or live multi-chat coordination is asserted.**
 
 ### Run the safe commands now
 
@@ -11,6 +11,10 @@ npm run check
 node bin/vs-agent.mjs public-discover
 node bin/vs-agent.mjs rehearse-two-agents
 ```
+
+### First-run local readiness
+
+From a fresh Node 20/22 checkout, run `node scripts/check-owner-alpha-local.mjs` to inspect **only** local owner prerequisites. This command never contacts GitHub, creates a claim or confirms that the private repository exists. It requires two `ready` developer tasks with **distinct resource partitions**; even a passing result does not authorize startup. See [owner local check](docs/OWNER_ALPHA_LOCAL_CHECK.md). The GitHub-connected workflow still requires a separately verified PRIVATE ledger and the remote `alpha-doctor`.
 
 ### Owner-only migration preparation
 
