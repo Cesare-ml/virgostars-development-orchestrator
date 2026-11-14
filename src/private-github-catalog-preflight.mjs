@@ -55,7 +55,7 @@ export function verifyPinnedCatalogBlob({entry,blob,approvedSha256,legacyTasks=[
  * this cannot prove the owner inspected it or that main branch rules are
  * protected. It does not claim tasks, change the ledger or launch chats.
  */
-export async function inspectApprovedPrivateGitHubCatalog({
+export async function readVerifiedPrivateGitHubCatalog({
   api,repository,acknowledgedRepository,approvedMainSha,approvedSha256,
   legacyTasks=[]
 }) {
@@ -96,7 +96,7 @@ export async function inspectApprovedPrivateGitHubCatalog({
   if(end.status!=='readiness_verified'||
      end.historical_submissions_preserved!==7)blocked();
 
-  return {
+  const report = {
     schema_version:'1-private-github-owner-catalog-preflight',
     mode:'get-only',
     private_visibility_verified:true,
@@ -115,4 +115,13 @@ export async function inspectApprovedPrivateGitHubCatalog({
     merge_authorized:false,
     next_step:'Owner independently reviews private main history and runs the full live readiness/collision gates before any claim.'
   };
+  // Only trusted in-process coordinators may consume these vetted task objects.
+  // Never serialize or return the tasks via an operator/CI/public response.
+  return {report,tasks:checked.tasks};
+}
+
+/** Safe public-facing operator report: never includes private task details. */
+export async function inspectApprovedPrivateGitHubCatalog(options) {
+  const {report}=await readVerifiedPrivateGitHubCatalog(options);
+  return report;
 }
