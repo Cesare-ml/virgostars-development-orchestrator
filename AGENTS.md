@@ -106,3 +106,7 @@ The existing public coordinator's claims branch is **never** a safe owner-only l
 ## Locally SHA-approved new task queue
 
 For the owner-only first alpha, after a reviewed private-ledger cutover, new task definitions must be held **outside** the public Git checkout. Read [docs/OWNER_TASK_QUEUE.md](docs/OWNER_TASK_QUEUE.md). The optional VS_PRIVATE_TASKS_FILE must be an absolute local regular file outside this repository; VS_PRIVATE_TASKS_APPROVED_SHA256 must equal its exact SHA-256. The tokenless `fingerprint-tasks FILE.json` may only print digest and aggregate counts, never task records. Public discovery must never read this file. Never treat the SHA as an authentication secret or as task authorization: check the live issue, lock, resource partition and competing PR before work. Do not reuse any of the seven historically submitted issue identities.
+
+## Read-only alpha launch readiness (owner-only)
+
+Before proposing the first two new developer chats, follow [docs/ALPHA_READINESS.md](docs/ALPHA_READINESS.md). On a trusted local machine, `node bin/vs-agent.mjs alpha-doctor` requires a verified PRIVATE coordination ledger and the exact approved local task file. Its aggregate output cannot approve a merge or acquire a task. Agents MUST still verify and exclusively acquire their own resource/issue locks after a positive report. If the report blocks, do not bypass it by writing to the old public ledger or by reusing seven historical submitted issues. No public workflow receives owner-only tokens or task data.

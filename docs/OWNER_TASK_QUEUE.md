@@ -66,6 +66,7 @@ After verifying the private ledger with verify-private-activation:
 ~~~powershell
 node bin/vs-agent.mjs fleet-status
 node bin/vs-agent.mjs discover
+node bin/vs-agent.mjs alpha-doctor
 node bin/vs-agent.mjs session --kind codex
 # Use the returned session ID, then claim only an explicitly ready, safe task:
 node bin/vs-agent.mjs claim-next --session codex-YOUR-UUID --role developer
