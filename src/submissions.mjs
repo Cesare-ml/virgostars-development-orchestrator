@@ -1,7 +1,22 @@
 import {assertSession, status, release, submissionKey} from './claims.mjs';
 import {GitHubError} from './github.mjs';
+import {isDeepStrictEqual} from 'node:util';
 import {auditTaskPullRequest} from './pr-audit.mjs';
 import {auditOpenPullRequestCollisions} from './pr-collisions.mjs';
+
+/* Evidence may be retried with a fresh submitted_at timestamp, but all other
+ * immutable fields must agree before accepting a pre-existing marker. Otherwise
+ * a same-session 409/422 create race could release a claim for different work.
+ */
+const SUBMISSION_EVIDENCE_FIELDS = [
+  'schema_version','state','target_repository','issue_number','session_id',
+  'role','access','resource_scope_id','last_handoff','pull_request',
+  'audited_head_sha','audited_base_sha','scope_verdict','collision_audit'
+];
+function sameSubmissionEvidence(stored,expected) {
+  return stored && typeof stored==='object' && !Array.isArray(stored) &&
+    SUBMISSION_EVIDENCE_FIELDS.every(key=>isDeepStrictEqual(stored[key],expected[key]));
+}
 
 /**
  * Persist "submitted for review", then release the owner claim.
@@ -43,6 +58,13 @@ export async function submit({api,config,tasks,repo,issue,session,prNumber=null,
       throw new Error('Write submission blocked by competing/open PRs on the same resource: '+
         collisions.candidates.map(p=>'#'+p.number).join(',')+
         '. Review the overlapping branches before submitting.');
+    // Scope and collision scans are independent GitHub requests, not one
+    // transactional snapshot. A changed PR HEAD/base must block release.
+    const delivery=collisions.candidates[0];
+    if(delivery.head_sha!==scopedAudit.pull_request_head ||
+       delivery.base_sha!==scopedAudit.upstream_head ||
+       delivery.base_ref!==scopedAudit.base_branch)
+      throw new Error('Delivery PR changed between scope and collision audits; re-audit before submitting.');
     if(claim.last_handoff.head_sha!==scopedAudit.pull_request_head)
       throw new Error('Handoff head SHA is missing or differs from audited PR head; revalidate work.');
     if(prior && (prior.data.pull_request!==prNumber ||
@@ -58,14 +80,16 @@ export async function submit({api,config,tasks,repo,issue,session,prNumber=null,
       collision_audit:'single-candidate'}:{}),
     note:'Awaiting independent review; not automatically approved or DONE'
   };
+  if(prior && !sameSubmissionEvidence(prior.data,marker))
+    throw new Error('Existing submission evidence differs from current handoff; manual reconciliation required.');
   if(!prior) {
     try {await api.createClaim(ledger,path,branch,marker);}
     catch(error) {
       if(!(error instanceof GitHubError) || ![409,422].includes(error.status))
         throw new Error('Submission outcome unknown; inspect ledger before retrying.',{cause:error});
       const concurrent=await api.getClaim(ledger,path,branch);
-      if(concurrent?.data?.session_id!==session || concurrent.data.state!=='submitted')
-        throw new Error('Submission conflict; manual review required.');
+      if(!sameSubmissionEvidence(concurrent?.data,marker))
+        throw new Error('Submission evidence conflict; manual reconciliation required.');
     }
   }
   await release({api,config,repo,issue,session,confirm:true});
