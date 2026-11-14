@@ -72,6 +72,16 @@ export async function status({api,config,repo,issue}) {
     ? {status:'submitted',submission:submission.data}
     : {status:'unclaimed'};
   const data=current.data;
+  // A Git Contents path is not proof that the JSON inside it identifies the
+  // same issue. Corrupt or case/identity-conflicting records must block ALL
+  // same-session resume and queue scans, not be classified as a normal busy
+  // assignment to an unrelated agent.
+  if(!data||typeof data!=='object'||Array.isArray(data)||
+     data.schema_version!==2 ||
+     data.target_repository!==repo || data.issue_number!==issue ||
+     typeof data.session_id!=='string'||!VALID_SESSION.test(data.session_id)||
+     !['claimed','in_progress'].includes(data.state))
+    return {status:'inconsistent',reason:'invalid-claim-identity-or-state'};
   if(data.access==='write') {
     if(typeof data.resource_scope_id!=='string')
       return {status:'inconsistent',reason:'missing-resource-key'};
