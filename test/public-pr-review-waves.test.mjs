@@ -64,7 +64,6 @@ test('reject missing, unapproved or structurally blocked topology',()=>{
     ['file_conflicts_evaluated',true],
     ['merge_authorized',true],
     ['remote_writes',1],
-    ['private_ledger_verified',true],
     ['schema_version','unexpected'],
     ['mode','authorized-write'],
     ['external_head_or_base_prs',1],
@@ -74,7 +73,6 @@ test('reject missing, unapproved or structurally blocked topology',()=>{
   ];
   for (const [field,value] of cases) {
     const r=fixture();r[field]=value;
-    if (field==='private_ledger_verified') continue; // no such field in public analyzer schema
     assert.throws(()=>planPublicPrReviewWaves(r),/topology/,field);
   }
 });
