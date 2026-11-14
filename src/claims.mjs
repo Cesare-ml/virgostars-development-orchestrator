@@ -168,9 +168,14 @@ export async function claim({api,config,tasks,repo,issue,session,role='developer
       const observed=await status({api,config,repo,issue});
       if(observed.status!=='claimed'||observed.submitted)
         throw new Error('Contended claim ownership or resource scope inconsistent; reconcile manually.');
-      const resumed=assertResumableOwnerClaim({
-        claim:observed.claim,task,session
-      });
+      let resumed;
+      try {
+        resumed=assertResumableOwnerClaim({
+          claim:observed.claim,task,session
+        });
+      } catch {
+        throw new Error('Contended claim ownership or resource scope inconsistent; reconcile manually.');
+      }
       return {result:'already-owned',claim:resumed};
     }
     if(newResource) {
