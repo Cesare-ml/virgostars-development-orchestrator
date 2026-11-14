@@ -23,15 +23,18 @@ Every chat gets the same prompt. It picks its own work, and when a turn ends you
 
 Each cycle a chat takes the first applicable step: **resume → integrate → review → triage → develop → plan → audit**. Planning and auditing always apply, so a chat never runs out of work. Repositories above their WIP limit get reviews and triage instead of new PRs, so the backlog shrinks before it grows.
 
-Agents may squash-merge a PR only when the merge gate passes: an independent approval at the current head and green CI where the repo has CI. In `docs-only` repos, only documentation changes qualify. Workflows, licenses, `AGENTS.md` and this repo's rules always go to the owner. Those PRs are marked `AGENT-READY-TO-MERGE`.
+Agents open PRs into each repo's `integration_branch` (for VirgoStars-Ephemeris: `dev/ephemeris`; promoting it to `main` stays with the owner). They may squash-merge a PR only when the merge gate passes: an independent approval at the current head and green CI where the repo has CI. In `docs-only` repos, only documentation changes qualify. Workflows, licenses, `AGENTS.md` and this repo's rules always go to the owner. Those PRs are marked `AGENT-READY-TO-MERGE`.
 
 ## Owner tools
 
 ```sh
 npm run check                                # syntax + full test suite (Node 20/22)
 node bin/vs-agent.mjs fleet-board            # GET-only overview: PRs, WIP, tasks, merge queues
+node bin/vs-agent.mjs fleet-report --hours 2   # GET-only: what agents did, per session, plus rule violations
 node bin/vs-agent.mjs next-work --session chat-xxxxxxxx   # what the runbook tells that chat to do now
 ```
+
+Without running anything locally: the **Fleet board** workflow publishes the board and the 2-hour activity report every 2 hours. Open *Actions → Fleet board → latest run* to read the summary, or start it manually with *Run workflow*.
 
 Set `GITHUB_TOKEN` (read-only is enough) to avoid GitHub's anonymous rate limit.
 

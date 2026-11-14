@@ -1,0 +1,38 @@
+name: Fleet board
+
+# Read-only snapshot of the agent fleet, published to this run's summary page.
+on:
+  schedule:
+    - cron: '17 */2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fleet-board
+  cancel-in-progress: true
+
+jobs:
+  board:
+    name: Board and activity report
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout public repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Install Node 22
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+      - name: Fleet board (GET-only)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node bin/vs-agent.mjs fleet-board --markdown >> "$GITHUB_STEP_SUMMARY"
+      - name: Activity in the last 2 hours (GET-only)
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node bin/vs-agent.mjs fleet-report --hours 2 --markdown >> "$GITHUB_STEP_SUMMARY"
