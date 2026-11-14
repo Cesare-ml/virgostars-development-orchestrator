@@ -43,3 +43,7 @@ This matrix is complementary to [the 10+10 continuity rehearsal](OFFLINE_CHAT_BA
 All eight cases run in a single local Node process against an in-memory mock. They do **not** demonstrate real parallel browser sessions, an external durable database, cross-process GitHub atomicity, safe crash recovery, live permissions or scheduling 40 real ChatGPT chats. No private GitHub identity or token is read, and this tool grants **no** permission to claim or launch live tasks.
 
 Run the native Node suite and inspect the current PR changed-file list and upstream commit before independent review. This work must remain an unmerged stacked draft until validated and explicitly accepted; never use the historical public `coordination/claims` branch for new private coordination records. See [first owner alpha](FIRST_OWNER_ALPHA.md).
+
+## Verified report comparison hardening
+
+After **both** stress reports pass `verifyWaveReport()` (including its strict unexpected-field checks), repeat mode compares a stable JSON representation with the top-level property names sorted. Thus a different field-insertion order is not misreported as stress drift, but changed values, changed arrival arrays, absent fields and added permitted no-reopen diagnostics remain observable. The comparator must **never** be used instead of the strict per-run validation; unknown session/private identifiers are still rejected before comparison, never ignored or printed.

@@ -1,4 +1,5 @@
 import {runOfflineFleetStress} from './offline-fleet-stress.mjs';
+import {sameVerifiedWaveReport} from './offline-wave-evidence.mjs';
 
 // Fixed, public-safe synthetic scenarios. They never read the owner task catalog,
 // private coordination ledger, environment credentials or network resources.
@@ -133,7 +134,7 @@ export async function runOfflineWaveMatrix({
       // prove a particular task/session assignment is deterministic.
       const repeated = await runStress(args);
       verifyWaveReport(repeated, waves);
-      if (JSON.stringify(repeated) !== JSON.stringify(evidence)) {
+      if (!sameVerifiedWaveReport(repeated, evidence)) {
         throw new Error('Synthetic wave repeat evidence changed.');
       }
       repeatedScenarios++;
