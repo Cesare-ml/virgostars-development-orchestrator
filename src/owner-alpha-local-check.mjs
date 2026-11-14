@@ -44,6 +44,8 @@ export async function assessOwnerAlphaLocalSetup({
   let validatedTasks = false;
   let configuredTasks = 0;
   let configuredWriters = 0;
+  let configuredDevelopers = 0;
+  let independentDeveloperPartitions = 0;
   if (!isText(env.VS_PRIVATE_TASKS_FILE) ||
       !isText(env.VS_PRIVATE_TASKS_APPROVED_SHA256)) {
     blockers.add('OWNER_TASK_APPROVAL_MISSING');
@@ -64,6 +66,20 @@ export async function assessOwnerAlphaLocalSetup({
       configuredWriters = tasks.filter(t => t?.access === 'write').length;
       if (configuredWriters < 2)
         blockers.add('TWO_WRITE_TASKS_REQUIRED');
+      // The remote alpha-doctor requires two eligible developer partitions,
+      // not just any two writers (tester tasks cannot launch this pilot).
+      const developers = tasks.filter(t =>
+        t?.access === 'write' && t?.role === 'developer' &&
+        t?.status === 'ready' &&
+        typeof t?.repository === 'string' &&
+        typeof t?.resource_scope?.id === 'string'
+      );
+      configuredDevelopers = developers.length;
+      independentDeveloperPartitions = new Set(developers.map(t =>
+        t.repository.toLowerCase() + '#' + t.resource_scope.id.toLowerCase()
+      )).size;
+      if (independentDeveloperPartitions < 2)
+        blockers.add('TWO_DISTINCT_DEVELOPER_TASKS_REQUIRED');
     } catch {
       blockers.add('OWNER_TASK_FILE_OR_APPROVAL_INVALID');
     }
@@ -80,6 +96,8 @@ export async function assessOwnerAlphaLocalSetup({
     private_task_file_validated: validatedTasks,
     configured_tasks: configuredTasks,
     configured_write_tasks: configuredWriters,
+    configured_developer_tasks: configuredDevelopers,
+    independent_developer_partitions: independentDeveloperPartitions,
     eligible_for_remote_alpha_doctor: sorted.length === 0,
     github_requests: 0,
     private_ledger_verified: false,
