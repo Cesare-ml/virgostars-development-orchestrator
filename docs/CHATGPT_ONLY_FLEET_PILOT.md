@@ -4,6 +4,12 @@
 
 The existing owner CLI and task validator accept a locally approved catalog limited to five original repositories. **They do not implement this GitHub-only source, Orchestrator self-assignment, or a 100-chat live scheduler.** This document is a proposed *manual connector-only protocol* requiring independent owner review; it does not silently change those CLI guarantees. Do not use the original seven submitted task identifiers. The public Orchestrator source or its historical public `coordination/claims` branch is **never** a coordination destination.
 
+## One common prompt for EVERY ChatGPT chat
+
+The startup message is **identical and no longer than two lines** for the first 2 chats and for all future 20, 40, and 100-chat waves. It does not include a task ID, fixed role, specialization, issue number, preselected target repository, or session ID. The same initial message directs each chat to the **PRIVATE** `pilot/AGENT_START.md` runbook through its authorized GitHub connector. That private runbook contains the literal two-line prompt and the dynamic assignment rules. Keep the literal prompt and any private coordination destination **out of this PUBLIC repository**.
+
+Each chat generates its own unique session UUID after reading the runbook, inspects the same owner-approved private manifest, checks live claims, and acquires at most one eligible task through verified exclusive resource-first and issue claims. If two chats race for the first task, only the verified winner continues; the other can try the next eligible ready task after proving it holds no partial lock. On `ok avanti` in the **same chat**, revalidate and resume its assignment or, after submitted/released, request the next approved one. **Never ask the user to craft separate Chat A/Chat B prompts.** A repeated `ok avanti` is a new active turn, not background execution.
+
 ## Allowed target set
 
 Owner-authorized first-party projects: `virgo-stars`, `virgostars-desktop`, `VirgoStars-Ephemeris`, `VirgoStars-Event-Ephemeris`, `astrological-functions`, `astrological-charts`, `astrological-assets`, and **`virgostars-development-orchestrator` itself**. Orchestrator changes need the same claim, file-scope, review, and no-auto-merge checks as other repos. This list does not grant public volunteers access to private repositories or expand GitHub permissions.
