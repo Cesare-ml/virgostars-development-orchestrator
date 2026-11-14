@@ -62,6 +62,7 @@ export async function inspectPrivateDestination({api,destination}) {
       branch_exists:false,
       status:'private_branch_needs_setup',
       records:{claims:0,resources:0,submissions:0},
+      unclassified_blobs:0,
       ready_to_migrate:false,write_enabled:false,
       requires_owner_reconciliation:true,
       next_step:'Create the private coordination branch only after explicit owner approval.'
@@ -83,6 +84,7 @@ export async function inspectPrivateDestination({api,destination}) {
     invalid('the private ledger tree is incomplete or oversized.');
 
   const records={claims:0,resources:0,submissions:0};
+  let unclassifiedBlobs=0;
   const seen=new Set();
   for(const entry of tree.tree) {
     if(!entry||typeof entry.path!=='string'||
@@ -97,9 +99,11 @@ export async function inspectPrivateDestination({api,destination}) {
       if(!sha(entry.sha)||!Number.isSafeInteger(entry.size)||
          entry.size<0||entry.size>65536||entry.mode!=='100644')
         invalid('unsupported or oversized destination record.');
-      for(const key of Object.keys(records)) {
-        if(entry.path.startsWith(key+'/'))records[key]++;
-      }
+      const kind=Object.keys(records).find(key=>entry.path.startsWith(key+'/'));
+      if(kind)records[kind]++;
+      // An optional root README is a harmless branch bootstrap. Every other
+      // foreign blob needs owner reconciliation, even when there are no claims.
+      else if(entry.path!=='README.md')unclassifiedBlobs++;
     } else if(entry.type!=='tree'||entry.mode!=='040000') {
       invalid('unsupported destination Git object type.');
     }
@@ -112,13 +116,14 @@ export async function inspectPrivateDestination({api,destination}) {
     invalid('destination branch changed while its records were inspected.');
   // A visibility change during the scan invalidates the result.
   inspectMeta(repo,await api.getRepository(repo));
-  const hasRecords=Object.values(records).some(x=>x>0);
+  const hasRecords=Object.values(records).some(x=>x>0)||unclassifiedBlobs>0;
   return {
     schema_version:'1-private-destination-preflight',
     private_visibility_verified:true,
     branch_exists:true,
     status:hasRecords?'existing_records_need_reconciliation':'empty_branch_needs_owner_approval',
     records,
+    unclassified_blobs:unclassifiedBlobs,
     ready_to_migrate:false,write_enabled:false,
     requires_owner_reconciliation:true,
     next_step:hasRecords

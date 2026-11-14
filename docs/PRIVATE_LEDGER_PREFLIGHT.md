@@ -17,7 +17,7 @@ Never paste the token or private GitHub repository data into ChatGPT, a public G
 1. The proposed ledger is a **different** GitHub repository from the public orchestrator, with an exact recognized repository name.
 2. Its actual GitHub metadata reports `private: true`, `visibility: "private"`, and a matching `full_name`, and the repository is not archived or disabled. Any GitHub 403, 404, malformed response or visibility mismatch fails closed.
 3. The `coordination/claims` branch either does not yet exist or resolves to a valid pinned Git commit/tree.
-4. If the branch exists, the tool inspects **only tree metadata**, not claim/resource/submission blob contents, and returns **counts** by kind, never private filenames, records, IDs, target names, tokens or SHA values.
+4. If the branch exists, the tool inspects **only tree metadata**, not claim/resource/submission blob contents, and returns **counts** by kind plus `unclassified_blobs`, never private filenames, records, IDs, target names, tokens or SHA values. An optional root `README.md` is permitted as a bootstrap file. Other blobs outside `claims/`, `resources/` and `submissions/` count as unclassified, so a branch containing only foreign files is **not** reported as empty.
 5. It checks private visibility again after the scan to detect visibility changes during a run.
 
 The output is a constrained `1-private-destination-preflight` JSON object. It always contains:
@@ -26,7 +26,7 @@ The output is a constrained `1-private-destination-preflight` JSON object. It al
 - `write_enabled: false`
 - `requires_owner_reconciliation: true`
 
-Possible statuses are `private_branch_needs_setup`, `empty_branch_needs_owner_approval`, and `existing_records_need_reconciliation`. All require an explicit human decision. **A successful preflight does not authorize writes, branch creation, migration or public volunteer task claiming.**
+Possible statuses are `private_branch_needs_setup`, `empty_branch_needs_owner_approval`, and `existing_records_need_reconciliation`. An activation verification additionally rejects any nonzero `unclassified_blobs`, even when all seven historical submissions are intact. All require an explicit human decision. **A successful preflight does not authorize writes, branch creation, migration or public volunteer task claiming.**
 
 ## Next migration gates
 

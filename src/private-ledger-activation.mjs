@@ -100,6 +100,8 @@ export async function assertPrivateLedgerActivation({api,config}) {
   const destination=await inspectPrivateDestination({api,destination:repository});
   if(!destination.branch_exists)
     blocked('the reviewed private coordination branch does not exist.');
+  if(destination.unclassified_blobs!==0)
+    blocked('private coordination branch has unclassified files requiring owner reconciliation.');
 
   const [sourceSnapshot,destinationSnapshot]=await Promise.all([
     api.getLedgerSnapshot(PUBLIC_COORDINATOR,DESTINATION_BRANCH),
