@@ -134,14 +134,15 @@ export async function planPrivateCutover({api,destination}) {
     blockers.push('SOURCE_UNCLASSIFIED_BLOBS_REQUIRE_REVIEW');
   if(!source.records.submissions)
     blockers.push('SOURCE_HAS_NO_HISTORICAL_SUBMISSIONS');
-  if(!target.branch_exists)
+  if(!target.branch_exists) {
     blockers.push('DESTINATION_BRANCH_NOT_CONFIGURED');
-  else if(Object.values(target.records).some(n=>n>0)||target.unclassified_blobs>0)
+  } else if(Object.values(target.records).some(n=>n>0)||target.unclassified_blobs>0) {
     blockers.push('DESTINATION_CONTAINS_EXISTING_RECORDS');
-  if(target.unclassified_blobs>0)
-    blockers.push('DESTINATION_UNCLASSIFIED_BLOBS_REQUIRE_REVIEW');
-  else
+    if(target.unclassified_blobs>0)
+      blockers.push('DESTINATION_UNCLASSIFIED_BLOBS_REQUIRE_REVIEW');
+  } else {
     blockers.push('DESTINATION_EMPTY_REQUIRES_OWNER_APPROVAL');
+  }
   blockers.push('OWNER_APPROVAL_AND_PRIVATE_LEDGER_CUTOVER_REQUIRED');
 
   return {
