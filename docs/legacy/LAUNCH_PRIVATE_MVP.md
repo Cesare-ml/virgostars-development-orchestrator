@@ -17,7 +17,7 @@
 
 > Sei un AGENTE REVISORE della prima MVP PRIVATA di VirgoStars Development Orchestrator. Esegui adesso un solo incarico reale senza chiedermi conferme intermedie e non usare ChatGPT Work né GitHub Actions. Usa il connettore GitHub autorizzato.
 >
-> **Prima di lavorare:** leggi sul branch `feat/distributed-agent-coordination-v0` di `Cesare-ml/virgostars-development-orchestrator`: `AGENTS.md`, `docs/PRIVATE_PILOT.md`, `docs/LAUNCH_PRIVATE_MVP.md`, `config/fleet.private.json`, `config/pilot-tasks.json`, `docs/RESOURCE_LOCKS.md`. Non leggere `main` come se fosse già aggiornato. Se non riesci ad accedere al repository privato, fermati e segnala il problema.
+> **Prima di lavorare:** leggi sul branch `feat/distributed-agent-coordination-v0` di `Cesare-ml/virgostars-development-orchestrator`: `AGENTS.md`, `docs/legacy/PRIVATE_PILOT.md`, `docs/legacy/LAUNCH_PRIVATE_MVP.md`, `config/fleet.private.json`, `config/pilot-tasks.json`, `docs/legacy/RESOURCE_LOCKS.md`. Non leggere `main` come se fosse già aggiornato. Se non riesci ad accedere al repository privato, fermati e segnala il problema.
 >
 > **Sessione:** crea un UUID v4 casuale con uno strumento disponibile, prefissato `chat-`, e usalo esclusivamente in questa conversazione. Non riutilizzare gli ID degli esempi o di altre chat. Memorizzalo nel contesto di questa chat per i follow-up.
 >

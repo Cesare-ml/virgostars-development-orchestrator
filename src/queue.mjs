@@ -1,5 +1,6 @@
 import { assertSession, claim, status } from './claims.mjs';
 import { validateTaskCatalog } from './resources.mjs';
+import { assertResumableOwnerClaim } from './claim-resume-integrity.mjs';
 
 const ROLES = new Set(['planner','developer','tester','reviewer','auditor','integrator']);
 
@@ -7,7 +8,7 @@ const ROLES = new Set(['planner','developer','tester','reviewer','auditor','inte
  * Select at most one curated task per chat session.
  * All errors except an explicitly closed issue or a contended claim fail closed.
  */
-export async function claimNext({ api, config, tasks, session, role, repository = null }) {
+export async function claimNext({ api, config, tasks, session, role, repository = null, beforeClaim = null }) {
   assertSession(session);
   validateTaskCatalog(tasks);
   if (!ROLES.has(role)) throw new Error('Choose an explicit valid role for claim-next.');
@@ -29,11 +30,8 @@ export async function claimNext({ api, config, tasks, session, role, repository 
     if (current.status === 'submitted' || current.submitted)
       submitted.add(task.repository+'#'+task.issue);
     if (current.status === 'claimed' && current.claim.session_id === session) {
-      if (current.claim.access !== task.access ||
-        (task.access === 'write' && (current.claim.resource_scope_id !== task.resource_scope.id ||
-          JSON.stringify(current.claim.resource_roots) !== JSON.stringify([...task.resource_scope.roots].sort()))))
-        throw new Error('Curated task resource scope changed; manual reconciliation required.');
-      owned.push({ claim:current.claim,submitted:!!current.submitted });
+      const resumed=assertResumableOwnerClaim({claim:current.claim,task,session});
+      owned.push({ claim:resumed,submitted:!!current.submitted });
     }
   }
   if (owned.length > 1)
@@ -41,6 +39,8 @@ export async function claimNext({ api, config, tasks, session, role, repository 
   if (owned.length === 1) {
     if (owned[0].submitted)
       throw new Error('Submitted task still has an active claim; original owner must finish release or request manual recovery.');
+    if(owned[0].claim.role!==role)
+      throw new Error('Session already owns a different role; reconcile before requesting new work.');
     return { result:'already-owned',claim:owned[0].claim };
   }
 
@@ -59,7 +59,7 @@ export async function claimNext({ api, config, tasks, session, role, repository 
     if (!issue || issue.pull_request) throw new Error('Invalid curated target issue.');
     if (issue.state !== 'open') { closed++; continue; }
     const attempt = await claim({ api, config, tasks, repo: task.repository,
-      issue: task.issue, session, role });
+      issue: task.issue, session, role, beforeClaim });
     if (attempt.result === 'acquired' || attempt.result === 'already-owned')
       return attempt;
     if (attempt.result === 'busy') { contended++; continue; }

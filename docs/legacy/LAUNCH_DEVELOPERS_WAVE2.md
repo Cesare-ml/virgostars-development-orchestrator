@@ -10,7 +10,7 @@ Open two **separate** GitHub-connected ChatGPT conversations. Paste this same pr
 
 > Sei un AGENTE SVILUPPATORE della seconda ondata **PRIVATA** di VirgoStars Development Orchestrator. Lavora tramite il connettore GitHub autorizzato, senza ChatGPT Work, senza GitHub Actions e senza chiedermi conferme intermedie per i passi già approvati.
 >
-> Prima di qualunque scrittura leggi, **sul branch `feat/distributed-agent-coordination-v0`** del repository privato `Cesare-ml/virgostars-development-orchestrator`, i file `AGENTS.md`, `docs/PRIVATE_PILOT.md`, `docs/RESOURCE_LOCKS.md`, `docs/LAUNCH_DEVELOPERS_WAVE2.md`, `config/fleet.private.json` e `config/pilot-tasks.json`. Non presumere che `main` sia aggiornato.
+> Prima di qualunque scrittura leggi, **sul branch `feat/distributed-agent-coordination-v0`** del repository privato `Cesare-ml/virgostars-development-orchestrator`, i file `AGENTS.md`, `docs/legacy/PRIVATE_PILOT.md`, `docs/legacy/RESOURCE_LOCKS.md`, `docs/legacy/LAUNCH_DEVELOPERS_WAVE2.md`, `config/fleet.private.json` e `config/pilot-tasks.json`. Non presumere che `main` sia aggiornato.
 >
 > Genera con uno strumento un **nuovo UUID v4 casuale** preceduto da `chat-`, valido soltanto per questa conversazione. Non riusare sessioni di altri agenti. Mantienilo per eventuali messaggi successivi «avanti».
 >

@@ -91,9 +91,12 @@ export async function submit({api,config,tasks,repo,issue,session,prNumber=null,
   };
   if(prior && !sameSubmissionEvidence(prior.data,marker))
     throw new Error('Existing submission evidence differs from current handoff; manual reconciliation required.');
+  let createdNewMarker=false;
   if(!prior) {
-    try {await api.createClaim(ledger,path,branch,marker);}
-    catch(error) {
+    try {
+      await api.createClaim(ledger,path,branch,marker);
+      createdNewMarker=true;
+    } catch(error) {
       if(!(error instanceof GitHubError) || ![409,422].includes(error.status))
         throw new Error('Submission outcome unknown; inspect ledger before retrying.',{cause:error});
       const concurrent=await api.getClaim(ledger,path,branch);
@@ -101,6 +104,22 @@ export async function submit({api,config,tasks,repo,issue,session,prNumber=null,
         throw new Error('Submission evidence conflict; manual reconciliation required.');
     }
   }
+  // Never release the active issue/resource lock based on GitHub's PUT
+  // acknowledgement alone. Verify that the permanent submission marker
+  // is readable from the current PRIVATE ledger with its exact evidence.
+  // A prior marker must also be unchanged since the initial read.
+  let persisted;
+  try {
+    persisted=await api.getClaim(ledger,path,branch);
+  } catch(error) {
+    throw new Error('Submission marker readback unavailable; keep owner locks for manual reconciliation.',{cause:error});
+  }
+  if(typeof persisted?.sha!=='string'||!persisted.sha||
+     !sameSubmissionEvidence(persisted.data,marker)||
+     (createdNewMarker && !isDeepStrictEqual(persisted.data,marker))||
+     (prior && persisted.sha!==prior.sha))
+    throw new Error('Submission marker readback inconsistent; keep owner locks for manual reconciliation.');
+
   await release({api,config,repo,issue,session,confirm:true});
   return {result:'submitted',task:repo+'#'+issue,review_required:true};
 }

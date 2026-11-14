@@ -51,7 +51,7 @@ These are **reviewers' reported findings**, not maintainer-approved conclusions 
 
 ## Wave 2 work queue
 
-The ledger retains the five wave-1 submitted reviewer markers. Two new curated developer tasks are ready: `astrological-functions#5` and `astrological-charts#25`, each with a single explicit partition and a new-file-only write scope. `fleet-status` now lists seven task records (five submitted, two available before a wave-2 claim) plus any alerts. The live status may change as agents work. Use `docs/LAUNCH_DEVELOPERS_WAVE2.md` for startup prompts, required resource-first claims and stacked-PR rules.
+The ledger retains the five wave-1 submitted reviewer markers. Two new curated developer tasks are ready: `astrological-functions#5` and `astrological-charts#25`, each with a single explicit partition and a new-file-only write scope. `fleet-status` now lists seven task records (five submitted, two available before a wave-2 claim) plus any alerts. The live status may change as agents work. Use `docs/legacy/LAUNCH_DEVELOPERS_WAVE2.md` for startup prompts, required resource-first claims and stacked-PR rules.
 
 ## Scope verification for wave-2 write submissions
 

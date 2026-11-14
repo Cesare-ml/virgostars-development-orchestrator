@@ -8,7 +8,7 @@ const readWorkflow=()=>readFile(workflowUrl,'utf8');
 test('public CI runs full Node 20/22 suite on PRs and declared pushes',async()=>{
   const y=await readWorkflow();
   assert.match(y,/^name: Node\.js CI$/m);
-  assert.match(y,/^on:\n  push:\n    branches:\n      - main\n      - feat\/distributed-agent-coordination-v0\n  pull_request:\n  workflow_dispatch:/m);
+  assert.match(y,/^on:\n  push:\n    branches:\n      - main\n  pull_request:\n  workflow_dispatch:/m);
   assert.match(y,/^\s+node: \[20, 22\]$/m);
   assert.match(y,/^\s+run: npm run check$/m);
   assert.match(y,/^\s+timeout-minutes: 15$/m);

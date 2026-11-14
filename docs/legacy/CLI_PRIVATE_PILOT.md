@@ -23,7 +23,7 @@ Before releasing a claim, verify that the work has stopped, the handoff was reco
 
 ## ChatGPT with GitHub connector (without local Node)
 
-1. Read `AGENTS.md`, `docs/PRIVATE_PILOT.md`, and both pilot registries on the feature branch.
+1. Read `AGENTS.md`, `docs/legacy/PRIVATE_PILOT.md`, and both pilot registries on the feature branch.
 2. Generate a fresh UUID v4 for your chat session, prefixed `chat-`. Never reuse a session from another chat.
 3. Choose one **ready** task from `config/pilot-tasks.json` and respect the required role.
 4. Only after the owner has approved the separate PRIVATE coordination destination, use GitHub connector `create_file` **in that private ledger repository**, branch `coordination/claims`, at `claims/OWNER__REPO/issue-N.json` for a **new** approved issue. The old example issue #23 is historical and not eligible for another claim. Never write to the PUBLIC orchestrator.
@@ -54,7 +54,7 @@ All five initial tasks require `--role reviewer`. The CLI remains a local tool; 
 
 ## Important: code-writing agents must acquire a resource first
 
-The GitHub connector walkthrough above is valid **only for `access: "read"` tasks**. For `access: "write"`, read `config/pilot-tasks.json` and `docs/RESOURCE_LOCKS.md`. First create `resources/OWNER__REPO/PARTITION.json` with the same session/issue and approved path roots, then create the issue claim. If either fails, stop or perform the documented verified rollback. On normal release, delete the issue claim **before** the resource. Never delete a foreign/orphaned lock or infer release from a timeout. The local Node CLI `claim`/`claim-next`/`handoff`/`release` implements these steps. All five initially curated tasks remain read-only, so this feature is intended for future separately approved developer tasks.
+The GitHub connector walkthrough above is valid **only for `access: "read"` tasks**. For `access: "write"`, read `config/pilot-tasks.json` and `docs/legacy/RESOURCE_LOCKS.md`. First create `resources/OWNER__REPO/PARTITION.json` with the same session/issue and approved path roots, then create the issue claim. If either fails, stop or perform the documented verified rollback. On normal release, delete the issue claim **before** the resource. Never delete a foreign/orphaned lock or infer release from a timeout. The local Node CLI `claim`/`claim-next`/`handoff`/`release` implements these steps. All five initially curated tasks remain read-only, so this feature is intended for future separately approved developer tasks.
 
 The `discover` command exposes `resource-busy` for write issues whose partition is occupied, even if the issue claim itself does not exist. Such tasks must not be started, and orphan recovery remains owner-controlled.
 
@@ -74,11 +74,11 @@ Run `node bin/vs-agent.mjs fleet-status` from the feature branch with a private 
 
 ## Two supervised write tasks now available
 
-After the first five reviewer tasks were submitted, the private catalog gained two `pilot_wave:2` developer tasks. Local Codex may run `node bin/vs-agent.mjs claim-next --session YOUR_SESSION --role developer`; it will try the two curated tasks and require a resource lock before the task claim. Follow `docs/LAUNCH_DEVELOPERS_WAVE2.md` for exact branch/PR rules, permitted paths and handoff/submit procedure. These are **stacked draft PRs**, not updates to main or the existing active PR branches.
+After the first five reviewer tasks were submitted, the private catalog gained two `pilot_wave:2` developer tasks. Local Codex may run `node bin/vs-agent.mjs claim-next --session YOUR_SESSION --role developer`; it will try the two curated tasks and require a resource lock before the task claim. Follow `docs/legacy/LAUNCH_DEVELOPERS_WAVE2.md` for exact branch/PR rules, permitted paths and handoff/submit procedure. These are **stacked draft PRs**, not updates to main or the existing active PR branches.
 
 ## Prevent out-of-scope developer submissions
 
-Developer tasks must use the actual draft PR number and current PR HEAD SHA. After publishing a factual handoff, run `node bin/vs-agent.mjs audit-pr OWNER/REPO ISSUE PR_NUMBER` and then `node bin/vs-agent.mjs submit OWNER/REPO ISSUE --session YOUR_SESSION --pr PR_NUMBER --confirm`. Submission rechecks the scope and refuses missing or unauthorized changes. The original five reviewer tasks remain `access:read` and do not require `--pr`. Read `docs/PR_SCOPE_AUDIT.md` for the exact checks, error codes, and limitations. A manually created ChatGPT marker is not evidence of CLI execution.
+Developer tasks must use the actual draft PR number and current PR HEAD SHA. After publishing a factual handoff, run `node bin/vs-agent.mjs audit-pr OWNER/REPO ISSUE PR_NUMBER` and then `node bin/vs-agent.mjs submit OWNER/REPO ISSUE --session YOUR_SESSION --pr PR_NUMBER --confirm`. Submission rechecks the scope and refuses missing or unauthorized changes. The original five reviewer tasks remain `access:read` and do not require `--pr`. Read `docs/legacy/PR_SCOPE_AUDIT.md` for the exact checks, error codes, and limitations. A manually created ChatGPT marker is not evidence of CLI execution.
 
 ## Block overlapping open PRs on one resource
 

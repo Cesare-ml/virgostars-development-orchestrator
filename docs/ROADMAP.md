@@ -1,8 +1,19 @@
 # Roadmap
 
+## Current: open agent fleet (from 14 November 2026)
+
+- [x] One public runbook ([AGENT_START.md](../AGENT_START.md)) and a ≤18-word start prompt for any ChatGPT/Codex chat.
+- [x] Work ladder resume → integrate → review → triage → develop → plan → audit, executable and tested in `src/agent-work.mjs`.
+- [x] Create-only claims on `agent-ledger` with per-step TTL takeover; WIP limits per repository; integrator merge gate.
+- [ ] Shrink the PR backlogs below each repository's `wip_limit` (triage + review).
+- [ ] Read-only CI for `astrological-charts` and `astrological-assets`, then switch them to `ci+review` merges.
+- [ ] Measure real throughput with 2 → 10 → 40 chats using `fleet-board`; tune TTLs and limits.
+
+Everything below is the history of the legacy private-ledger pilot (see [docs/legacy](legacy/README.md)).
+
 ## Release checkpoint: use the owner MVP (14 November 2026)
 
-**Owner-operated MVP source integrated into `main`, with continued guarded security improvements:** exclusive-task safety, private-readiness controls, duplicate-session audits, Git blob integrity, a verified historical submission backup, an SHA-bound offline copy-only planner, and an offline owner preflight. Do not infer a deployed service or live two-chat proof from test-only merges. Exact integration PR-head Node 20/22 checks succeeded; no real two-chat workload has been verified. See [MVP activation](MVP_ACTIVATION.md).
+**Owner-operated MVP source integrated into `main`, with continued guarded security improvements:** exclusive-task safety, private-readiness controls, duplicate-session audits, Git blob integrity, a verified historical submission backup, an SHA-bound offline copy-only planner, and an offline owner preflight. Do not infer a deployed service or live two-chat proof from test-only merges. Exact integration PR-head Node 20/22 checks succeeded; no real two-chat workload has been verified. See [MVP activation](legacy/MVP_ACTIVATION.md) and the [post-migration first run](legacy/OWNER_ALPHA_POST_MIGRATION.md).
 
 ### P0 remaining — unblock actual users
 
@@ -88,7 +99,7 @@ No deploy, production mutation, release, automatic merge, or license change is i
 ## First-chat launch gate (2026-11-12)
 
 - [x] Verified the five initial reviewer issues remain open; private lock ledger was empty before first-chat preparation.
-- [x] Add `docs/LAUNCH_PRIVATE_MVP.md`: a single copy/paste chat prompt and clear 3–5-chat launch instructions.
+- [x] Add `docs/legacy/LAUNCH_PRIVATE_MVP.md`: a single copy/paste chat prompt and clear 3–5-chat launch instructions.
 - [x] Add immutable `submissions/` terminal queue markers: `submit --confirm` records work submitted for independent review before releasing the claim. `discover` and `claim-next` skip submitted tasks.
 - [x] Add submission tests for owner-only delivery, retries, interrupted release, duplicate prevention, and queue exhaustion; checked into PR #1.
 - [ ] Run `npm run check` on a fresh checkout of the feature branch on Windows/Codex; this environment has no direct network checkout of the private repository.
@@ -114,7 +125,7 @@ No deploy, production mutation, release, automatic merge, or license change is i
 - [x] Created test-scoped issues `Cesare-ml/astrological-functions#5` (provider ESM consumer import) and `Cesare-ml/astrological-charts#25` (axis canvas browser smoke).
 - [x] Verified all three intended new file paths are absent on the source PR branches at selection time; no source files in existing PRs are authorized to change under these tasks.
 - [x] Added both `access:write`, `pilot_wave:2` tasks to the private curated catalog with exact resource roots and upstream PR metadata; first five `submitted` reviews retained.
-- [x] Authored `docs/LAUNCH_DEVELOPERS_WAVE2.md` with a shared two-chat prompt, resource-first claim format, stacked draft PR requirement and honest test/handoff reporting.
+- [x] Authored `docs/legacy/LAUNCH_DEVELOPERS_WAVE2.md` with a shared two-chat prompt, resource-first claim format, stacked draft PR requirement and honest test/handoff reporting.
 - [ ] Observe both agents independently acquire disjoint resource+issue locks and open draft PRs without writing outside declared paths.
 - [ ] Verify their tests and target PR heads, then decide whether to approve work or expand toward additional repos.
 
@@ -165,7 +176,7 @@ No deploy, production mutation, release, automatic merge, or license change is i
 - [x] Added `scripts/verify-pilot.mjs` and `npm run verify:private -- --sha SHA` for explicit operator execution of actual `npm run check` with a strict child environment allowlist excluding GitHub tokens.
 - [x] Added `test/native-check.test.mjs` and ran it with **real Node.js 22.16.0**: **11/11 passing**, including a nested **real npm** test run against a three-file synthetic snapshot; corrected two erroneous `assert.rejects` expectations for synchronous argument validation.
 - [x] Verified exact Git blob SHA equality for test and module: `src/native-check.mjs` `ee2826ea88b20f30c42b742da6af97a41807b707`; `test/native-check.test.mjs` `de443acc5e1714528acab6ffb94d6b1bdf57a538`; CLI `scripts/verify-pilot.mjs` `5eff28b0da3c663ce72708621c5cc45d3a6a6365`. Manual CLI help/invalid SHA/missing token errors also tested successfully.
-- [x] Wrote [docs/NATIVE_VALIDATION.md](NATIVE_VALIDATION.md) with offline checkout and authenticated snapshot validation options; neither makes GitHub Actions calls or merges PRs.
+- [x] Wrote [docs/legacy/NATIVE_VALIDATION.md](legacy/NATIVE_VALIDATION.md) with offline checkout and authenticated snapshot validation options; neither makes GitHub Actions calls or merges PRs.
 - [ ] On a trusted network-connected environment with GitHub repo read access, execute `npm run verify:private -- --sha CURRENT_BRANCH_SHA` and independently record the **complete** `npm run check` output. This remains unexecuted on the full private repo in this runtime because DNS/network is unavailable.
 - [ ] Review the complete native suite before considering coordinator PR #1 for a non-draft merge decision; do not confuse verifier's own 11 tests with whole-branch acceptance.
 
@@ -175,7 +186,7 @@ No deploy, production mutation, release, automatic merge, or license change is i
 - [x] Extend `scripts/verify-pilot.mjs` to write `--receipt NEW_FILE.json` only after native execution returns, and to inspect `--verify-receipt FILE.json --sha SHA` completely offline without a token.
 - [x] Atomically publish using an exclusive same-directory hard link; reject existing outputs and malformed/too-large inputs. Read at most 4097 bytes to reject oversized receipts without loading large files into memory.
 - [x] Add `test/validation-receipt.test.mjs` and validate using **real Node.js 22.16.0** on exact Git-blob-identical files: receipt tests **9/9**, existing native snapshot tests **11/11** (**20/20 total**). CLI subprocesses were executed in offline mode, covering successful and failed receipts, missing GitHub authorization and secret omission.
-- [x] Add syntax-check gating for the receipt module and document the unsigned record/human validation boundary in [VALIDATION_RECEIPTS.md](VALIDATION_RECEIPTS.md).
+- [x] Add syntax-check gating for the receipt module and document the unsigned record/human validation boundary in [VALIDATION_RECEIPTS.md](legacy/VALIDATION_RECEIPTS.md).
 - [ ] Perform the **full real private orchestrator checkout's** authenticated `npm run check`; native tests of the verifier and receipt are not a substitute.
 - [ ] Independently reproduce submitted developer PR tests and resolve competing Charts PRs before any integration/merge decision.
 
@@ -195,7 +206,7 @@ No deploy, production mutation, release, automatic merge, or license change is i
 - [x] Pin official `actions/checkout` and `actions/setup-node` **v6** to fixed GitHub commit SHAs (both use supported Node 24 Actions runtime); keep workflow `contents:read` and `persist-credentials:false`.
 - [x] Add four policy regression tests for workflow privileges and three public-registry separation tests. **Actual GitHub Actions run #43297389118 passed 127/127 Node 20 tests and 127/127 Node 22 tests, zero failures and no runtime deprecation warning**.
 - [x] Update README, AGENTS and legacy pilot/security docs to identify the repository's public visibility and the limited public test-only Actions authorization.
-- [x] Document the publicly visible legacy operational records and owner-controlled migration requirements in [PUBLIC_TRANSITION.md](PUBLIC_TRANSITION.md) and [issue #19](https://github.com/Cesare-ml/virgostars-development-orchestrator/issues/19).
+- [x] Document the publicly visible legacy operational records and owner-controlled migration requirements in [PUBLIC_TRANSITION.md](legacy/PUBLIC_TRANSITION.md) and [issue #19](https://github.com/Cesare-ml/virgostars-development-orchestrator/issues/19).
 - [ ] Audit all public refs/history for nonpublic data and move owner-only coordination to a suitable private service with explicit migration safeguards. Do not assume existing history can be made private by deleting a new version of a file.
 - [ ] Choose and review a LICENSE and contributor terms; publication alone does not grant open-source reuse rights.
 - [ ] Complete independent review of the draft PR; no automatic merge, production deploy or public agent write onboarding.
@@ -293,3 +304,11 @@ No deploy, production mutation, release, automatic merge, or license change is i
 - [x] Add deterministic Node tests for duplicate session ownership, pending-release blocking, valid released rescheduling, and a later inconsistent lock that must not be hidden by early return.
 - [ ] Validate Node 20/22 CI and obtain independent review of this small stacked draft PR.
 - [ ] A catalog scan is not transactional enforcement against simultaneous calls sharing one session ID; the owner must assign unique IDs to independently active chats. Real private-ledger pilot remains separately gated.
+
+## Owner offline first-run gate (2026-11-14)
+
+- [x] Add `npm run smoke:owner-local` combining strict public-only discovery/two-agent smoke and independent local OS-process contention.
+- [x] Enforce no-token child environments, fixed subcommands, bounded JSON output, fail-closed evidence contracts and aggregate-only results.
+- [x] Add native regressions for fabricated live-readiness and ownership evidence, rejected arguments and secret-safe subprocesses.
+- [ ] Require a fresh exact-head Node 20/22 CI pass before integrating this feature.
+- [ ] Owner: independently provision/reconcile a PRIVATE coordination ledger, preserve seven historical submissions, SHA-approve a local queue, then supervise two real chats.
