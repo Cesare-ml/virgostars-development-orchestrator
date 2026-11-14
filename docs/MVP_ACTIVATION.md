@@ -6,7 +6,7 @@
 
 The owner has provisioned a separate **PRIVATE** GitHub repository. The `coordination/claims` branch now contains seven original historical submission records copied with exactly matching Git blob hashes, byte sizes and modes. Live read-only Git metadata and reference checks found **no active claim/resource lock files and no unclassified records**. A separate same-private-repository checkpoint branch was created for rollback. No private ledger name, branch SHA, historic session records or tokens are stored in this public documentation.
 
-**Remaining independent owner checks:** take a complete local Git mirror backup, confirm the connected credential on the owner's machine, run `verify-private-activation` using the local CLI, approve a new local task catalog by SHA-256 and validate via `alpha-doctor`. Then conduct two real independent chat sessions. The public coordinator remains forbidden for new claims.
+**Remaining independent owner checks:** take a complete local Git mirror backup, confirm the connected credential on the owner's machine, run `verify-private-activation` using the local CLI, approve a new local task catalog by SHA-256 and validate via `alpha-doctor`. Then conduct two real independent chat sessions. The public coordinator remains forbidden for new claims. For the exact remaining Windows verification sequence, see the [owner post-migration first run](OWNER_ALPHA_POST_MIGRATION.md).
 
 ## 1. Local smoke (no GitHub secrets or private ledger)
 
