@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { makeGitHubClient } from '../src/github.mjs';
 import { validateLegacyCliInvocation } from '../src/cli-command-policy.mjs';
-import { loadPilotConfig, loadPilotTasks } from '../src/registry.mjs';
+import { loadPilotConfig } from '../src/registry.mjs';
 import {inspectOwnerTaskFile,loadHistoricalPilotTasks} from '../src/owner-task-catalog.mjs';
 import {loadPublicDiscovery} from '../src/public-discovery.mjs';
 import {inspectPrivateDestination} from '../src/private-ledger-preflight.mjs';
@@ -10,6 +10,12 @@ import {rehearseLocalBackupFile} from '../src/offline-cutover-rehearsal.mjs';
 import {assertPrivateLedger,guardLegacyLedgerClient} from '../src/ledger-visibility.mjs';
 import {assertPrivateLedgerActivation} from '../src/private-ledger-activation.mjs';
 import {inspectAlphaLaunch} from '../src/alpha-doctor.mjs';
+import {inspectPrivateGitHubAlphaReadiness}
+  from '../src/private-github-alpha-readiness.mjs';
+import {
+  selectOwnerTaskSource,loadApprovedPrivateTaskSource,
+  guardPinnedOwnerCatalogWrites
+} from '../src/approved-private-task-source.mjs';
 import {runOfflineTwoAgentRehearsal} from '../src/offline-two-agent-rehearsal.mjs';
 import {exportVerifiedLocalLedgerBackup} from '../src/verified-local-ledger-export.mjs';
 import {planLocalCopyOnlyImport} from '../src/offline-ledger-copy-plan.mjs';
@@ -29,7 +35,7 @@ const usage = [
   'node bin/vs-agent.mjs rehearse-private-cutover LOCAL_BACKUP.json  # offline, no token/writes',
   'node bin/vs-agent.mjs session [--kind chat|codex]',
   'node bin/vs-agent.mjs fingerprint-tasks ABSOLUTE_LOCAL_FILE.json  # offline; no token or task data printed',
-  'node bin/vs-agent.mjs alpha-doctor  # GET-only owner preflight; no claims, no merge',
+  'node bin/vs-agent.mjs alpha-doctor  # owner-local OR SHA-approved private GitHub catalog, GET-only',
   'node bin/vs-agent.mjs rehearse-two-agents  # offline synthetic claim→handoff→submit→release',
   'node bin/vs-agent.mjs export-verified-ledger OWNER/PRIVATE-REPO --output ABSOLUTE_BACKUP.json --confirm  # GitHub GET-only; private LOCAL file',
   'node bin/vs-agent.mjs plan-ledger-copy ABSOLUTE_BACKUP.json  # offline copy-only comparison, never writes',
@@ -124,15 +130,31 @@ async function main() {
   if(command==='alpha-doctor') {
     if(positionals.length || Object.keys(flags).length)
       throw new Error('alpha-doctor takes no arguments.');
-    if(!process.env.VS_PRIVATE_TASKS_FILE ||
-       !process.env.VS_PRIVATE_TASKS_APPROVED_SHA256)
-      throw new Error('alpha-doctor requires an approved local owner task catalog.');
+    const selection=selectOwnerTaskSource();
+    if(selection.mode==='historical-submitted-only')
+      throw new Error('alpha-doctor requires an independently approved NEW owner catalog.');
     const config=await loadPilotConfig();
-    const tasks=await loadPilotTasks();
     const api=makeGitHubClient({token:process.env.GITHUB_TOKEN});
-    const report=await inspectAlphaLaunch({api,config,tasks});
-    process.stdout.write(JSON.stringify(report,null,2)+'\n');
-    if(!report.ready_for_manual_pilot)process.exitCode=2;
+    if(selection.mode==='owner-private-github') {
+      let report;
+      try {
+        report=await inspectPrivateGitHubAlphaReadiness({
+          api,config,
+          repository:process.env.VS_PRIVATE_LEDGER_REPO,
+          acknowledgedRepository:process.env.VS_PRIVATE_LEDGER_APPROVED_REPO,
+          approvedMainSha:selection.approvedMainSha,
+          approvedSha256:selection.approvedSha256,
+          legacyTasks:await loadHistoricalPilotTasks()
+        });
+      } catch {throw new Error('Owner GitHub alpha readiness blocked; private checkpoint must be reviewed.');}
+      process.stdout.write(JSON.stringify(report,null,2)+'\n');
+      if(!report.live_readiness_prerequisites_passed)process.exitCode=2;
+    } else {
+      const tasks=(await loadApprovedPrivateTaskSource({api,config})).tasks;
+      const report=await inspectAlphaLaunch({api,config,tasks});
+      process.stdout.write(JSON.stringify(report,null,2)+'\n');
+      if(!report.ready_for_manual_pilot)process.exitCode=2;
+    }
     return;
   }
   if(command==='rehearse-private-cutover') {
@@ -180,30 +202,48 @@ async function main() {
   // old READY tasks and silently assign them to another chat.
   if(config.claim_store.repo!=='Cesare-ml/virgostars-development-orchestrator')
     await assertPrivateLedgerActivation({api:baseApi,config});
-  const api=guardLegacyLedgerClient({api:baseApi,config});
+  // Only commands that actually require a task catalog load its contents.
+  // Status, handoff and owner-only release remain available for safe recovery
+  // if a reviewed catalog was superseded while a claim was active.
+  const taskCommands=new Set([
+    'discover','fleet-status','audit-collisions','audit-pr',
+    'claim-next','claim','submit'
+  ]);
+  const source=taskCommands.has(command)
+    ? await loadApprovedPrivateTaskSource({api:baseApi,config})
+    : null;
+  const tasks=source?.tasks;
+  const guarded=guardLegacyLedgerClient({api:baseApi,config});
+  const api=source?.mode==='owner-private-github'
+    ? guardPinnedOwnerCatalogWrites({
+      api:guarded,refApi:baseApi,
+      repository:config.claim_store.repo,
+      approvedMainSha:source.approvedMainSha
+    })
+    : guarded;
   let result;
   if(command==='discover') {
     if(positionals.length) throw new Error('Discover takes no target.');
-    result=await discover({api,config,tasks:await loadPilotTasks()});
+    result=await discover({api,config,tasks:tasks});
   } else if(command==='fleet-status') {
     if(positionals.length) throw new Error('Fleet-status takes no positional target.');
-    result=await auditFleet({api,config,tasks:await loadPilotTasks()});
+    result=await auditFleet({api,config,tasks:tasks});
   } else if(command==='audit-collisions') {
     if(positionals.length!==2) throw new Error('Audit-collisions expects OWNER/REPO ISSUE.');
     const [repo,rawIssue]=positionals;
     if(!/^[1-9]\d*$/.test(rawIssue)) throw new Error('Expected positive issue number.');
-    result=await auditOpenPullRequestCollisions({api,tasks:await loadPilotTasks(),
+    result=await auditOpenPullRequestCollisions({api,tasks:tasks,
       repo,issue:Number(rawIssue)});
   } else if(command==='audit-pr') {
     if(positionals.length!==3) throw new Error('Audit-pr expects OWNER/REPO ISSUE PR_NUMBER.');
     const [repo,rawIssue,rawPr]=positionals;
     if(!/^[1-9]\d*$/.test(rawIssue)||!/^[1-9]\d*$/.test(rawPr))
       throw new Error('Audit-pr requires positive issue and PR numbers.');
-    result=await auditTaskPullRequest({api,tasks:await loadPilotTasks(),repo,
+    result=await auditTaskPullRequest({api,tasks:tasks,repo,
       issue:Number(rawIssue),prNumber:Number(rawPr)});
   } else if(command==='claim-next') {
     if(positionals.length) throw new Error('Claim-next takes no positional target.');
-    result=await claimNext({api,config,tasks:await loadPilotTasks(),
+    result=await claimNext({api,config,tasks:tasks,
       session:flags.session,role:flags.role,repository:flags.repo||null});
   } else {
     if(positionals.length!==2) throw new Error('Expected OWNER/REPO and ISSUE.');
@@ -212,14 +252,14 @@ async function main() {
     const issue=Number(raw);
     const common={api,config,repo,issue};
     if(command==='status') result=await status(common);
-    else if(command==='claim') result=await claim({...common,tasks:await loadPilotTasks(),
+    else if(command==='claim') result=await claim({...common,tasks:tasks,
       session:flags.session,role:flags.role,branchName:flags.branch});
     else if(command==='handoff') result=await handoff({...common,session:flags.session,
       summary:flags.summary,branchName:flags.branch,headSha:flags['head-sha']});
     else if(command==='release') result=await release({...common,session:flags.session,
       confirm:flags.confirm});
     else if(command==='submit') result=await submit({...common,session:flags.session,
-      tasks:await loadPilotTasks(),prNumber:flags.pr===undefined?null:Number(flags.pr),
+      tasks:tasks,prNumber:flags.pr===undefined?null:Number(flags.pr),
       confirm:flags.confirm});
     else throw new Error('Unknown command ' + command);
   }
