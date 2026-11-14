@@ -73,6 +73,17 @@ test('stable comparison is counts-only and never migration authorization',async(
  assert.doesNotMatch(JSON.stringify(x),/example-org|opaque-|session_id|owner_id/);
  assert.ok(c.calls.every(y=>['repo','ref','commit','tree'].includes(y[0])));
 });
+test('unknown private branch files appear as explicit migration blockers',async()=>{
+ const x=await planPrivateCutover({api:mock({destinationFiles:[
+   dir('backups'),file('backups/private-session.json')
+ ]}),destination:DEST});
+ assert.equal(x.destination.unclassified_blobs,1);
+ assert.deepEqual(x.destination.records,{claims:0,resources:0,submissions:0});
+ assert.ok(x.blockers.includes('DESTINATION_UNCLASSIFIED_BLOBS_REQUIRE_REVIEW'));
+ assert.ok(x.blockers.includes('DESTINATION_CONTAINS_EXISTING_RECORDS'));
+ assert.equal(x.ready_to_migrate,false);
+ assert.doesNotMatch(JSON.stringify(x),/private-session/);
+});
 test('active source locks and nonempty private ledger require reconciliation',async()=>{
  const x=await planPrivateCutover({api:mock({sourceActive:1,
   destinationFiles:[dir('claims'),file('claims/a.json')]}),destination:DEST});
