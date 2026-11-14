@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {claim,claimNext,newSession,taskKey,status} from '../src/claims.mjs';
+import {claim,newSession,taskKey,status} from '../src/claims.mjs';
+import {claimNext} from '../src/queue.mjs';
 import {GitHubError} from '../src/github.mjs';
 
 const REPO='Cesare-ml/astrological-charts';
