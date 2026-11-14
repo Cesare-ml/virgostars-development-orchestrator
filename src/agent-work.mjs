@@ -50,7 +50,20 @@ export function repoDir(repo) { return repo.replace('/', '__'); }
 
 /** Current claim for a key = highest attempt. Live if within TTL. */
 export function claimState(claims, repo, key, ttlMinutes, now) {
-  const list = (claims?.[`${repoDir(repo)}/${key}`] ?? []).slice().sort((a, b) => a.attempt - b.attempt);
+  if (!Number.isSafeInteger(ttlMinutes) || ttlMinutes < 1 ||
+      !Number.isFinite(now))
+    throw new Error('Invalid agent-ledger lease parameters.');
+  const list = (claims?.[`${repoDir(repo)}/${key}`] ?? []).slice()
+    .sort((a, b) => a.attempt - b.attempt);
+  for (let i = 0; i < list.length; i++) {
+    const c = list[i], millis = Date.parse(c?.claimed_at);
+    if (!c || !Number.isSafeInteger(c.attempt) || c.attempt !== i + 1 ||
+        typeof c.session !== 'string' || !SESSION_RE.test(c.session) ||
+        !Number.isFinite(millis) || typeof c.claimed_at !== 'string' ||
+        !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/.test(c.claimed_at) ||
+        new Date(millis).toISOString().slice(0, 19) !== c.claimed_at.slice(0, 19))
+      throw new Error('Malformed agent-ledger lease; manual reconciliation required.');
+  }
   const current = list.at(-1);
   if (!current) return { live: false, current: null, nextAttempt: 1 };
   const expires = Date.parse(current.claimed_at) + ttlMinutes * 60_000;
