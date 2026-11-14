@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { makeGitHubClient } from '../src/github.mjs';
+import { validateLegacyCliInvocation } from '../src/cli-command-policy.mjs';
 import { loadPilotConfig, loadPilotTasks } from '../src/registry.mjs';
 import {inspectOwnerTaskFile,loadHistoricalPilotTasks} from '../src/owner-task-catalog.mjs';
 import {loadPublicDiscovery} from '../src/public-discovery.mjs';
@@ -168,6 +169,7 @@ async function main() {
     process.stdout.write(JSON.stringify(report,null,2)+'\n');
     return;
   }
+  validateLegacyCliInvocation(command,positionals,flags);
   // Fail closed BEFORE any legacy ledger reads or writes. The historical
   // branch is PUBLIC; config labels never prove private GitHub visibility.
   const config=await loadPilotConfig();
