@@ -89,6 +89,10 @@ export async function loadClaims(get, ledger) {
   for (const item of tree.tree) {
     if (!item || typeof item.path !== 'string')
       throw new Error('Malformed agent-ledger Git entry.');
+    if ((item.path.toLowerCase() === 'claims' && item.path !== 'claims') ||
+        (item.path.toLowerCase().startsWith('claims/') &&
+         !item.path.startsWith('claims/')))
+      throw new Error('Noncanonical case alias of agent-ledger claim root.');
     if (item.path === 'claims/README.md') {
       if (item.type !== 'blob' || item.mode !== '100644')
         throw new Error('Unexpected ledger README metadata.');
