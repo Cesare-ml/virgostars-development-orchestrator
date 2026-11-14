@@ -1,6 +1,6 @@
 # VirgoStars Development Orchestrator
 
-## Owner-operated alpha: source integrated, private ledger still required (2026-11-14)
+## Owner-operated alpha: historical private-ledger cutover verified (2026-11-14)
 
 The reviewed owner-operated CLI, privacy protections, backup/copy planner and local alpha preflight have been integrated into `main`. The Node CLI, scoped task locks, duplicate-session detection, pinned ledger integrity, read-only alpha doctor and owner-local verified backup/copy planner are now on `main`. Individual integration heads passed Node 20/22 tests. **No deployed scheduler or live multi-chat coordination is asserted.**
 
@@ -16,11 +16,13 @@ node bin/vs-agent.mjs rehearse-two-agents
 
 From a fresh Node 20/22 checkout, run `node scripts/check-owner-alpha-local.mjs` to inspect **only** local owner prerequisites. This command never contacts GitHub, creates a claim or confirms that the private repository exists. It requires two `ready` developer tasks with **distinct resource partitions**; even a passing result does not authorize startup. See [owner local check](docs/OWNER_ALPHA_LOCAL_CHECK.md). The GitHub-connected workflow still requires a separately verified PRIVATE ledger and the remote `alpha-doctor`.
 
-### Owner-only migration preparation
+### Verified private-ledger migration checkpoint
 
-Create a **separate PRIVATE GitHub repository** first, never the old public `coordination/claims` branch. With a least-privilege GitHub token configured privately and the destination approved locally, the owner can run `check-private-destination`, `export-verified-ledger` to a protected local JSON outside this checkout and `plan-ledger-copy` to review the missing/conflicting seven historical submissions. These commands do **not** transfer any submissions. Follow [MVP activation](docs/MVP_ACTIVATION.md), [verified local export](docs/VERIFIED_LOCAL_LEDGER_EXPORT.md), [offline copy-only plan](docs/OFFLINE_LEDGER_COPY_PLAN.md) and [first owner alpha](docs/FIRST_OWNER_ALPHA.md).
+An independently held GitHub **PRIVATE** repository and its `coordination/claims` branch have now been created. On 14 November 2026, the seven historic immutable `submitted` records were copied from the frozen public source and verified with exact original Git blob identities, sizes and file modes. The new branch has **zero active claim/resource locks and zero unclassified blobs**. A separate PRIVATE rollback branch captures the initial seven-record checkpoint. Neither repository identity, historic record bodies, session IDs nor the private branch SHA are published here.
 
-**Remaining hard gates:** provision/verify private ledger; independently backup, reconcile and copy the historical seven submissions; approve a fresh private task queue; supervise two *real* independent ChatGPT chats through claim → scoped draft PR → submission → release. Do not merge competing snapshot variants #91/#94/#95 together. No autonomous browser chat start, auto-merge or deployment.
+**Not yet completed:** an independent local full Git mirror backup, owner-local token and SHA-approved new task queue, running the integrated `verify-private-activation` CLI from the owner machine, and two **real** separate ChatGPT agent sessions completing claim → scoped draft PR → submission → release. A same-repository rollback branch is not an offsite backup. Do not auto-launch, reassign historic tasks or bypass the review gate.
+
+Read [MVP activation](docs/MVP_ACTIVATION.md), [owner-local setup check](docs/OWNER_ALPHA_LOCAL_CHECK.md), [first owner alpha](docs/FIRST_OWNER_ALPHA.md) and [owner task queue](docs/OWNER_TASK_QUEUE.md) for the next owner-only steps.
 
 **Status: PUBLIC repository, owner-operated pilot.** GitHub visibility changed on 2026-11-12; external write-task enrollment remains disabled. Legacy private-pilot records are still present and require owner-controlled review/migration before broad public onboarding. See [public transition and CI safety](docs/PUBLIC_TRANSITION.md).
 
