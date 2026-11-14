@@ -18,7 +18,7 @@ names, session IDs or approved hash values. It never accesses the network.
 It checks Node 20+, two matching locally selected private ledger identifiers
 (the historic public repository is rejected), presence **only** of a token,
 and the actual already-existing `loadOwnerTasks` reader's local-file safety,
-schema and SHA-256 approval. It requires at least two approved write tasks.
+schema and SHA-256 approval. It requires at least two **ready developer write tasks with distinct repository/resource partitions**, matching the stricter remote `alpha-doctor` launch policy. Two tester tasks, duplicate partitions or one developer plus one tester are not sufficient.
 A token being present does **not** mean the token is valid or sufficiently
 permissioned. No GitHub data or existing coordination records are read.
 
