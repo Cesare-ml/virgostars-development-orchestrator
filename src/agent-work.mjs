@@ -44,6 +44,8 @@ export function claimKey(step, n, sha) {
   throw new Error(`unknown step ${step}`);
 }
 
+export const integrationBranch = cfg => cfg.integration_branch ?? cfg.default_branch;
+
 export function repoDir(repo) { return repo.replace('/', '__'); }
 
 /** Current claim for a key = highest attempt. Live if within TTL. */
@@ -100,9 +102,9 @@ function verifiedFiles(pr) {
 export function mergeGate(pr, repoCfg, session) {
   const reasons = [];
   const author = authorSession(pr.body);
-  if (pr.base !== repoCfg.default_branch) reasons.push('base-not-default');
+  if (pr.base !== integrationBranch(repoCfg)) reasons.push('base-not-integration');
   if (pr.draft) reasons.push('draft');
-  if (pr.mergeable !== true) reasons.push('mergeability-unverified');
+  if (pr.mergeable !== true) reasons.push('mergeable-unknown');
   if (!COMMIT_SHA.test(pr.head_sha ?? '') || !COMMIT_SHA.test(pr.base_sha ?? ''))
     reasons.push('commit-identity-unverified');
   if (!author) reasons.push('author-session-unverified');
@@ -199,7 +201,7 @@ export function nextWork(snapshot) {
     const recent = ctx.now - 3 * 3600_000;
     const drafts = r.prs.filter(pr => pr.draft && !(pr.comments ?? []).some(c => parseMarker(c.body, 'AGENT-TRIAGE'))
       && Date.parse(pr.updated_at ?? 0) < recent)
-      .sort((a, b) => (a.base === r.config.default_branch ? 0 : 1) - (b.base === r.config.default_branch ? 0 : 1) || byOldest(a, b));
+      .sort((a, b) => (a.base === integrationBranch(r.config) ? 0 : 1) - (b.base === integrationBranch(r.config) ? 0 : 1) || byOldest(a, b));
     for (const pr of drafts) {
       const key = claimKey('triage', pr.number);
       if (available(ctx, r.config.name, key, 'triage')) return { step: 'D', action: 'triage', repo: r.config.name, pr: pr.number, key };
@@ -214,7 +216,7 @@ export function nextWork(snapshot) {
   // F. plan
   const hour = new Date(ctx.now).toISOString().slice(0, 13).replace(/[-T]/g, '');
   for (const r of repos) {
-    if (r.config.only_labels) continue;
+    if (r.config.only_labels || r.prs.length >= r.config.wip_limit) continue;
     if (eligibleIssues(r, ctx).length >= ctx.fleet.limits.min_ready_tasks_per_repo) continue;
     const key = claimKey('plan', hour);
     if (available(ctx, r.config.name, key, 'plan')) return { step: 'F', action: 'plan', repo: r.config.name, key };
@@ -231,6 +233,7 @@ export function fleetBoard(snapshot) {
       repo: r.config.name,
       open_prs: r.prs.length,
       draft_prs: r.prs.filter(p => p.draft).length,
+      stacked_prs: r.prs.filter(p => p.base !== integrationBranch(r.config)).length,
       wip_limit: r.config.wip_limit,
       over_wip: r.prs.length > r.config.wip_limit,
       eligible_tasks: eligibleIssues(r, { ...snapshot, session: null }).length,
