@@ -2,10 +2,14 @@
 
 ## Immediate MVP: integrate and run two real chats (14 November 2026)
 
+### Ten-PR integration checkpoint
+Merged to main: #1, #23, #25, #27, #30, #33, #35, #90, #80, #96. Operational readiness is **not yet confirmed**: private ledger migration and two independent live chats are outstanding.
+
+
 **Current priority:** stop feature proliferation and make the owner-operated alpha usable. See [MVP activation](MVP_ACTIVATION.md). The existing public historical claim ledger is not authorized for private operations; do not bypass the private visibility gate.
 
-- [ ] Merge a reviewed, passing base MVP PR #1 into `main`, then verify the default-branch CLI and read-only preview.
-- [ ] Integrate only the minimal nonoverlapping stacked PR chain for two-agent rehearsal; require current HEAD validation, changed-file scope and documented dependencies.
+- [x] Merge a reviewed, passing base MVP PR #1 into `main` (merge `1b31b62503c5`; Node 20/22 CI succeeded on the exact PR head). Default-branch local smoke is still an operator check.
+- [x] Integrate the selected non-overlapping MVP chain #23, #25, #27, #30, #33, #35, plus #90, #80, #96, with passing exact PR-head Node 20/22 checks. Full composed `main` test evidence remains to be verified.
 - [ ] Resolve duplicate alternatives (notably #91/#94/#95) by selecting a single canonical change, not merging all.
 - [ ] Establish a separately confirmed PRIVATE ledger, reconcile historical submissions privately and update only reviewed private operator configuration.
 - [ ] Complete two live independent ChatGPT sessions with unique IDs, exclusive task/resource ownership, scoped draft PRs, evidence, handoff, submitted markers and release.

@@ -23,7 +23,7 @@ node bin/vs-agent.mjs public-discover
 5. Test the real sequence for both chats: exclusive resource lock (when writing) → issue claim → scoped feature branch/draft PR → head/scope audit → factual handoff → immutable submitted marker → owner-checked release. On 409/422, uncertain claims, stale SHA or orphaned locks, stop for maintainer review.
 6. Independently review both results; only then expand to 5–10 real sessions, followed by separately verified 20- and 40-session waves.
 
-**Current blocking gates:** private operational ledger not confirmed, real two-chat claim-to-release not proven, automatic browser/chat launch and durable distributed recovery not implemented. A successful merge to main does not satisfy these conditions.
+**Current blocking gates:** fresh composed main CI not independently verified, private operational ledger not confirmed, real two-chat claim-to-release not proven, automatic browser/chat launch and durable distributed recovery not implemented. A successful merge to main does not satisfy these conditions.
 
 ## PR integration policy
 
@@ -36,9 +36,9 @@ node bin/vs-agent.mjs public-discover
 
 | Gate | Requirement | State at plan creation |
 | --- | --- | --- |
-| MVP source on main | Reviewed base PR + passing exact-head checks | Pending |
-| Safe public commands | `npm run check` and tokenless preview | Feature branch only |
-| Offline two-agent proof | Test results on integrated code | Draft PRs only |
+| MVP source on main | Reviewed base PR + passing exact-head checks | Integrated (#1 and nine selected PRs) |
+| Safe public commands | `npm run check` and tokenless preview | Integrated; fresh main-checkout run not verified |
+| Offline two-agent proof | Test results on integrated code | #35/#80/#96 merged; only synthetic/local tests proven |
 | Private claims | Separate private destination and reviewed migration | Blocked |
 | Live two-chat run | Two distinct IDs, exclusive claims, audited handoff and release | Not proven |
 | 5, 10, 20, 40 live chats | Measured concurrency and safe recovery | Not proven |

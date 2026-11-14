@@ -2,6 +2,15 @@
 
 ## Operational MVP activation (14 November 2026)
 
+### Integration checkpoint — 14 November 2026
+
+**Ten selected PRs have been merged to `main`:** #1, #23, #25, #27, #30, #33, #35, #90, #80 and #96. The base CLI, private-destination validation, owner activation gates, local curated task queue, read-only alpha doctor, offline two-agent rehearsal, submission-evidence guards, tokenless smoke, and independent local-process race test are present in the default branch.
+
+**Not yet active:** a new PRIVATE ledger has not been verified, the seven historical markers have not been reconciled into it, and two real independent ChatGPT sessions have not completed a claim-to-release pilot. Test success on individual merged PR heads does not prove the full composed `main` tree. Run `npm run check` on a fresh checkout and review the private-ledger cutover before enabling live tasks.
+
+**Do not merge competing recovery variants (#91/#94/#95) together.** Their synthetic behavior is optional for the first supervised two-agent pilot; no auto-dispatch or auto-merge is enabled.
+
+
 The immediate release target is a **supervised two-chat pilot**, not a deployed 40-agent scheduler. The repository is public, and the legacy private claim operations deliberately fail closed until the owner validates a separate PRIVATE ledger. **Do not write owner-only claims to the historical public coordination branch.**
 
 Read the [MVP activation and PR integration guide](docs/MVP_ACTIVATION.md). After integration, safe local entry points are `npm run check`, `node bin/vs-agent.mjs --help`, and tokenless `node bin/vs-agent.mjs public-discover`.
