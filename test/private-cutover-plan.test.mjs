@@ -81,6 +81,7 @@ test('unknown private branch files appear as explicit migration blockers',async(
  assert.deepEqual(x.destination.records,{claims:0,resources:0,submissions:0});
  assert.ok(x.blockers.includes('DESTINATION_UNCLASSIFIED_BLOBS_REQUIRE_REVIEW'));
  assert.ok(x.blockers.includes('DESTINATION_CONTAINS_EXISTING_RECORDS'));
+ assert.ok(!x.blockers.includes('DESTINATION_EMPTY_REQUIRES_OWNER_APPROVAL'));
  assert.equal(x.ready_to_migrate,false);
  assert.doesNotMatch(JSON.stringify(x),/private-session/);
 });
@@ -91,12 +92,16 @@ test('active source locks and nonempty private ledger require reconciliation',as
  assert.equal(x.destination.records.claims,1);
  assert.ok(x.blockers.includes('SOURCE_HAS_ACTIVE_LOCKS'));
  assert.ok(x.blockers.includes('DESTINATION_CONTAINS_EXISTING_RECORDS'));
+ assert.ok(!x.blockers.includes('DESTINATION_EMPTY_REQUIRES_OWNER_APPROVAL'));
+ assert.ok(!x.blockers.includes('DESTINATION_UNCLASSIFIED_BLOBS_REQUIRE_REVIEW'));
 });
 test('missing private branch remains blocked; no remote initialization occurs',async()=>{
  const c=mock({missing:true});
  const x=await planPrivateCutover({api:c,destination:DEST});
  assert.equal(x.destination.branch_exists,false);
  assert.ok(x.blockers.includes('DESTINATION_BRANCH_NOT_CONFIGURED'));
+ assert.ok(!x.blockers.includes('DESTINATION_EMPTY_REQUIRES_OWNER_APPROVAL'));
+ assert.ok(!x.blockers.includes('DESTINATION_CONTAINS_EXISTING_RECORDS'));
  assert.equal(c.calls.filter(y=>y[0]==='ref'&&y[1]===DEST).length,4);
 });
 test('unclassified source files and absent submissions require independent review',async()=>{
