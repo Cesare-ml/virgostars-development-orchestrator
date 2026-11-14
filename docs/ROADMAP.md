@@ -2,13 +2,14 @@
 
 ## Release checkpoint: use the owner MVP (14 November 2026)
 
-**18 PRs merged into `main`** through #117, including exclusive-task safety, private-readiness controls, duplicate session audits, Git blob integrity, an owner-local verified historical submission backup and an SHA-bound offline copy-only planner. Exact integration PR-head Node 20/22 checks succeeded; no real two-chat workload has been verified. See [MVP activation](MVP_ACTIVATION.md).
+**Owner-operated MVP source integrated into `main`, with continued guarded security improvements:** exclusive-task safety, private-readiness controls, duplicate-session audits, Git blob integrity, a verified historical submission backup, an SHA-bound offline copy-only planner, and an offline owner preflight. Do not infer a deployed service or live two-chat proof from test-only merges. Exact integration PR-head Node 20/22 checks succeeded; no real two-chat workload has been verified. See [MVP activation](MVP_ACTIVATION.md).
 
 ### P0 remaining — unblock actual users
 
 - [x] Integrate the first GitHub-backed owner CLI and a supervised two-agent synthetic rehearsal.
 - [x] Reject multiple active session ownership, malformed/case-aliased resource claims and corrupt ledger snapshots.
 - [x] Supply read-only private destination checks, historical local backup export and offline copy-only comparison tools.
+- [x] Owner-local readiness check requires two independently scoped `ready` developer tasks; the owner must still pass the private remote `alpha-doctor`.
 - [ ] Owner creates an independently verified **PRIVATE** coordination repository and a `coordination/claims` branch; never put private records in public history.
 - [ ] Owner takes full repository backups, reviews and performs a safe copy-only transfer of seven historic submission markers, then runs `verify-private-activation`.
 - [ ] Owner approves two new disjoint local developer tasks with an exact SHA-256 and passes `alpha-doctor`.
