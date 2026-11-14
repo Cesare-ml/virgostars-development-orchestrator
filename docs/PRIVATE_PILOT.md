@@ -1,4 +1,6 @@
-# Private MVP — five VirgoStars repositories
+# Legacy private MVP — completed pilot tasks (archive)
+
+> **SAFETY OVERRIDE (2026-11-14):** The original `Cesare-ml/virgostars-development-orchestrator` repository and its historical `coordination/claims` branch are PUBLIC. Never use them for new claims, resource locks or submissions, even if earlier paragraphs below describe that mechanism. The seven original issues have already been submitted. New operations require a separate owner-approved **PRIVATE** GitHub coordination repository, exact historical submission preservation and a freshly SHA-approved local task catalog. Start at [MVP_ACTIVATION.md](MVP_ACTIVATION.md). This file is historical protocol reference only.
 
 **Legacy owner-only pilot specification.** The repository itself is now **PUBLIC** (2026-11-12); these records and the historical coordination branch must not be assumed confidential. See [PUBLIC_TRANSITION.md](PUBLIC_TRANSITION.md). The coordination workflow remains owner-operated, and open volunteer onboarding is deferred.
 
@@ -23,7 +25,7 @@ The public orchestrator is not an invitation to outside volunteers or permission
 
 ## GitHub-native claim (pilot mechanism)
 
-A dedicated branch `coordination/claims` exists on `Cesare-ml/virgostars-development-orchestrator`.
+A historical branch `coordination/claims` exists on the now **PUBLIC** source repository; it is **NOT AUTHORIZED** for any new private coordination. Only a separately selected, live-verified PRIVATE repository may hold new operational claim paths after owner-approved migration.
 
 For a chosen issue `#N` in `owner/repo`, construct the **exact** path:
 
@@ -31,7 +33,7 @@ For a chosen issue `#N` in `owner/repo`, construct the **exact** path:
 
 For example `claims/Cesare-ml__astrological-charts/issue-42.json`.
 
-Use the GitHub Contents API or available GitHub connector's **create_file** action on that path and branch; NEVER use update_file to steal or overwrite an existing claim. JSON must include `target_repository`, `issue_number`, `session_id`, `state`, `claimed_at`, `branch` (when known) and `last_handoff` (when known). A successful create confirms exclusive acquisition of that *task claim path*. If GitHub rejects the write or the file already exists, stop and select a different issue. Report failed claims rather than treating API errors as success.
+Only for **new, specifically approved tasks**, use the GitHub Contents API or an authorized connector's **create_file** action on the separately verified PRIVATE ledger's path and branch; NEVER use update_file to steal or overwrite an existing claim. Historical catalog tasks must not be reused. JSON must include `target_repository`, `issue_number`, `session_id`, `state`, `claimed_at`, `branch` (when known) and `last_handoff` (when known). A successful create confirms exclusive acquisition of that *task claim path*. If GitHub rejects the write or the file already exists, stop and select a different issue. Report failed claims rather than treating API errors as success.
 
 **Verified smoke test (2026-11-12):** two simultaneous GitHub connector `create_file` attempts at an identical path on a test branch led to one success and one 422 rejection. The first session's test file was then read, deleted with its blob SHA, and successfully recreated by a second session; a follow-up read confirmed the second owner. This does not prove production handoff, automatic expiry or cross-issue resource exclusivity.
 
