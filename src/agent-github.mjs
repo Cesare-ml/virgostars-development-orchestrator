@@ -1,17 +1,23 @@
 // Read-only (GET) GitHub snapshot builder for the agent work ladder.
 // Token optional (GITHUB_TOKEN); unauthenticated calls hit GitHub's 60/hour limit quickly.
 import { reviewsAtHead } from './agent-work.mjs';
+import { collectFleetMergeEvidence } from './agent-merge-evidence.mjs';
 
 export function makeGet({ token = process.env.GITHUB_TOKEN, fetchImpl = globalThis.fetch } = {}) {
-  return async function get(path, { allow404 = false } = {}) {
-    const res = await fetchImpl(`https://api.github.com/${path}`, {
+  const get = async function get(path, { allow404 = false } = {}) {
+    const res = await fetchImpl('https://api.github.com/' + path, {
       headers: { accept: 'application/vnd.github+json', 'x-github-api-version': '2022-11-28',
-        ...(token ? { authorization: `Bearer ${token}` } : {}) },
+        ...(token ? { authorization: 'Bearer ' + token } : {}) },
+      redirect: 'error'
     });
     if (allow404 && res.status === 404) return null;
-    if (!res.ok) throw new Error(`GitHub GET ${path} -> ${res.status}`);
+    if (!res.ok) throw new Error('GitHub read-only request failed: HTTP ' + res.status);
     return res.json();
   };
+  // Only a locally held token can establish an authenticated REST transport;
+  // it does not prove a chat-to-reviewer binding or effective branch rules.
+  Object.defineProperty(get, 'authenticated', { value: typeof token === 'string' && !!token.trim() });
+  return get;
 }
 
 async function pages(get, path) {
@@ -60,13 +66,22 @@ export async function loadSnapshot({ fleet, get, session = null, now = Date.now(
         updated_at: p.updated_at, comments: [], files: [], ci: null, mergeable: null };
       if (deep && p.comments !== 0) pr.comments = await pages(get, `repos/${name}/issues/${p.number}/comments`);
       if (deep && reviewsAtHead(pr).some(r => r.verdict === 'approve')) {
-        pr.files = (await pages(get, `repos/${name}/pulls/${p.number}/files`)).map(f => f.filename);
-        pr.mergeable = (await get(`repos/${name}/pulls/${p.number}`)).mergeable;
-        if (pr.mergeable === null) { // GitHub computes mergeability lazily; ask once more
-          await new Promise(r => setTimeout(r, 2000));
-          pr.mergeable = (await get(`repos/${name}/pulls/${p.number}`)).mergeable;
+        // A marker is only a reason to *inspect*, never authentication.
+        // Any denied, malformed, racing or partial GitHub read leaves the
+        // merge candidate blocked and the rest of the fleet-board usable.
+        if (get.authenticated !== true) {
+          pr.evidence = { kind: 'anonymous-unverified' };
+        } else {
+          try {
+            Object.assign(pr, await collectFleetMergeEvidence({
+              get, repository: name, listing: p, ci: config.ci
+            }));
+          } catch {
+            pr.evidence = { kind: 'incomplete-or-stale-github-evidence' };
+            pr.mergeable = null;
+            pr.ci = 'missing';
+          }
         }
-        if (config.ci) pr.ci = await ciState(get, name, p.head.sha);
       }
       prs.push(pr);
     }
