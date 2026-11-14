@@ -103,3 +103,43 @@ test('public mode refuses flags and does not fall into authenticated legacy comm
   assert.match(result.stderr,/Public-discover takes no arguments/);
   assert.doesNotMatch(result.stderr,/GITHUB_TOKEN is required/);
 });
+
+test('top-level catalog metadata, unexpected roles and hidden private fields fail closed',async()=>{
+  const source=await file('fleet.json');
+  const cases=[
+    c=>{c.internal_tasks=[{repo:'private/example'}];},
+    c=>{c.private_repos=['private/target'];},
+    c=>{c.visibility_note='Unexpected alternate enrollment note';},
+    c=>{c.roles.push('owner');},
+    c=>{c.roles[0]='owner';},
+    c=>{c.roles[0]=c.roles[1];},
+    c=>{delete c.visibility_note;},
+    c=>{delete c.policies;}
+  ];
+  for(const change of cases) {
+    const catalog=clone(source);
+    change(catalog);
+    assert.throws(()=>buildPublicDiscovery(catalog),/Public discovery is unavailable/);
+  }
+  // The role declaration is a set; harmless ordering changes do not alter policy.
+  const reordered=clone(source);
+  reordered.roles.reverse();
+  assert.deepEqual(buildPublicDiscovery(reordered),buildPublicDiscovery(source));
+});
+
+test('unrecognized or drifted public policy fields fail closed before projection',async()=>{
+  const source=await file('fleet.json');
+  const changes=[
+    c=>{c.policies.allow_direct_push=true;},
+    c=>{c.policies.allow_github_actions=false;},
+    c=>{c.policies.ready_task_source='Private agent queue';},
+    c=>{c.policies.automatic_claims='false';},
+    c=>{c.policies.outsider_contribution='fork_pr_only';delete c.policies.allow_automerge;},
+    c=>{c.policies=null;}
+  ];
+  for(const change of changes) {
+    const catalog=clone(source);
+    change(catalog);
+    assert.throws(()=>buildPublicDiscovery(catalog),/Public discovery is unavailable/);
+  }
+});

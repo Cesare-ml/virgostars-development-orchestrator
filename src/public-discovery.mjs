@@ -2,11 +2,17 @@ import {readFile} from 'node:fs/promises';
 
 const REPO=/^[A-Za-z0-9][A-Za-z0-9._-]{0,99}\/[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/;
 const PROJECT_KEYS=['domain','entry_point','full_name','opt_in','visibility'];
+const ROOT_KEYS=['schema_version','status','coordinator_endpoint','visibility_note','repos','roles','private_repos','policies'];
+const PUBLIC_ROLES=['planner','developer','tester','reviewer','auditor','integrator'];
+const VISIBILITY_NOTE='Orchestrator repository is public. Public discovery is read-only and requires owner approval before any external contribution or task claim.';
+const PRIVATE_REPOS_NOTE='Omitted from public registry; must be explicitly authorized per participant';
 const REQUIRED_POLICIES={
   automatic_claims:false,
   allow_automerge:false,
   allow_deploy:false,
-  outsider_contribution:'fork_pr_only'
+  allow_github_actions:true,
+  outsider_contribution:'fork_pr_only',
+  ready_task_source:'GitHub Issues (after manual triage)'
 };
 
 const fail=reason=>{throw new Error('Public discovery is unavailable: '+reason);};
@@ -21,11 +27,18 @@ const exactKeys=(obj,keys)=>
  * is required for discovery. Discovery is NOT permission to work on a repo.
  */
 export function buildPublicDiscovery(registry) {
-  if(!isObject(registry)||registry.schema_version!=='0.1-draft'||
+  if(!exactKeys(registry,ROOT_KEYS)||registry.schema_version!=='0.1-draft'||
      registry.status!=='discovery_only'||
      registry.coordinator_endpoint!==null)
     fail('catalog must remain discovery-only with no coordinator endpoint.');
-  if(!isObject(registry.policies)||
+  if(registry.visibility_note!==VISIBILITY_NOTE||
+     registry.private_repos!==PRIVATE_REPOS_NOTE||
+     !Array.isArray(registry.roles)||
+     registry.roles.length!==PUBLIC_ROLES.length||
+     new Set(registry.roles).size!==PUBLIC_ROLES.length||
+     registry.roles.some(role=>!PUBLIC_ROLES.includes(role)))
+    fail('unexpected public catalog metadata.');
+  if(!exactKeys(registry.policies,Object.keys(REQUIRED_POLICIES))||
      Object.entries(REQUIRED_POLICIES).some(([k,v])=>registry.policies[k]!==v))
     fail('unsafe contribution policy.');
   if(!Array.isArray(registry.repos)||registry.repos.length<1||
