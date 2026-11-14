@@ -28,6 +28,8 @@ Use `"access":"read"` for reviewer/auditor/planner/integrator work, **without** 
 
 Two tasks that share code must declare the **same** resource ID. Tasks sharing the same ID serialize, even when their issue numbers differ. Different IDs are only safe when their authorized path roots are disjoint. This check treats path spelling case-insensitively for Windows safety. A path prefix ending in `/` covers its subtree; an exact filename covers only that file. No `../`, absolute paths or globs.
 
+**Canonical repository spelling:** all tasks referring to one GitHub repository must use exactly the same owner/repository capitalization. GitHub treats repository names case-insensitively, while existing `claims/` and `resources/` file paths retain their original case. Mixing aliases could produce different lock files for the same resource. The local catalog validator now fails closed when aliases appear in the *same* catalog; it deliberately does **not** rename historical ledger records or guarantee cross-catalog consistency. Maintain one reviewed catalog and compare its spelling with the enabled fleet registry before launching agents. Multiple tasks sharing a partition may legitimately declare distinct file subsets: the common partition ID still serializes them.
+
 **Do not** edit the catalog's resource definitions while a task has a live claim. A curator must first inspect existing claims and reconcile scope changes. Existing locks do not get migrated automatically.
 
 ## Lock protocol

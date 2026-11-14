@@ -34,6 +34,33 @@ test('disjoint scopes and multiple tasks in one shared partition are allowed',()
  ]));
 });
 
+test('case aliases of one GitHub repository cannot split a shared resource lock',()=>{
+ const differentlyCased=repo.toLowerCase();
+ // The existing lock-key format preserves repository spelling; treating these
+ // as separate curated targets would allow distinct resource files to exist.
+ assert.notEqual(resourceKey(repo,'renderer'),resourceKey(differentlyCased,'renderer'));
+ assert.throws(()=>validateTaskCatalog([
+   write(2,'renderer',['src/render/']),
+   {...write(3,'renderer',['src/render/subdir/']),repository:differentlyCased}
+ ]),/Conflicting repository capitalization/);
+ // This also applies to reviewer tasks, preventing inconsistent claim paths.
+ assert.throws(()=>validateTaskCatalog([
+   read,
+   {...read,repository:differentlyCased,issue:99}
+ ]),/Conflicting repository capitalization/);
+ // One canonical spelling across different issues remains valid, including
+ // legitimate different scopes serialized by the SAME partition ID.
+ assert.doesNotThrow(()=>validateTaskCatalog([
+   write(2,'renderer',['src/render/']),
+   write(3,'renderer',['src/render/subdir/'])
+ ]));
+ // Distinct repositories are not accidentally considered aliases.
+ assert.doesNotThrow(()=>validateTaskCatalog([
+   write(2,'renderer',['src/render/']),
+   {...write(3,'renderer',['src/render/']),repository:'other-org/astrological-charts'}
+ ]));
+});
+
 test('no access inference, malformed paths, and multiple IDs are rejected',()=>{
  assert.throws(()=>validateTaskCatalog([{...read,access:undefined}]),/explicitly read or write/);
  assert.throws(()=>validateTaskCatalog([write(2,'core',[String.fromCharCode(46,46,47)+'private/'])]),/valid partition/);
