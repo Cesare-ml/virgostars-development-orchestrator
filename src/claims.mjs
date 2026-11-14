@@ -59,7 +59,7 @@ export async function status({api,config,repo,issue}) {
     submitted:!!submission,submission:submission?.data??null};
 }
 
-export async function claim({api,config,tasks,repo,issue,session,role='developer',branchName=null,now=()=>new Date().toISOString()}) {
+export async function claim({api,config,tasks,repo,issue,session,role='developer',branchName=null,beforeClaim=null,now=()=>new Date().toISOString()}) {
   assertSession(session);
   validateTaskCatalog(tasks);
   const task=approved(config,tasks,repo,issue);
@@ -87,6 +87,16 @@ export async function claim({api,config,tasks,repo,issue,session,role='developer
       return {result:'already-owned',claim:observed.claim};
     }
     return {result:'busy',task:repo+'#'+issue};
+  }
+
+  // This optional callback is used by the SHA-approved PRIVATE GitHub
+  // catalog mode only. It inspects the live target PR and changed files
+  // BEFORE the first write-resource create. Existing owned claims resume
+  // without acquiring a new resource or running a fresh admission.
+  if(beforeClaim!==null) {
+    if(typeof beforeClaim!=='function')
+      throw new Error('Invalid live write-task admission gate.');
+    await beforeClaim(task);
   }
 
   const claimedAt=now();
