@@ -120,6 +120,18 @@ test('frozen public submissions mirrored byte-for-byte in private branch pass GE
   assert.doesNotMatch(JSON.stringify(report),/example\/|submission\/|[a-f0-9]{40}/);
 });
 
+test('private activation rejects unclassified destination files even with seven exact submissions',async()=>{
+  const x=fixture();
+  const original=x.api.getGitTree;
+  x.api.getGitTree=async(repo,...args)=>{
+    const tree=await original(repo,...args);
+    if(repo===DEST)tree.tree.push({path:'backups/unknown.json',type:'blob',
+      mode:'100644',sha:'1'.repeat(40),size:40});
+    return tree;
+  };
+  await assert.rejects(()=>assertPrivateLedgerActivation({api:x.api,config}),
+    /unclassified files requiring owner reconciliation/);
+});
 test('private branch may contain additional legitimate records once activated',async()=>{
   const {api,dest}=fixture();
   dest.push({path:'claims/example__project/issue-88.json',
