@@ -1,5 +1,11 @@
 # VirgoStars Development Orchestrator
 
+## Operational MVP activation (14 November 2026)
+
+The immediate release target is a **supervised two-chat pilot**, not a deployed 40-agent scheduler. The repository is public, and the legacy private claim operations deliberately fail closed until the owner validates a separate PRIVATE ledger. **Do not write owner-only claims to the historical public coordination branch.**
+
+Read the [MVP activation and PR integration guide](docs/MVP_ACTIVATION.md). After integration, safe local entry points are `npm run check`, `node bin/vs-agent.mjs --help`, and tokenless `node bin/vs-agent.mjs public-discover`.
+
 **Status: PUBLIC repository, owner-operated pilot.** GitHub visibility changed on 2026-11-12; external write-task enrollment remains disabled. Legacy private-pilot records are still present and require owner-controlled review/migration before broad public onboarding. See [public transition and CI safety](docs/PUBLIC_TRANSITION.md).
 
 **Start here:** [public transition](docs/PUBLIC_TRANSITION.md), [agent instructions](AGENTS.md) and [legacy owner-only pilot instructions](docs/PRIVATE_PILOT.md). The old pilot catalog is not a public contributor registry.
