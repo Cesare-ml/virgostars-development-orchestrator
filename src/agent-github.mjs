@@ -1,6 +1,12 @@
 // Read-only (GET) GitHub snapshot builder for the agent work ladder.
 // Token optional (GITHUB_TOKEN); unauthenticated calls hit GitHub's 60/hour limit quickly.
+// Claims can be read from a local clone of the ledger branch (no API calls) via loadClaimsFromDir.
+import { readdir, readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { reviewsAtHead } from './agent-work.mjs';
+
+const MARKER_RE = /^\s*AGENT-(?:REVIEW|TRIAGE|READY-TO-MERGE)\b/;
+export const MARKER_WINDOW_DAYS = 21;
 
 export function makeGet({ token = process.env.GITHUB_TOKEN, fetchImpl = globalThis.fetch } = {}) {
   return async function get(path, { allow404 = false } = {}) {
@@ -49,16 +55,50 @@ export async function loadClaims(get, ledger) {
   return claims;
 }
 
-export async function loadSnapshot({ fleet, get, session = null, now = Date.now(), deep = true }) {
+/** Claims from a local checkout of the ledger branch: <dir>/<root>/<owner__repo>/<key>/<n>.json */
+export async function loadClaimsFromDir(dir, root = 'claims') {
+  const claims = {};
+  const base = join(dir, root);
+  let repos = [];
+  try { repos = await readdir(base, { withFileTypes: true }); } catch (e) { if (e.code === 'ENOENT') return claims; throw e; }
+  for (const r of repos.filter(d => d.isDirectory())) {
+    for (const k of (await readdir(join(base, r.name), { withFileTypes: true })).filter(d => d.isDirectory())) {
+      for (const f of await readdir(join(base, r.name, k.name))) {
+        const m = f.match(/^(\d+)\.json$/);
+        if (!m) continue;
+        try {
+          const rec = JSON.parse(await readFile(join(base, r.name, k.name, f), 'utf8'));
+          (claims[`${r.name}/${k.name}`] ??= []).push({ ...rec, attempt: Number(m[1]) });
+        } catch { /* malformed claim: ignored */ }
+      }
+    }
+  }
+  return claims;
+}
+
+/** Fleet markers for a whole repo in a few paged calls (instead of one call per PR). */
+export async function loadMarkerComments(get, repo, now) {
+  const since = new Date(now - MARKER_WINDOW_DAYS * 86400_000).toISOString();
+  const byIssue = new Map();
+  for (const c of await pages(get, `repos/${repo}/issues/comments?since=${since}`)) {
+    if (!MARKER_RE.test(String(c.body ?? ''))) continue;
+    const n = Number(String(c.issue_url ?? '').split('/').pop());
+    if (!byIssue.has(n)) byIssue.set(n, []);
+    byIssue.get(n).push({ body: c.body, created_at: c.created_at });
+  }
+  return byIssue;
+}
+
+export async function loadSnapshot({ fleet, get, session = null, now = Date.now(), deep = true, claims = null }) {
   const repos = [];
   for (const config of fleet.repos) {
     const name = config.name;
     const rawPrs = await pages(get, `repos/${name}/pulls?state=open`);
+    const markers = deep ? await loadMarkerComments(get, name, now) : new Map();
     const prs = [];
     for (const p of rawPrs) {
       const pr = { number: p.number, draft: p.draft, base: p.base.ref, head_sha: p.head.sha, body: p.body ?? '',
-        updated_at: p.updated_at, comments: [], files: [], ci: null, mergeable: null };
-      if (deep && p.comments !== 0) pr.comments = await pages(get, `repos/${name}/issues/${p.number}/comments`);
+        updated_at: p.updated_at, comments: markers.get(p.number) ?? [], files: [], ci: null, mergeable: null };
       if (deep && reviewsAtHead(pr).some(r => r.verdict === 'approve')) {
         pr.files = (await pages(get, `repos/${name}/pulls/${p.number}/files`)).map(f => f.filename);
         pr.mergeable = (await get(`repos/${name}/pulls/${p.number}`)).mergeable;
@@ -75,6 +115,6 @@ export async function loadSnapshot({ fleet, get, session = null, now = Date.now(
       .map(i => ({ number: i.number, title: i.title, labels: i.labels.map(l => l.name) }));
     repos.push({ config, prs, issues });
   }
-  const claims = await loadClaims(get, fleet.ledger);
+  claims ??= await loadClaims(get, fleet.ledger);
   return { fleet, now, session, claims, repos };
 }

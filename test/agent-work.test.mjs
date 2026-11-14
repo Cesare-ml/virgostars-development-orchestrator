@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { nextWork, mergeGate, fleetBoard, parseMarker, authorSession, eligibleIssues, claimState }
+import { nextWork as nextWorkRandom, workQueue, workCandidates, mergeGate, fleetBoard, parseMarker, authorSession, eligibleIssues, claimState }
   from '../src/agent-work.mjs';
 
+const nextWork = (s, o = {}) => nextWorkRandom(s, { rng: () => 0, ...o });
 const fleet = JSON.parse(await readFile(new URL('../config/agent-fleet.json', import.meta.url), 'utf8'));
 const cfg = name => fleet.repos.find(r => r.name.endsWith(name));
 const NOW = Date.parse('2026-11-14T20:00:00Z');
@@ -193,4 +194,41 @@ test('runbook states the trust model and the stricter gate', async () => {
   for (const s of ['## 8. Trust model', '`mergeable: true`', 'complete** list of changed files', 'verdict=close|finish|ready|retarget',
     'promotion is owner-only', '`integration_branch`'])
     assert.ok(runbook.includes(s), s);
+});
+
+test('herd avoidance: picks are spread over the top 10 of the first non-empty step', () => {
+  const prs = Array.from({ length: 30 }, (_, i) => epr(300 + i));
+  const s = snap([repo('VirgoStars-Ephemeris', prs, [])]);
+  const seen = new Set();
+  for (let k = 0; k < 10; k++) seen.add(nextWork(s, { rng: () => k / 10 }).pr);
+  assert.deepEqual([...seen].sort(), Array.from({ length: 10 }, (_, i) => 300 + i));
+  assert.equal(nextWork(s, { rng: () => 0.9999 }).pr, 309, 'never beyond the top 10');
+  const real = nextWorkRandom(s);
+  assert.ok(real.pr >= 300 && real.pr < 310 && real.step === 'C');
+});
+
+test('random pick never returns the session\'s own PR', () => {
+  const s = snap([repo('VirgoStars-Ephemeris', [epr(1, { body: `Agent-Session: ${ME}` }), epr(2)], [])]);
+  for (const x of [0, 0.5, 0.99]) assert.equal(nextWork(s, { rng: () => x }).pr, 2);
+});
+
+test('queue: session-agnostic, ordered by ladder, claimed items removed, capped per step', () => {
+  const prs = [epr(1, { comments: [approve()] }), epr(2), epr(3), epr(4, { draft: true })];
+  const claims = { 'Cesare-ml__VirgoStars-Ephemeris/review-pr-3-aaaaaaa': [{ session: OTHER, attempt: 1, claimed_at: '2026-11-14T19:50:00Z' }] };
+  const q = workQueue(snap([repo('VirgoStars-Ephemeris', prs, [{ number: 9, title: 'P0 · x' }])], { claims }), { perStep: 50 });
+  assert.equal(q.schema, 'virgostars-agent-queue/1');
+  assert.deepEqual(q.steps.B.map(i => i.pr), [1]);
+  assert.deepEqual(q.steps.C.map(i => i.pr), [2], 'claimed #3 and draft #4 are not offered for review');
+  assert.equal(q.steps.C[0].head, 'a'.repeat(40));
+  assert.deepEqual(q.steps.E.map(i => i.issue), [9]);
+  assert.deepEqual(q.counts, { B: 1, C: 1, D: 0, E: 1, F: 1 });
+  const many = workQueue(snap([repo('VirgoStars-Ephemeris', Array.from({ length: 20 }, (_, i) => epr(i + 1)), [])]), { perStep: 5 });
+  assert.equal(many.steps.C.length, 5);
+  assert.equal(many.counts.C, 20);
+});
+
+test('queue keeps own-authored PRs (filtered by each chat), candidates for a session drop them', () => {
+  const s = snap([repo('VirgoStars-Ephemeris', [epr(1, { body: `Agent-Session: ${ME}` })], [])]);
+  assert.equal(workQueue(s).steps.C[0].author, ME);
+  assert.equal(workCandidates(s).C.length, 0);
 });

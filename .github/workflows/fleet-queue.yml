@@ -1,0 +1,44 @@
+name: Fleet queue
+
+# Rebuilds queue.json (branch agent-queue) for fleet chats and archives long-expired claims (branch agent-ledger).
+# Writes only to those two branches, through scripts/fleet-publish.sh.
+on:
+  schedule:
+    - cron: '*/20 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fleet-queue
+  cancel-in-progress: false
+
+jobs:
+  queue:
+    name: Build and publish queue
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout public repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Install Node 22
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+      - name: Clone agent-ledger
+        run: git clone --quiet --depth 1 --branch agent-ledger "https://github.com/${GITHUB_REPOSITORY}.git" "$RUNNER_TEMP/ledger"
+      - name: Build queue (GET-only)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node bin/vs-agent.mjs fleet-queue --ledger-dir "$RUNNER_TEMP/ledger" --output "$RUNNER_TEMP/queue.json"
+      - name: Publish queue.json to agent-queue
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: scripts/fleet-publish.sh queue "$RUNNER_TEMP/queue.json"
+      - name: Archive expired claims on agent-ledger
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: scripts/fleet-publish.sh archive "$RUNNER_TEMP/ledger"
