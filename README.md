@@ -14,6 +14,9 @@ The initial objective is to let many independent ChatGPT and Codex conversations
 
 ## First usable owner-operated alpha (private ledger required)
 
+**New: [offline two-agent end-to-end rehearsal](docs/OFFLINE_TWO_AGENT_REHEARSAL.md).** Run `node bin/vs-agent.mjs rehearse-two-agents` on Node 20+ with no GitHub token. It executes actual task claim, resource lock, handoff, PR scope/collision audit, submission and release functions using **synthetic, in-memory GitHub fixture data**. It demonstrates collision rejection and interrupted release recovery; it does **not** contact real GitHub, launch live browser chats or replace the separately approved PRIVATE ledger.
+
+
 **New: [two-agent launch readiness doctor](docs/ALPHA_READINESS.md)** — after setting a reviewed PRIVATE ledger and a SHA-approved local task file, run `node bin/vs-agent.mjs alpha-doctor`. This is a read-only aggregate audit of historical submission preservation, available new tasks, open issues, upstream PRs and competing changed paths. It does not assign tasks, merge PRs or authorize an unattended fleet. A private ledger is still required for real use.
 
 

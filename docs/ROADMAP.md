@@ -269,3 +269,13 @@ No deploy, production mutation, release, automatic merge, or license change is i
 - [x] Add synthetic Node test coverage and Windows first-alpha instructions.
 - [ ] Run and verify public Node 20/22 CI on final PR HEAD and obtain independent source review.
 - [ ] Validate on a *real owner-held private ledger* after an independently reviewed cutover; then run two live agent sessions with safe claim → submit → release.
+
+## Offline two-developer end-to-end rehearsal — issue #34 (2026-11-13)
+
+- [x] Add a no-token, network-free `rehearse-two-agents` command using actual in-memory GitHub claims/queue/handoff/submission/PR audit functions.
+- [x] Verify two concurrent claimed tasks with independent issue/resource locks and deny a third agent while tasks are held.
+- [x] Reject a competing synthetic PR, preserve owner locks, then recover after removing the collision.
+- [x] Simulate release failure after a saved submission; require same-owner retry, preserve submitted markers and release both locks.
+- [x] Add automated tests, public Node checks and a Windows quickstart with strict limitations.
+- [ ] Verify public Node 20/22 CI at final HEAD and independent source review.
+- [ ] After privately approved ledger cutover, perform an actual cross-chat GitHub integration test with 2 new tasks; do not claim the synthetic rehearsal proves live concurrency.

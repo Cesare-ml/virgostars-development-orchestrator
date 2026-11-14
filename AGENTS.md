@@ -110,3 +110,7 @@ For the owner-only first alpha, after a reviewed private-ledger cutover, new tas
 ## Read-only alpha launch readiness (owner-only)
 
 Before proposing the first two new developer chats, follow [docs/ALPHA_READINESS.md](docs/ALPHA_READINESS.md). On a trusted local machine, `node bin/vs-agent.mjs alpha-doctor` requires a verified PRIVATE coordination ledger and the exact approved local task file. Its aggregate output cannot approve a merge or acquire a task. Agents MUST still verify and exclusively acquire their own resource/issue locks after a positive report. If the report blocks, do not bypass it by writing to the old public ledger or by reusing seven historical submitted issues. No public workflow receives owner-only tokens or task data.
+
+## Offline two-agent rehearsal (synthetic only)
+
+Before a live owner-operated pilot, run `node bin/vs-agent.mjs rehearse-two-agents` and review [docs/OFFLINE_TWO_AGENT_REHEARSAL.md](docs/OFFLINE_TWO_AGENT_REHEARSAL.md). The command uses only synthetic in-memory GitHub data, even with private environment variables set. It exercises actual claim/handoff/submit/release functions, overlapping PR submission blockers and owner retry after interrupted release. Never represent synthetic pass as proof of a live private ledger, human code review, real branch tests, GitHub write concurrency or a deployed coordinator. No public ledger operations are authorized.

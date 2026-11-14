@@ -2,6 +2,8 @@
 
 The owner-operated Alpha uses a **separate PRIVATE** coordination ledger and a **locally approved** task queue. The new command checks whether conditions for a two-developer pilot have been met. It **never claims a task, edits a PR, publishes a record, migrates history, merges or deploys**.
 
+For a tokenless, synthetic two-agent claim→submit→release regression check before the private ledger is ready, see [OFFLINE_TWO_AGENT_REHEARSAL.md](OFFLINE_TWO_AGENT_REHEARSAL.md). That rehearsal cannot substitute for this live readiness gate.
+
 ## Preflight steps on Windows
 
 1. Follow [FIRST_OWNER_ALPHA.md](FIRST_OWNER_ALPHA.md). Independently provision and review a PRIVATE GitHub coordination repository, reconcile the historical seven submitted markers **byte-for-byte**, and verify the frozen public ledger no longer has active claims.
