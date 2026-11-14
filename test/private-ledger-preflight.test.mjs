@@ -89,7 +89,7 @@ test('README-only bootstrap is empty, while foreign private files block the clea
   assert.deepEqual(dirty.records,{claims:0,resources:0,submissions:0});
   assert.equal(dirty.ready_to_migrate,false);
   assert.equal(dirty.write_enabled,false);
-  assert.doesNotMatch(JSON.stringify(dirty),/backups\\/|private-sessions|example-org/);
+  assert.doesNotMatch(JSON.stringify(dirty),/backups|private-sessions|example-org/);
 });
 test('existing empty private branch still requires explicit owner approval',async()=>{
   const x=await inspectPrivateDestination({api:api(),destination:D});
