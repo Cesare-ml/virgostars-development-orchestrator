@@ -22,10 +22,10 @@ function gitBlob(raw) {
     response:{encoding:'base64',content:bytes.toString('base64'),size:bytes.length,sha}};
 }
 function synthetic({record=validRecord(),raw=null,truncated=false,missingRef=false,
-  drift=false,wrongHash=false,attempt=1,include=true}={}) {
+  drift=false,wrongHash=false,attempt=1,include=true,alternatePath=null}={}) {
   const body=raw??JSON.stringify(record)+'\n';
   const blob=gitBlob(body);
-  blob.entry.path=path.replace('/1.json','/'+attempt+'.json');
+  blob.entry.path=alternatePath??path.replace('/1.json','/'+attempt+'.json');
   const entries=include?[blob.entry]:[];
   const calls=[];
   let refs=0;
@@ -110,4 +110,10 @@ test('valid second-precision UTC timestamps remain supported',async()=>{
   const record=validRecord({claimed_at:'2026-11-14T18:49:50Z'});
   const claims=await read(synthetic({record}));
   assert.equal(claimState(claims,TARGET,'issue-178',180,NOW).live,true);
+});
+
+test('case-only alias of claims root must not hide active lock records',async()=>{
+  const aliased=path.replace('claims/','Claims/');
+  await assert.rejects(()=>read(synthetic({alternatePath:aliased})),
+    /Noncanonical case alias/);
 });
