@@ -2,7 +2,7 @@
 
 ## Release checkpoint: use the owner MVP (14 November 2026)
 
-**Owner-operated MVP source integrated into `main`, with continued guarded security improvements:** exclusive-task safety, private-readiness controls, duplicate-session audits, Git blob integrity, a verified historical submission backup, an SHA-bound offline copy-only planner, and an offline owner preflight. Do not infer a deployed service or live two-chat proof from test-only merges. Exact integration PR-head Node 20/22 checks succeeded; no real two-chat workload has been verified. See [MVP activation](MVP_ACTIVATION.md).
+**Owner-operated MVP source integrated into `main`, with continued guarded security improvements:** exclusive-task safety, private-readiness controls, duplicate-session audits, Git blob integrity, a verified historical submission backup, an SHA-bound offline copy-only planner, and an offline owner preflight. Do not infer a deployed service or live two-chat proof from test-only merges. Exact integration PR-head Node 20/22 checks succeeded; no real two-chat workload has been verified. See [MVP activation](MVP_ACTIVATION.md) and the [post-migration first run](OWNER_ALPHA_POST_MIGRATION.md).
 
 ### P0 remaining — unblock actual users
 
