@@ -1,48 +1,76 @@
-# MVP activation and integration — 2026-11-14
+# VirgoStars Development Orchestrator — owner alpha activation
 
-**Status: candidate for integration, not deployed.** The first goal is two independent, GitHub-connected ChatGPT sessions, not 40 automatic browser tabs. This public repository does not contain an authorized private operational task ledger.
+**Updated 2026-11-14.** The owner CLI and private migration *preparation* commands have been merged to `main`; the service is not deployed and real ChatGPT multi-session operation has **not** been proven. The source repository is PUBLIC. Keep all private work records in a **different PRIVATE** GitHub repository, never in its historical `coordination/claims` branch.
 
-## Available immediately after source integration
+## 1. Local smoke (no GitHub secrets or private ledger)
 
-From a trusted local clone, with Node.js 20 or 22:
+With Node.js 20/22 from a fresh source checkout:
 
-```sh
+```powershell
 npm run check
-node bin/vs-agent.mjs --help
 node bin/vs-agent.mjs public-discover
+node bin/vs-agent.mjs rehearse-two-agents
+node scripts/verify-public-alpha-smoke.mjs
+node scripts/rehearse-local-processes.mjs
 ```
 
-`public-discover` is tokenless, read-only and does **not** claim tasks. Synthetic offline commands are available only if their separate PRs have been integrated. There is no hosted scheduler, automatic chat launcher, production deployment, auto-merge or cross-browser session recovery.
+These tests cover an in-memory two-agent run and local OS process contention, **not actual independent browser chats**, remote lock durability, automatic chat recovery or distributed fencing.
 
-## Before any real private claims
+## 2. Owner creates the separate PRIVATE ledger
 
-1. Owner creates or chooses a **separate PRIVATE GitHub repository** for coordination records, with least-privilege access; a public repository branch is not a private store.
-2. Owner reviews public Git history and safely reconciles legacy records with local backup/cutover tooling. Never copy private records into public issue comments, workflow logs or commits. Rotate any historically exposed credentials.
-3. Update the private operator configuration to use the exact reviewed private destination, and verify it with the CLI visibility gate at time of use. Do not bypass the guard. The old public `coordination/claims` branch must receive **no new private claims**.
-4. Select two ready issues with disjoint write partitions and no competing active PRs; generate one unique durable session ID per chat.
-5. Test the real sequence for both chats: exclusive resource lock (when writing) → issue claim → scoped feature branch/draft PR → head/scope audit → factual handoff → immutable submitted marker → owner-checked release. On 409/422, uncertain claims, stale SHA or orphaned locks, stop for maintainer review.
-6. Independently review both results; only then expand to 5–10 real sessions, followed by separately verified 20- and 40-session waves.
+1. In the owner GitHub account, create a repository with **Private** visibility and minimal collaborators; use a distinct name such as `OWNER/virgostars-coordination-private`. Neither this source code nor its public CI can create or authorize it.
+2. Independently back up the full Git history of the historical public source and the new private destination, and review any previously exposed sensitive information; rotate exposed credentials.
+3. Establish its `coordination/claims` branch via a reviewed owner procedure. Freeze the old public coordination branch, and do not create new public owner-only claims.
+4. Store GitHub credentials in the local credential manager or protected environment only. Never paste tokens, session IDs or the local record manifest into public PRs/issues or prompts.
 
-**Current blocking gates:** fresh composed main CI not independently verified, private operational ledger not confirmed, real two-chat claim-to-release not proven, automatic browser/chat launch and durable distributed recovery not implemented. A successful merge to main does not satisfy these conditions.
+## 3. Verify the destination and prepare an exact local backup
 
-## PR integration policy
+Use a trusted local Windows PowerShell shell. Change the placeholder to your actual PRIVATE repository and select a **new** backup file path in an existing protected folder outside the public checkout:
 
-- Merge parent before child in stacked PR chains. Check exact head SHA, changed files, branch ancestry and Node 20/22 results on the candidate revision. Retarget only after recalculating its diff and CI evidence.
-- Choose one canonical implementation for overlapping changes. The competing recovery PRs #91, #94 and #95 must **not** all be merged. Multiple audit and submission-guard drafts also overlap.
-- Prioritize the base CLI PR #1 and a minimal offline two-agent rehearsal chain. Keep privacy migration and live activation separately gated by owner review.
-- Green synthetic tests do not prove real distributed locking or 40 live ChatGPT sessions. Do not merge all drafts to reduce the queue count. No automatic deploy or auto-merge.
+```powershell
+$env:VS_PRIVATE_LEDGER_APPROVED_REPO = 'OWNER/virgostars-coordination-private'
+# Supply GITHUB_TOKEN through your private credential manager.
+node bin/vs-agent.mjs check-private-destination OWNER/virgostars-coordination-private
+node bin/vs-agent.mjs plan-private-cutover OWNER/virgostars-coordination-private
+node bin/vs-agent.mjs export-verified-ledger OWNER/virgostars-coordination-private --output 'C:\VirgoStarsPrivate\ledger-record-backup.json' --confirm
+node bin/vs-agent.mjs plan-ledger-copy 'C:\VirgoStarsPrivate\ledger-record-backup.json'
+```
 
-## Go/no-go checklist
+`export-verified-ledger` fetches Git data with GET requests and creates a **local owner-private file** containing the historic records. The copy planner reads it offline, checks canonical Git blob bytes, the frozen source commit/tree and an independent seven-blob inventory hash, then reports counts and blockers. **Neither command writes to GitHub, stages an import nor creates a private branch.** A backup of seven records is not a full Git mirror.
 
-| Gate | Requirement | State at plan creation |
-| --- | --- | --- |
-| MVP source on main | Reviewed base PR + passing exact-head checks | Integrated (#1 and nine selected PRs) |
-| Safe public commands | `npm run check` and tokenless preview | Integrated; fresh main-checkout run not verified |
-| Offline two-agent proof | Test results on integrated code | #35/#80/#96 merged; only synthetic/local tests proven |
-| Private claims | Separate private destination and reviewed migration | Blocked |
-| Live two-chat run | Two distinct IDs, exclusive claims, audited handoff and release | Not proven |
-| 5, 10, 20, 40 live chats | Measured concurrency and safe recovery | Not proven |
+An absent private coordination branch, unexpected active locks, inconsistent or additional records, changed historical source, unverifiable private visibility, token/permission errors, symlinks or unsafe local paths must stop the process. Follow [the export guide](VERIFIED_LOCAL_LEDGER_EXPORT.md) and [copy planner guide](OFFLINE_LEDGER_COPY_PLAN.md) for precise rules.
 
-## Interrupted sessions
+## 4. Manual owner-approved migration and readiness
 
-Never delete another chat's lock. Keep the session ID and GitHub commit evidence private, take a fresh read-only snapshot, and permit owner-mediated recovery only after ownership and submitted records have been reconciled. Synthetic snapshot reload is not durable crash recovery.
+Only after reviewing the private backup and its blockers, copy the seven historical `submitted` records **byte-for-byte** into the private `coordination/claims` branch, without overwriting conflicting data or copying old active locks. Re-verify exact remote state, then:
+
+```powershell
+node bin/vs-agent.mjs verify-private-activation OWNER/virgostars-coordination-private
+$env:VS_PRIVATE_LEDGER_REPO = 'OWNER/virgostars-coordination-private'
+$env:VS_PRIVATE_LEDGER_APPROVED_REPO = 'OWNER/virgostars-coordination-private'
+# Put new owner-curated task JSON outside the public checkout.
+node bin/vs-agent.mjs fingerprint-tasks 'C:\VirgoStarsPrivate\owner-tasks.json'
+# Set VS_PRIVATE_TASKS_FILE and VS_PRIVATE_TASKS_APPROVED_SHA256 privately.
+node bin/vs-agent.mjs alpha-doctor
+```
+
+The old seven tasks are already submitted and **must never be re-offered**. Use two entirely new, small, disjoint, explicitly approved developer tasks, with a pinned upstream PR and exact allowed files. The local catalog must be owner-reviewed and its SHA-256 explicitly approved. The readiness doctor is **GET-only** and does not claim or authorize a merge.
+
+## 5. First two independent ChatGPT sessions
+
+Start two different GitHub-connected owner-controlled chats, each with its own durable UUID/session ID and exactly one ready task. For write tasks, acquire the approved exclusive resource lock **before** the issue claim. Verify lock ownership and current PR HEAD/scope, develop on separate draft branches, record actual test results, create immutable submitted handoff markers and release only one's own locks. Stop on any 409/422 ambiguity, stale source, already-submitted task, duplicate active session or resource overlap. Have an independent reviewer inspect both outcomes and the private ledger.
+
+Only after a **measured two-chat end-to-end pilot** with zero duplicate ownership and zero stranded locks should owner expand to 5–10, then 20, then 40 active real sessions. There is no automatic browser/chat launcher or guaranteed crash-safe cross-machine scheduler. See [first owner alpha](FIRST_OWNER_ALPHA.md), [operator task queue](OWNER_TASK_QUEUE.md) and [resource locks](RESOURCE_LOCKS.md).
+
+## Release gates
+
+| Capability | Current status |
+| --- | --- |
+| Base CLI, GitHub guarded commands and Node test suite | Integrated on `main`; integration-head CI successful |
+| Offline two-agent and local-process rehearsals | Integrated; synthetic/local only |
+| Private ledger read/visibility/historical export/copy plan | CLI integrated; actual private destination **not verified** |
+| Private ledger import and owner approval | **Not performed** |
+| First two real independently connected chats | **Not performed** |
+| Automatic 40-chat orchestration and crash recovery | **Not implemented/proven** |
+
+No automatic merge, deploy, access change or live private write is authorized merely by this guide.
