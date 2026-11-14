@@ -237,3 +237,26 @@ No deploy, production mutation, release, automatic merge, or license change is i
 - [x] Add synthetic Node tests for identical, missing, conflicting, extra, locked, corrupted, malformed and inaccessible backups; public GitHub Actions Node 20/22 validation.
 - [ ] Independently obtain a complete authenticated **full Git tree** backup in a trusted owner-controlled environment and verify live head/visibility; the offline record-only rehearsal alone **cannot** establish full backup completeness.
 - [ ] Complete owner-approved identity reconciliation and cutover plan on a separately provisioned private ledger, without automatic deletion of the public historical branch.
+
+## Owner-only private ledger activation gate — issue #29 (2026-11-13)
+
+- [x] Add explicit local dual-variable selection of a distinct owner-reviewed private ledger; never commit the private repository identity.
+- [x] Block the old public ledger and reject missing/incorrect operator acknowledgement.
+- [x] Introduce a read-only activation verifier that freezes the historical public HEAD, requires zero public active locks, validates real private destination metadata/branch, and checks SHA-identical preservation of all seven submitted markers.
+- [x] Recheck pinned refs and private visibility; refuse missing or changed historical evidence to prevent re-offering submitted work.
+- [x] Provide a Windows owner quickstart, mock tests and public CI syntax/test gate.
+- [ ] Independently provision, back up and review a real PRIVATE coordination repository; this public PR does not provision or choose one.
+- [ ] Copy/reconcile all historic submitted markers only after explicit owner approval and independently inspect all historical PUBLIC refs for sensitive material.
+- [ ] Validate the read-only gate against the owner-selected destination using an authorized local credential; record findings privately.
+- [ ] Curate two new disjoint agent tasks and execute end-to-end live claim/submit/release on the private ledger, including failure recovery, before scaling.
+- [ ] Independent code/security review and owner-controlled merge of the stacked PR chain. Green CI alone is insufficient.
+
+## First alpha local owner task queue — issue #31 (2026-11-13)
+
+- [x] Add a local absolute-path JSON catalog guarded by exact owner-acknowledged SHA-256, without committing new task metadata into the public repository.
+- [x] Prevent selection of the seven historic submitted task identities and reject malformed, duplicate, out-of-fleet or overlapping write tasks.
+- [x] Add offline `fingerprint-tasks` returning only digest and aggregate counts; separate public discovery from private environment variables.
+- [x] Add Windows setup instructions and regression tests for missing approval, unsafe filesystem paths, changed files and no-token mode.
+- [ ] Verify full Node 20/22 CI on the final PR head and independently review all new paths.
+- [ ] After private ledger migration approval, curate two **new** real issues with disjoint root scopes and demonstrate two concurrent sessions.
+- [ ] Do not claim public coordination safety, autonomous scheduling or 40-chat capacity before real testing.

@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 import { makeGitHubClient } from '../src/github.mjs';
 import { loadPilotConfig, loadPilotTasks } from '../src/registry.mjs';
+import {inspectOwnerTaskFile,loadHistoricalPilotTasks} from '../src/owner-task-catalog.mjs';
 import {loadPublicDiscovery} from '../src/public-discovery.mjs';
 import {inspectPrivateDestination} from '../src/private-ledger-preflight.mjs';
 import {planPrivateCutover} from '../src/private-cutover-plan.mjs';
 import {rehearseLocalBackupFile} from '../src/offline-cutover-rehearsal.mjs';
 import {assertPrivateLedger,guardLegacyLedgerClient} from '../src/ledger-visibility.mjs';
+import {assertPrivateLedgerActivation} from '../src/private-ledger-activation.mjs';
 import { newSession, claim, status, release, handoff, discover } from '../src/claims.mjs';
 import { claimNext } from '../src/queue.mjs';
 import { submit } from '../src/submissions.mjs';
@@ -18,8 +20,10 @@ const usage = [
   'node bin/vs-agent.mjs public-discover  # read-only, no token, public repos only',
   'node bin/vs-agent.mjs check-private-destination OWNER/REPO  # GET-only, token required',
   'node bin/vs-agent.mjs plan-private-cutover OWNER/PRIVATE-REPO  # metadata-only, no migration',
+  'node bin/vs-agent.mjs verify-private-activation OWNER/PRIVATE-REPO  # read-only, preserves submitted work',
   'node bin/vs-agent.mjs rehearse-private-cutover LOCAL_BACKUP.json  # offline, no token/writes',
   'node bin/vs-agent.mjs session [--kind chat|codex]',
+  'node bin/vs-agent.mjs fingerprint-tasks ABSOLUTE_LOCAL_FILE.json  # offline; no token or task data printed',
   'node bin/vs-agent.mjs discover',
   'node bin/vs-agent.mjs fleet-status  # read-only, all five repositories',
   'node bin/vs-agent.mjs audit-pr OWNER/REPO ISSUE PR_NUMBER  # read-only scope audit',
@@ -63,6 +67,23 @@ async function main() {
     process.stdout.write(JSON.stringify(discovery,null,2)+'\n');
     return;
   }
+  if(command==='fingerprint-tasks') {
+    if(positionals.length!==1 || Object.keys(flags).length)
+      throw new Error('fingerprint-tasks requires exactly one absolute local JSON path.');
+    const report=await inspectOwnerTaskFile(positionals[0],{
+      legacyTasks:await loadHistoricalPilotTasks()
+    });
+    process.stdout.write(JSON.stringify({
+      schema_version:'1-local-task-fingerprint',
+      sha256:report.sha256,
+      tasks:report.count,
+      read_tasks:report.read_tasks,
+      write_tasks:report.write_tasks,
+      approved:false,
+      private_file_uploaded:false
+    },null,2)+'\n');
+    return;
+  }
   if(command==='rehearse-private-cutover') {
     if(positionals.length!==1 || Object.keys(flags).length)
       throw new Error('rehearse-private-cutover requires exactly LOCAL_BACKUP.json.');
@@ -86,11 +107,27 @@ async function main() {
     process.stdout.write(JSON.stringify(plan,null,2)+'\n');
     return;
   }
+  if(command==='verify-private-activation') {
+    if(positionals.length!==1 || Object.keys(flags).length)
+      throw new Error('verify-private-activation requires exactly OWNER/PRIVATE-REPO.');
+    const api=makeGitHubClient({token:process.env.GITHUB_TOKEN});
+    const report=await assertPrivateLedgerActivation({api,config:{
+      repository_visibility_required:'private',
+      claim_store:{repo:positionals[0],branch:'coordination/claims'}
+    }});
+    process.stdout.write(JSON.stringify(report,null,2)+'\n');
+    return;
+  }
   // Fail closed BEFORE any legacy ledger reads or writes. The historical
   // branch is PUBLIC; config labels never prove private GitHub visibility.
   const config=await loadPilotConfig();
   const baseApi=makeGitHubClient({token:process.env.GITHUB_TOKEN});
   await assertPrivateLedger({api:baseApi,config});
+  // Any new owner-selected private ledger must preserve ALL seven submitted
+  // historical tasks byte-for-byte. A fresh/empty branch cannot reactivate
+  // old READY tasks and silently assign them to another chat.
+  if(config.claim_store.repo!=='Cesare-ml/virgostars-development-orchestrator')
+    await assertPrivateLedgerActivation({api:baseApi,config});
   const api=guardLegacyLedgerClient({api:baseApi,config});
   let result;
   if(command==='discover') {
