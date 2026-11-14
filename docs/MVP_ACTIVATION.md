@@ -2,6 +2,12 @@
 
 **Updated 2026-11-14.** The owner CLI and private migration *preparation* commands have been merged to `main`; the service is not deployed and real ChatGPT multi-session operation has **not** been proven. The source repository is PUBLIC. Keep all private work records in a **different PRIVATE** GitHub repository, never in its historical `coordination/claims` branch.
 
+## Current migration checkpoint (14 November 2026)
+
+The owner has provisioned a separate **PRIVATE** GitHub repository. The `coordination/claims` branch now contains seven original historical submission records copied with exactly matching Git blob hashes, byte sizes and modes. Live read-only Git metadata and reference checks found **no active claim/resource lock files and no unclassified records**. A separate same-private-repository checkpoint branch was created for rollback. No private ledger name, branch SHA, historic session records or tokens are stored in this public documentation.
+
+**Remaining independent owner checks:** take a complete local Git mirror backup, confirm the connected credential on the owner's machine, run `verify-private-activation` using the local CLI, approve a new local task catalog by SHA-256 and validate via `alpha-doctor`. Then conduct two real independent chat sessions. The public coordinator remains forbidden for new claims.
+
 ## 1. Local smoke (no GitHub secrets or private ledger)
 
 With Node.js 20/22 from a fresh source checkout:
@@ -76,8 +82,8 @@ Only after a **measured two-chat end-to-end pilot** with zero duplicate ownershi
 | --- | --- |
 | Base CLI, GitHub guarded commands and Node test suite | Integrated on `main`; integration-head CI successful |
 | Offline two-agent and local-process rehearsals | Integrated; synthetic/local only |
-| Private ledger read/visibility/historical export/copy plan | CLI integrated; actual private destination **not verified** |
-| Private ledger import and owner approval | **Not performed** |
+| Private ledger and seven historical submissions | **Remotely verified** through authenticated GitHub connector; owner-local CLI check pending |
+| Private ledger import | Seven original Git blobs copied and verified; independent full mirror and owner-local CLI validation pending |
 | First two real independently connected chats | **Not performed** |
 | Automatic 40-chat orchestration and crash recovery | **Not implemented/proven** |
 

@@ -10,8 +10,9 @@
 - [x] Reject multiple active session ownership, malformed/case-aliased resource claims and corrupt ledger snapshots.
 - [x] Supply read-only private destination checks, historical local backup export and offline copy-only comparison tools.
 - [x] Owner-local readiness check requires two independently scoped `ready` developer tasks; the owner must still pass the private remote `alpha-doctor`.
-- [ ] Owner creates an independently verified **PRIVATE** coordination repository and a `coordination/claims` branch; never put private records in public history.
-- [ ] Owner takes full repository backups, reviews and performs a safe copy-only transfer of seven historic submission markers, then runs `verify-private-activation`.
+- [x] Owner created a separately confirmed **PRIVATE** coordination repository and `coordination/claims` branch.
+- [x] Migrate and remotely re-verify seven historical immutable Git blobs, with zero active locks/unknown files; protect a separate private rollback branch.
+- [ ] Owner creates an **independent local full Git mirror backup**, reviews historical public exposure, and runs the local token-backed `verify-private-activation` command.
 - [ ] Owner approves two new disjoint local developer tasks with an exact SHA-256 and passes `alpha-doctor`.
 - [ ] Run two distinct actual GitHub-connected chats (different session IDs) through a verified claim/handoff/submit/release; inspect and reconcile every lock.
 - [ ] Only after that, test waves of 5–10, 20 and 40 **real** sessions; measure rate limits, interruptions, lock leaks and conflicts.
