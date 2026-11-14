@@ -25,6 +25,7 @@ import { submit } from '../src/submissions.mjs';
 import { auditFleet } from '../src/fleet-status.mjs';
 import { auditTaskPullRequest } from '../src/pr-audit.mjs';
 import { auditOpenPullRequestCollisions } from '../src/pr-collisions.mjs';
+import {assertLiveWriteTaskAdmission} from '../src/live-write-admission.mjs';
 
 const usage = [
   'VirgoStars private pilot — Node.js 20+',
@@ -226,6 +227,14 @@ async function main() {
     for(const method of ['createClaim','updateClaim','deleteClaim'])
       api[method]=pinned[method];
   }
+  // New resource-owning tasks from a remote approved catalog receive
+  // a live PR/issue collision audit before any new GitHub lock is created.
+  // It is not a replacement for the resource-first exclusive write itself.
+  const beforeClaim=source?.mode==='owner-private-github'
+    ? task=>task.access==='write'
+      ? assertLiveWriteTaskAdmission({api,tasks,task})
+      : undefined
+    : null;
   let result;
   if(command==='discover') {
     if(positionals.length) throw new Error('Discover takes no target.');
@@ -249,7 +258,7 @@ async function main() {
   } else if(command==='claim-next') {
     if(positionals.length) throw new Error('Claim-next takes no positional target.');
     result=await claimNext({api,config,tasks:tasks,
-      session:flags.session,role:flags.role,repository:flags.repo||null});
+      session:flags.session,role:flags.role,repository:flags.repo||null,beforeClaim});
   } else {
     if(positionals.length!==2) throw new Error('Expected OWNER/REPO and ISSUE.');
     const [repo,raw]=positionals;
@@ -258,7 +267,7 @@ async function main() {
     const common={api,config,repo,issue};
     if(command==='status') result=await status(common);
     else if(command==='claim') result=await claim({...common,tasks:tasks,
-      session:flags.session,role:flags.role,branchName:flags.branch});
+      session:flags.session,role:flags.role,branchName:flags.branch,beforeClaim});
     else if(command==='handoff') result=await handoff({...common,session:flags.session,
       summary:flags.summary,branchName:flags.branch,headSha:flags['head-sha']});
     else if(command==='release') result=await release({...common,session:flags.session,
