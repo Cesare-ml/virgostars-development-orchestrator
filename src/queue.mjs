@@ -7,7 +7,7 @@ const ROLES = new Set(['planner','developer','tester','reviewer','auditor','inte
  * Select at most one curated task per chat session.
  * All errors except an explicitly closed issue or a contended claim fail closed.
  */
-export async function claimNext({ api, config, tasks, session, role, repository = null }) {
+export async function claimNext({ api, config, tasks, session, role, repository = null, beforeClaim = null }) {
   assertSession(session);
   validateTaskCatalog(tasks);
   if (!ROLES.has(role)) throw new Error('Choose an explicit valid role for claim-next.');
@@ -59,7 +59,7 @@ export async function claimNext({ api, config, tasks, session, role, repository 
     if (!issue || issue.pull_request) throw new Error('Invalid curated target issue.');
     if (issue.state !== 'open') { closed++; continue; }
     const attempt = await claim({ api, config, tasks, repo: task.repository,
-      issue: task.issue, session, role });
+      issue: task.issue, session, role, beforeClaim });
     if (attempt.result === 'acquired' || attempt.result === 'already-owned')
       return attempt;
     if (attempt.result === 'busy') { contended++; continue; }
