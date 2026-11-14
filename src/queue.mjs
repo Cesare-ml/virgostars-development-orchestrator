@@ -1,5 +1,6 @@
 import { assertSession, claim, status } from './claims.mjs';
 import { validateTaskCatalog } from './resources.mjs';
+import { assertResumableOwnerClaim } from './claim-resume-integrity.mjs';
 
 const ROLES = new Set(['planner','developer','tester','reviewer','auditor','integrator']);
 
@@ -29,11 +30,8 @@ export async function claimNext({ api, config, tasks, session, role, repository 
     if (current.status === 'submitted' || current.submitted)
       submitted.add(task.repository+'#'+task.issue);
     if (current.status === 'claimed' && current.claim.session_id === session) {
-      if (current.claim.access !== task.access ||
-        (task.access === 'write' && (current.claim.resource_scope_id !== task.resource_scope.id ||
-          JSON.stringify(current.claim.resource_roots) !== JSON.stringify([...task.resource_scope.roots].sort()))))
-        throw new Error('Curated task resource scope changed; manual reconciliation required.');
-      owned.push({ claim:current.claim,submitted:!!current.submitted });
+      const resumed=assertResumableOwnerClaim({claim:current.claim,task,session});
+      owned.push({ claim:resumed,submitted:!!current.submitted });
     }
   }
   if (owned.length > 1)
@@ -41,6 +39,8 @@ export async function claimNext({ api, config, tasks, session, role, repository 
   if (owned.length === 1) {
     if (owned[0].submitted)
       throw new Error('Submitted task still has an active claim; original owner must finish release or request manual recovery.');
+    if(owned[0].claim.role!==role)
+      throw new Error('Session already owns a different role; reconcile before requesting new work.');
     return { result:'already-owned',claim:owned[0].claim };
   }
 
