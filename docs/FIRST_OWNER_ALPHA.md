@@ -1,6 +1,6 @@
 # First owner-operated alpha: private ledger activation
 
-**Status: reviewable stacked draft, not merged, deployed or open to public agent writes.** This is a manual GitHub-backed multi-chat pilot, not a hosted scheduler or permission service.
+**Status (2026-11-14): owner alpha CLI and preparation tools are merged into `main`, but no independent PRIVATE destination, historical migration or two real chat sessions have been verified.** This is a manual GitHub-backed pilot, not a hosted scheduler or permission service.
 
 The old coordinator repository is now PUBLIC. Never create another private task claim, resource lock or submission on its historical coordination/claims branch. The code refuses that repository. Public GitHub Actions use synthetic tests only, without a private token or ledger.
 
@@ -14,12 +14,13 @@ The old coordinator repository is now PUBLIC. Never create another private task 
 
 ## Run the read-only activation check
 
-From a trusted checkout of the reviewed stacked feature branch with Node.js 20 or newer:
+From a trusted checkout of reviewed `main` with Node.js 20 or newer:
 
 ~~~powershell
 node bin/vs-agent.mjs --help
 node bin/vs-agent.mjs check-private-destination OWNER/PRIVATE-REPOSITORY
 node bin/vs-agent.mjs plan-private-cutover OWNER/PRIVATE-REPOSITORY
+# Only after the seven historical submissions were reviewed and copied byte-for-byte:
 node bin/vs-agent.mjs verify-private-activation OWNER/PRIVATE-REPOSITORY
 ~~~
 

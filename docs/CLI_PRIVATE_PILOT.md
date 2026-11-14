@@ -1,12 +1,14 @@
-# Using the private pilot claim CLI
+# Historical private pilot CLI reference — not the live launch guide
 
-This is a Node.js 20+ command-line utility for the **owner-only pilot**. The authoritative list of five repositories is `config/fleet.private.json`. Only entries with `status=ready` in `config/pilot-tasks.json` may be claimed.
+> **STOP: do not execute the old claims examples against the PUBLIC orchestrator.** This document describes the historical five-reviewer/two-developer task catalog; all seven tasks are already submitted. New claims require an independently verified **separate PRIVATE GitHub repository**, an approved owner-local task queue and the preserved seven historical submission markers. The old `coordination/claims` branch of the public source repository is FORBIDDEN for new private writes. Use [MVP_ACTIVATION.md](MVP_ACTIVATION.md) and [FIRST_OWNER_ALPHA.md](FIRST_OWNER_ALPHA.md) for the current owner workflow. Never paste credentials or private records into GitHub issues or chats.
+
+This Node.js 20+ reference documents the prior owner-only pilot. The historical registry and task catalog are **not** authorization for new claims. Only new tasks in the SHA-approved owner-local JSON file are eligible after a verified private-ledger cutover.
 
 ## Codex or another local terminal
 
-Use a checkout of branch `feat/distributed-agent-coordination-v0`. Node.js is sufficient; no package installation or GitHub Actions.
+Use a checkout of reviewed `main` for the current CLI. Node.js 20 or 22 is sufficient. Run `npm run check` first; the public CI is test-only.
 
-Supply a GitHub API credential privately through the environment variable `GITHUB_TOKEN`. Do not put it in chat messages, terminal commands, issues, or source files. The credential needs read access to the target issue and read/write access to the orchestrator's claim branch; never grant more access than required.
+Supply a GitHub API credential privately through the environment variable `GITHUB_TOKEN`. Do not put it in chat messages, terminal commands, issues, or source files. The credential needs read access to the approved target issues and read/write access only to the **separate PRIVATE ledger's** claim branch; never give private coordination permissions to the public source repository.
 
 Example commands (replace the session placeholder with the actual output of the first command):
 
@@ -24,7 +26,7 @@ Before releasing a claim, verify that the work has stopped, the handoff was reco
 1. Read `AGENTS.md`, `docs/PRIVATE_PILOT.md`, and both pilot registries on the feature branch.
 2. Generate a fresh UUID v4 for your chat session, prefixed `chat-`. Never reuse a session from another chat.
 3. Choose one **ready** task from `config/pilot-tasks.json` and respect the required role.
-4. Use GitHub connector `create_file` in the private orchestrator, branch `coordination/claims`, file path `claims/OWNER__REPO/issue-N.json`. Example path: `claims/Cesare-ml__astrological-charts/issue-23.json`.
+4. Only after the owner has approved the separate PRIVATE coordination destination, use GitHub connector `create_file` **in that private ledger repository**, branch `coordination/claims`, at `claims/OWNER__REPO/issue-N.json` for a **new** approved issue. The old example issue #23 is historical and not eligible for another claim. Never write to the PUBLIC orchestrator.
 5. Store JSON fields: `schema_version:1`, `target_repository`, `issue_number`, `session_id`, `role`, `state:"claimed"`, `claimed_at` (ISO UTC), `branch:null`, `last_handoff:null`.
 6. On any failure (including HTTP 409/422), you **do not** own the task. Try a different ready task. Verify the stored file after successful creation.
 7. Before every further work cycle, re-read the claim and current issue/PR. Hand off via a target issue/PR comment and optionally update the claim with `update_file` using its current blob SHA.
