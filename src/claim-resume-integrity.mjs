@@ -1,3 +1,5 @@
+import { isStructurallyValidActiveClaim } from './claim-record-integrity.mjs';
+
 /**
  * Same-session resumption is NOT a new authorization. A claim with a
  * recognizable session id but a modified role, identity, state or write scope
@@ -10,6 +12,7 @@ function blocked() {
 }
 
 export function assertResumableOwnerClaim({claim,task,session}) {
+  if(!isStructurallyValidActiveClaim(claim,task?.repository,task?.issue)) blocked();
   if(!claim || !task || typeof session!=='string' ||
      claim.schema_version!==2 ||
      claim.session_id!==session ||
