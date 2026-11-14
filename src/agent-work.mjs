@@ -61,25 +61,89 @@ function available(ctx, repo, key, step) {
 }
 
 export function reviewsAtHead(pr) {
-  return (pr.comments ?? []).map(c => parseMarker(c.body, 'AGENT-REVIEW'))
-    .filter(r => r && r.head === pr.head_sha);
+  return (pr.comments ?? []).flatMap(c => {
+    const marker = parseMarker(c?.body, 'AGENT-REVIEW');
+    if (!marker || marker.head !== pr.head_sha) return [];
+    return [{ ...marker, github_author_id: c?.user?.id ?? null, github_comment_id: c?.id ?? null }];
+  });
 }
 
+// This is a fail-closed *candidate* gate. All provenance booleans below must be
+// supplied by authenticated GET-only evidence collection, never by a PR body,
+// AGENT-REVIEW marker, or another agent's session claim.
+const COMMIT_SHA = /^[0-9a-f]{40}$/i;
+const FILE_STATES = new Set(['added', 'modified', 'removed', 'renamed', 'copied', 'changed']);
+function githubId(x) { return Number.isSafeInteger(x) && x > 0; }
+function cleanPath(p) {
+  return typeof p === 'string' && p.length > 0 && !p.startsWith('/') &&
+    !p.includes('\\') && !/[\u0000-\u001f\u007f]/.test(p) &&
+    p.split('/').every(s => s !== '' && s !== '.' && s !== '..');
+}
+function verifiedFiles(pr) {
+  if (!Array.isArray(pr.files) || !Number.isSafeInteger(pr.changed_files) ||
+      pr.changed_files < 1 || pr.changed_files > 200 ||
+      pr.files.length !== pr.changed_files) return null;
+  const names = new Set(), paths = [];
+  for (const f of pr.files) {
+    if (!f || !FILE_STATES.has(f.status) || !cleanPath(f.filename)) return null;
+    const key = f.filename.toLowerCase();
+    if (names.has(key)) return null;
+    names.add(key);
+    paths.push(f.filename);
+    if (f.status === 'renamed' || f.status === 'copied') {
+      if (!cleanPath(f.previous_filename)) return null;
+      paths.push(f.previous_filename);
+    } else if (f.previous_filename !== undefined) return null;
+  }
+  return paths;
+}
 export function mergeGate(pr, repoCfg, session) {
   const reasons = [];
   const author = authorSession(pr.body);
   if (pr.base !== repoCfg.default_branch) reasons.push('base-not-default');
   if (pr.draft) reasons.push('draft');
-  if (pr.mergeable === false) reasons.push('conflicts');
+  if (pr.mergeable !== true) reasons.push('mergeability-unverified');
+  if (!COMMIT_SHA.test(pr.head_sha ?? '') || !COMMIT_SHA.test(pr.base_sha ?? ''))
+    reasons.push('commit-identity-unverified');
+  if (!author) reasons.push('author-session-unverified');
   if (author && author === session) reasons.push('own-pr');
+
+  const paths = verifiedFiles(pr);
+  if (!paths) reasons.push('incomplete-changed-files');
+  const source = pr.evidence;
+  if (source?.kind !== 'authenticated-github' ||
+      source.head_sha !== pr.head_sha || source.base_sha !== pr.base_sha ||
+      source.changed_files_complete !== true ||
+      source.reviews_complete !== true || source.comments_complete !== true ||
+      source.session_principal_binding_verified !== true ||
+      source.branch_protection_verified !== true ||
+      source.required_head_checks_verified !== true)
+    reasons.push('merge-evidence-unverified');
+
+  // A text marker is not an authenticated approval. Its real GitHub account
+  // must differ from the PR author's GitHub account, and it must match a
+  // native current-commit APPROVED review from that *same* account.
   const reviews = reviewsAtHead(pr);
-  if (!reviews.some(r => r.verdict === 'approve' && r.session !== author)) reasons.push('no-approval-at-head');
-  if (reviews.some(r => r.verdict === 'changes')) reasons.push('changes-requested');
-  if (repoCfg.ci && pr.ci !== 'success') reasons.push(`ci-${pr.ci ?? 'missing'}`);
-  const files = pr.files ?? [];
-  const ownerOnly = files.some(isProtectedPath) ||
-    (repoCfg.merge === 'docs-only' && !files.every(isDocsPath));
-  return { ok: reasons.length === 0, reasons, ownerMerge: ownerOnly };
+  const native = Array.isArray(pr.github_reviews) ? pr.github_reviews : [];
+  const approvers = new Set(native.filter(r =>
+    r?.state === 'APPROVED' && r?.commit_id === pr.head_sha &&
+    githubId(r?.user?.id)).map(r => r.user.id));
+  if (!githubId(pr.author_id)) reasons.push('author-principal-unverified');
+  const independent = reviews.some(r => r.verdict === 'approve' &&
+    SESSION_RE.test(r.session ?? '') && author && r.session !== author &&
+    r.session !== session && githubId(r.github_author_id) &&
+    r.github_author_id !== pr.author_id && githubId(r.github_comment_id) &&
+    approvers.has(r.github_author_id));
+  if (!independent) reasons.push('no-approval-at-head');
+  if (reviews.some(r => r.verdict === 'changes') ||
+      native.some(r => r?.state === 'CHANGES_REQUESTED'))
+    reasons.push('changes-requested');
+  if (repoCfg.ci && pr.ci !== 'success')
+    reasons.push(`ci-${pr.ci ?? 'missing'}`);
+
+  const ownerMerge = (paths ?? []).some(isProtectedPath) ||
+    (repoCfg.merge === 'docs-only' && !(paths ?? []).every(isDocsPath));
+  return { ok: reasons.length === 0, reasons, ownerMerge };
 }
 
 function readyMarked(pr) {
