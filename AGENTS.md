@@ -1,6 +1,10 @@
 # AGENTS.md — VirgoStars agent coordination
 
-## Current mode: public repository, owner-operated pilot
+## Current mode: public source, PRIVATE owner ledger required
+
+> **Mandatory safety policy (2026-11-14):** This repository, including its historical `coordination/claims` branch, is PUBLIC. It is never an authorized destination for new owner-only issue claims, resource locks, handoffs or submission records. The historical seven submissions are already recorded and MUST NOT be reassigned. New coordination is permitted only after the owner selects and verifies a **separate GitHub PRIVATE repository** and completes the approved preservation checks in [docs/MVP_ACTIVATION.md](docs/MVP_ACTIVATION.md). If the destination is unavailable or uncertain, perform read-only work only and STOP before a claim. This policy overrides all older paths/examples below. Do not put private ledger names, task catalogs, credentials, sessions or backup records into this public repository.
+
+No scheduler is deployed; the integrated CLI supports a supervised, locally operated pilot, not automatic ChatGPT chat launching. Do not claim live two-chat success based on synthetic rehearsals.
 
 Read `README.md`, `docs/PRIVATE_PILOT.md`, `config/fleet.private.json`, `docs/SECURITY.md` and the selected target repository's `AGENTS.md`, roadmap, issue/PR list and relevant source before any work. The legacy pilot catalogs refer to targets with mixed visibility. **This orchestrator repository is now PUBLIC**; review [docs/PUBLIC_TRANSITION.md](docs/PUBLIC_TRANSITION.md) before handling any coordination files or inviting external agents.
 
@@ -16,7 +20,7 @@ Agents may be independent ChatGPT/Codex conversations but share authorized GitHu
 
 ## Critical task-claim rules
 1. Read `docs/PRIVATE_PILOT.md`. Only work on explicitly triaged, non-overlapping issues.
-2. To claim issue N in owner/repo, attempt GitHub `create_file` (not update!) on `coordination/claims` branch of this repository at `claims/owner__repo/issue-N.json`, with a unique session ID and task metadata.
+2. To claim a **new owner-approved** issue N in owner/repo, first verify the independently selected **PRIVATE coordination repository**, historical submission preservation and local owner task-catalog approval. Only then use GitHub `create_file` (never update!) on that PRIVATE repository's `coordination/claims` branch at `claims/owner__repo/issue-N.json`, with a unique session ID and task metadata. Never use this public source repository for claims.
 3. Only successful creation grants exclusive ownership of that **one task key**. A failed create, an existing file or an API error means **no claim**. Select another task; do not overwrite.
 4. Claim does NOT prove safe ownership of overlapping files across different task IDs. Inspect open PRs, scope and resource conflicts before edits.
 5. There is no automatic TTL reclaim; stale claims require owner-mediated review. Do not interpret advisory expiry as an unlocked task.
@@ -32,7 +36,7 @@ Target-repository rules always apply. No direct push to main, automatic merge, p
 
 ## Executable private task queue
 
-Read `config/pilot-tasks.json` and `docs/CLI_PRIVATE_PILOT.md`. Every pilot reviewer must claim their issue before a review, just as developers must claim before code edits. The five initial tasks are reviewer-only and **do not authorize source changes**. `claim` requires a task explicitly marked `ready`; do not work on arbitrary issues. Local Codex may use the Node CLI; a GitHub-connected ChatGPT must use the exact same claim path and ownership rules through connector actions. A task claim is exclusive per issue key only, not across modules or files shared by different issues.
+`config/pilot-tasks.json` and `docs/CLI_PRIVATE_PILOT.md` document the **historical seven tasks**, all submitted; they are not an eligible queue. New tasks must come from the owner-approved local JSON catalog outside this public checkout, with matching SHA-256 and an independently verified PRIVATE ledger. A reviewer/developer may claim only a newly approved task with a permitted role, reviewed scope and no competing ownership; do not work on arbitrary issues. Local Codex may use the Node CLI; a GitHub-connected ChatGPT must use the exact same claim path and ownership rules through connector actions. A task claim is exclusive per issue key only, not across modules or files shared by different issues.
 
 
 ## Next task and continuity
@@ -45,7 +49,7 @@ For an explicitly approved `access: "write"` task, read [docs/RESOURCE_LOCKS.md]
 
 ## Trial launch and terminal submission status
 
-For the first ChatGPT pilot, use `docs/LAUNCH_PRIVATE_MVP.md` (feature branch) and only five read-only reviewer assignments. A finished review is **submitted**, not DONE: publish real issue/PR review findings, save the owner handoff, then create a `submissions/OWNER__REPO/issue-N.json` marker on `coordination/claims` **before** releasing the issue claim. Never delete that marker as part of normal release. The CLI `submit --confirm` performs these steps with ownership validation; connector-only agents follow the documented equivalent. A new chat must not claim an already-submitted task. If the process fails between submission and release, the original owner or maintainer must reconcile it; do not steal the lock.
+`docs/LAUNCH_PRIVATE_MVP.md` describes an already-completed historical review wave, not a live task queue. **Do not reassign its five reviewer tasks or two subsequent developer tasks.** For the new two-chat pilot, follow `docs/MVP_ACTIVATION.md` and the privately approved new catalog. A finished review is **submitted**, not DONE: publish real issue/PR review findings, save the owner handoff, then create a `submissions/OWNER__REPO/issue-N.json` marker on `coordination/claims` **before** releasing the issue claim. Never delete that marker as part of normal release. The CLI `submit --confirm` performs these steps with ownership validation; connector-only agents follow the documented equivalent. A new chat must not claim an already-submitted task. If the process fails between submission and release, the original owner or maintainer must reconcile it; do not steal the lock.
 
 ## Central monitoring and evidence review
 
@@ -53,7 +57,7 @@ Before a new wave of chats, run `fleet-status` or inspect the immutable private 
 
 ## Supervised developer pilot, wave 2
 
-Read `docs/LAUNCH_DEVELOPERS_WAVE2.md` before selecting a developer task. Only two curated `pilot_wave:2`, `access:write` issues currently qualify. Each requires a verified **resource-first** lock, then issue claim, exact file-root scope compliance, new feature branch from the latest upstream PR head and a **draft stacked PR** against that PR's branch. No direct writes to active PR branches. Stop rather than expanding file scope. Existing five submitted reviewer findings remain pending independent review.
+`docs/LAUNCH_DEVELOPERS_WAVE2.md` documents historical developer tasks now submitted and is not an active allocation source. For the next developer pilot, require **two new** owner-reviewed non-overlapping `access:write` issues from the SHA-approved local catalog. Each requires a verified **resource-first** lock, then issue claim, exact file-root scope compliance, new feature branch from the latest upstream PR head and a **draft stacked PR** against that PR's branch. No direct writes to active PR branches. Stop rather than expanding file scope. Existing five submitted reviewer findings remain pending independent review.
 
 ## Required PR scope gate for write tasks
 
@@ -73,7 +77,7 @@ Review [docs/REVIEW_GATES.md](docs/REVIEW_GATES.md) and run private `fleet-statu
 
 ## Native checks from pinned private GitHub snapshots
 
-Before claiming that the private coordinator itself has passed `npm run check`, use [docs/NATIVE_VALIDATION.md](docs/NATIVE_VALIDATION.md). The Node-only `scripts/verify-pilot.mjs` is a **manually invoked** read-only downloader/validator for this exact private repo and feature branch, not an unattended agent or GitHub Action. It requires a read-scoped token in the operator's local environment and refuses unsafe/truncated Git snapshots. Never paste API credentials into chat/PRs or forward them to arbitrary test code. A native unit test of this downloader is not proof that the entire coordinator branch passed its full suite. A passing result is still NOT PR approval or merge authorization.
+Before claiming that the private coordinator itself has passed `npm run check`, use [docs/NATIVE_VALIDATION.md](docs/NATIVE_VALIDATION.md). The Node-only `scripts/verify-pilot.mjs` is an optional manually invoked read-only downloader/validator; validate its current branch and public/private policy before use. It is not an unattended agent or a deployment. It requires a read-scoped token in the operator's local environment and refuses unsafe/truncated Git snapshots. Never paste API credentials into chat/PRs or forward them to arbitrary test code. A native unit test of this downloader is not proof that the entire coordinator branch passed its full suite. A passing result is still NOT PR approval or merge authorization.
 
 ## Do not confuse unsigned native receipts with independent acceptance
 
@@ -93,7 +97,7 @@ The read-only `check-private-destination OWNER/REPO` command is a planning aid o
 
 ## Public-to-private cutover planning is read-only
 
-The `plan-private-cutover OWNER/PRIVATE-REPO` command is a **metadata-only** planning aid under issue #24, stacked on the private-destination preflight PR. It may be run only with locally managed read access and must never copy or expose private claim contents, create destination branches or bypass the public legacy-ledger guard. Every output is `ready_to_migrate:false`, `writes_enabled:false`. Do not claim migration is authorized or complete. See [docs/PRIVATE_CUTOVER_PLAN.md](docs/PRIVATE_CUTOVER_PLAN.md) and owner migration issue #19.
+The `plan-private-cutover OWNER/PRIVATE-REPO` command is an integrated **metadata-only** planning aid under issue #24. It may be run only with locally managed read access and must never copy or expose private claim contents, create destination branches or bypass the public legacy-ledger guard. Every output is `ready_to_migrate:false`, `writes_enabled:false`. Do not claim migration is authorized or complete. See [docs/PRIVATE_CUTOVER_PLAN.md](docs/PRIVATE_CUTOVER_PLAN.md) and owner migration issue #19.
 
 ## Offline backup rehearsal is not a migration authorization
 
