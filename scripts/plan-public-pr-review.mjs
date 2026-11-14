@@ -122,19 +122,19 @@ export async function main(args=process.argv.slice(2),{
   inspect=inspectLivePublicTopology
 }={}) {
   if (args.length===1 && args[0]==='--help') {
-    process.stdout.write('GET-only manual PR review waves: node scripts/plan-public-pr-review.mjs\\n');
+    process.stdout.write('GET-only manual PR review waves: node scripts/plan-public-pr-review.mjs\n');
     return 0;
   }
   if (args.length || typeof inspect !== 'function')
     throw new Error('Public PR review command takes no arguments.');
   const plan = planPublicPrReviewWaves(await inspect());
-  process.stdout.write(JSON.stringify(plan,null,2)+'\\n');
+  process.stdout.write(JSON.stringify(plan,null,2)+'\n');
   return 0;
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   main().then(code=>{process.exitCode=code;}).catch(()=>{
     // No raw GitHub response, private local path, branch or SHA in stderr.
-    process.stderr.write('ERROR: Public PR review topology blocked or unavailable.\\n');
+    process.stderr.write('ERROR: Public PR review topology blocked or unavailable.\n');
     process.exitCode=2;
   });
 }
