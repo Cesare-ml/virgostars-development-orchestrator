@@ -36,8 +36,9 @@ export function expectedEarlierResumes(waves) {
 export function verifyWaveReport(report, waves) {
   const expectedResumes = expectedEarlierResumes(waves);
   const agents = waves.reduce((sum, size) => sum + size, 0);
-  if (!report || typeof report !== 'object' || Array.isArray(report)) {
-    throw new Error('Missing synthetic wave report.');
+  if (!report || typeof report !== 'object' || Array.isArray(report) ||
+      ![Object.prototype, null].includes(Object.getPrototypeOf(report))) {
+    throw new Error('Missing or invalid synthetic wave report.');
   }
   if (!Array.isArray(report.arrival_batch_sizes) ||
       report.arrival_batch_sizes.length !== waves.length ||
@@ -66,10 +67,43 @@ export function verifyWaveReport(report, waves) {
     real_multi_chat_concurrency_proven: false,
     automatic_merges_or_deploys: 0
   };
+  // Synthetic adapters may expose zero-valued state-reopen diagnostics in
+  // their default (no-reopen) mode. Do not accept positive recovery claims in
+  // this matrix, which has not requested or verified any reconstruction.
+  const optionalNoReopen = {
+    reopened_after_wave: null,
+    synthetic_adapter_recreated: false,
+    restored_session_resumes_verified: 0,
+    restored_ledger_entries_verified: 0,
+    real_external_storage_durability_proven: false
+  };
+  const allowed = new Set([
+    ...Object.keys(required), 'arrival_batch_sizes',
+    'synthetic_ledger_mutations', ...Object.keys(optionalNoReopen)
+  ]);
+  // Reflect.ownKeys also catches symbol and non-enumerable properties that
+  // JSON.stringify would silently discard. Never accept unrecognized flags
+  // asserting live permission, merge/deployment or leaked session metadata.
+  for (const field of Reflect.ownKeys(report)) {
+    const descriptor = Object.getOwnPropertyDescriptor(report, field);
+    if (!allowed.has(field) || !descriptor?.enumerable ||
+        !Object.hasOwn(descriptor, 'value')) {
+      throw new Error('Unexpected synthetic wave evidence field.');
+    }
+  }
   for (const [field, value] of Object.entries(required)) {
-    if (report[field] !== value) {
+    if (!Object.hasOwn(report, field) || report[field] !== value) {
       throw new Error('Invalid synthetic wave evidence: ' + field);
     }
+  }
+  for (const [field, value] of Object.entries(optionalNoReopen)) {
+    if (Object.hasOwn(report, field) && report[field] !== value) {
+      throw new Error('Invalid synthetic no-reopen evidence: ' + field);
+    }
+  }
+  if (!Object.hasOwn(report, 'arrival_batch_sizes') ||
+      !Object.hasOwn(report, 'synthetic_ledger_mutations')) {
+    throw new Error('Incomplete synthetic wave report fields.');
   }
   if (!Number.isSafeInteger(report.synthetic_ledger_mutations) ||
       report.synthetic_ledger_mutations < 6 * agents) {
