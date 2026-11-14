@@ -22,7 +22,7 @@ An independently held GitHub **PRIVATE** repository and its `coordination/claims
 
 **Not yet completed:** an independent local full Git mirror backup, owner-local token and SHA-approved new task queue, running the integrated `verify-private-activation` CLI from the owner machine, and two **real** separate ChatGPT agent sessions completing claim → scoped draft PR → submission → release. A same-repository rollback branch is not an offsite backup. Do not auto-launch, reassign historic tasks or bypass the review gate.
 
-Read [MVP activation](docs/MVP_ACTIVATION.md), [owner-local setup check](docs/OWNER_ALPHA_LOCAL_CHECK.md), [first owner alpha](docs/FIRST_OWNER_ALPHA.md) and [owner task queue](docs/OWNER_TASK_QUEUE.md) for the next owner-only steps.
+Read [post-migration first run](docs/OWNER_ALPHA_POST_MIGRATION.md), [MVP activation](docs/MVP_ACTIVATION.md), [owner-local setup check](docs/OWNER_ALPHA_LOCAL_CHECK.md), [first owner alpha](docs/FIRST_OWNER_ALPHA.md) and [owner task queue](docs/OWNER_TASK_QUEUE.md) for the next owner-only steps.
 
 **Status: PUBLIC repository, owner-operated pilot.** GitHub visibility changed on 2026-11-12; external write-task enrollment remains disabled. Legacy private-pilot records are still present and require owner-controlled review/migration before broad public onboarding. See [public transition and CI safety](docs/PUBLIC_TRANSITION.md).
 
