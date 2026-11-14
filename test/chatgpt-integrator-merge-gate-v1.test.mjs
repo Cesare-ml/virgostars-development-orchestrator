@@ -14,13 +14,13 @@ function evidence() {
       changed_files:1,head:{sha:A,repo:{full_name:REPO}},
       base:{sha:B,ref:'main',repo:{full_name:REPO}}},
     approval:{verified:true,manifest_sha:C,owner_reviewed:true},
-    session:{integrator_id:'chat-aaaa-bbbb',author_id:'chat-cccc-dddd',
+    session:{integrator_id:'chat-12345678-1234-4123-8123-123456789abc',author_id:'chat-22345678-1234-4123-8123-123456789abc',
       independent_identity_verified:true},
     reviews:[{state:'APPROVED',head_sha:A,source:'github',
-      reviewer_session:'chat-eeee-ffff',independence_verified:true}],
+      reviewer_session:'chat-32345678-1234-4123-8123-123456789abc',independence_verified:true}],
     checks:[{name:'test',source:'github',conclusion:'success',head_sha:A}],
     requiredChecks:['test'],
-    files:[{filename:'src/example.mjs'}],
+    files:[{filename:'src/example.mjs',status:'added'}],
     dependencies:[{merged:true,merge_sha:D,target_branch:'main'}],
     conflicts:[],
     discussions:{from_github:true,unresolved_count:0,head_sha:A},
@@ -83,7 +83,7 @@ test('rejects reviews from own agent or unrelated commit',()=>{
 });
 test('rejects sensitive workflow, environment and licensing changes',()=>{
   for(const filename of ['.github/workflows/release.yml','config/.env.production','LICENSE']) {
-    const e=evidence(); e.files=[{filename}];
+    const e=evidence(); e.files=[{filename,status:'modified'}];
     blocked(e,'SENSITIVE_CHANGE_REQUIRES_OWNER');
   }
 });
@@ -91,7 +91,7 @@ test('rejects incomplete or duplicated GitHub changed-file inventories',()=>{
   const e=evidence(); e.pr.changed_files=2;
   blocked(e,'INCOMPLETE_OR_INVALID_FILE_INVENTORY');
   const d=evidence(); d.pr.changed_files=2;
-  d.files=[{filename:'src/test.mjs'},{filename:'src/TEST.mjs'}];
+  d.files=[{filename:'src/test.mjs',status:'added'},{filename:'src/TEST.mjs',status:'added'}];
   blocked(d,'DUPLICATE_CHANGED_PATHS');
 });
 test('rejects pending stacked PR dependencies or overlapping branches',()=>{
