@@ -34,6 +34,8 @@ Each scenario calls the existing `runOfflineFleetStress` implementation, without
 
 The verifier fails closed unless the result matches its exact declared agent/wave sizes, prior-chat resume count, unique claims and resource partitions, submitted markers, no re-offered submitted task, zero remaining issue/resource locks and zero real GitHub requests. It also requires explicit false assertions for private-ledger verification, real multi-chat proof and automatic merges/deployments. It prints *only* aggregate matrix results.
 
+**Strict report boundary:** every required field must be an own data property, and unexpected enumerable, hidden or symbol fields are rejected before success is reported. This includes any unrecognized claim of merge authority, deployment or private session/task evidence. For compatibility with independently reviewed synthetic state-reopen candidates, the verifier optionally permits only five explicitly zero/false/null *no-reopen* diagnostics; positive recovery/durability claims are rejected because the wave matrix itself does not request or test reconstruction. A stricter schema guards against misleading results; it does not make the in-memory simulator an independent verifier of real-world behavior.
+
 This matrix is complementary to [the 10+10 continuity rehearsal](OFFLINE_CHAT_BATCHES.md). The independent in-progress state-reopen work (issue #88) can eventually be verified separately; this matrix intentionally does not modify its branch, existing CLI or active simulator.
 
 ## Limitations and integration
