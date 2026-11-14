@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { GitHubError } from './github.mjs';
 import { resourceKey, resourceMatches, validateTaskCatalog } from './resources.mjs';
+import { assertResumableOwnerClaim } from './claim-resume-integrity.mjs';
 
 const VALID_REPO = /^[a-z\d][a-z\d_.-]*\/[a-z\d][a-z\d_.-]*$/i;
 const VALID_SESSION = /^(chat|codex)-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -33,6 +34,31 @@ function store(config) {
 function isOwner(current,session,repo,issue) {
   return current?.data?.session_id===session && current.data.target_repository===repo && current.data.issue_number===issue;
 }
+
+/**
+ * GitHub acknowledging a Contents PUT is not proof that this agent owns a
+ * usable task/resource pair. Read both records back from the current PRIVATE
+ * branch and demand the exact just-written receipt. A lagging or ambiguous
+ * GitHub read must leave a lock for owner reconciliation, not authorize edits.
+ */
+async function verifyNewClaimReceipt({api,config,repo,issue,data}) {
+  let observed;
+  try { observed=await status({api,config,repo,issue}); }
+  catch { throw new Error('New claim cannot be independently verified; stop and reconcile private locks.'); }
+  const saved=observed?.claim;
+  const rootsMatch=JSON.stringify(saved?.resource_roots)===
+    JSON.stringify(data.resource_roots);
+  if(observed?.status!=='claimed'||observed.submitted||
+     !observed.blob_sha||!saved||
+     saved.session_id!==data.session_id ||
+     saved.target_repository!==repo || saved.issue_number!==issue ||
+     saved.role!==data.role || saved.access!==data.access ||
+     saved.resource_scope_id!==data.resource_scope_id || !rootsMatch ||
+     saved.claimed_at!==data.claimed_at || saved.state!=='claimed' ||
+     saved.branch!==data.branch || saved.last_handoff!==null)
+    throw new Error('New claim readback inconsistent; do not work or automatically release locks.');
+  return saved;
+}
 export async function status({api,config,repo,issue}) {
   const {ledger,branch}=store(config);
   const [current,submission]=await Promise.all([
@@ -46,6 +72,16 @@ export async function status({api,config,repo,issue}) {
     ? {status:'submitted',submission:submission.data}
     : {status:'unclaimed'};
   const data=current.data;
+  // A Git Contents path is not proof that the JSON inside it identifies the
+  // same issue. Corrupt or case/identity-conflicting records must block ALL
+  // same-session resume and queue scans, not be classified as a normal busy
+  // assignment to an unrelated agent.
+  if(!data||typeof data!=='object'||Array.isArray(data)||
+     data.schema_version!==2 ||
+     data.target_repository!==repo || data.issue_number!==issue ||
+     typeof data.session_id!=='string'||!VALID_SESSION.test(data.session_id)||
+     !['claimed','in_progress'].includes(data.state))
+    return {status:'inconsistent',reason:'invalid-claim-identity-or-state'};
   if(data.access==='write') {
     if(typeof data.resource_scope_id!=='string')
       return {status:'inconsistent',reason:'missing-resource-key'};
@@ -59,7 +95,7 @@ export async function status({api,config,repo,issue}) {
     submitted:!!submission,submission:submission?.data??null};
 }
 
-export async function claim({api,config,tasks,repo,issue,session,role='developer',branchName=null,now=()=>new Date().toISOString()}) {
+export async function claim({api,config,tasks,repo,issue,session,role='developer',branchName=null,beforeClaim=null,now=()=>new Date().toISOString()}) {
   assertSession(session);
   validateTaskCatalog(tasks);
   const task=approved(config,tasks,repo,issue);
@@ -80,13 +116,26 @@ export async function claim({api,config,tasks,repo,issue,session,role='developer
     if(observed.status==='inconsistent') throw new Error('Inconsistent active claim: manual recovery required.');
     if(isOwner(existing,session,repo,issue)) {
       if(observed.submitted) return {result:'submitted',task:repo+'#'+issue};
-      if(existing.data.access!==task.access ||
-        (task.access==='write' && (existing.data.resource_scope_id!==task.resource_scope.id ||
-          JSON.stringify(existing.data.resource_roots)!==JSON.stringify([...task.resource_scope.roots].sort()))))
-        throw new Error('Curated task scope changed during active assignment.');
-      return {result:'already-owned',claim:observed.claim};
+      if(observed.status!=='claimed')
+        throw new Error('Cannot resume an inconsistent or unverified claim.');
+      // Recheck against the FRESH ledger read, not the first possibly stale
+      // getClaim result. Identical session alone never grants ownership.
+      const resumed=assertResumableOwnerClaim({
+        claim:observed.claim,task,session
+      });
+      return {result:'already-owned',claim:resumed};
     }
     return {result:'busy',task:repo+'#'+issue};
+  }
+
+  // This optional callback is used by the SHA-approved PRIVATE GitHub
+  // catalog mode only. It inspects the live target PR and changed files
+  // BEFORE the first write-resource create. Existing owned claims resume
+  // without acquiring a new resource or running a fresh admission.
+  if(beforeClaim!==null) {
+    if(typeof beforeClaim!=='function')
+      throw new Error('Invalid live write-task admission gate.');
+    await beforeClaim(task);
   }
 
   const claimedAt=now();
@@ -116,7 +165,10 @@ export async function claim({api,config,tasks,repo,issue,session,role='developer
   }
   try {
     await api.createClaim(ledger,path,branch,data);
-    return {result:'acquired',claim:data};
+    // Failure is intentionally NOT followed by automatic lock deletion:
+    // the PUT may have succeeded while GitHub reads are stale/ambiguous.
+    const verified=await verifyNewClaimReceipt({api,config,repo,issue,data});
+    return {result:'acquired',claim:verified};
   } catch(error) {
     // Ambiguous network errors deliberately leave the resource reserved.
     if(!(error instanceof GitHubError) || ![409,422].includes(error.status))
@@ -124,8 +176,17 @@ export async function claim({api,config,tasks,repo,issue,session,role='developer
     const saved=await api.getClaim(ledger,path,branch);
     if(isOwner(saved,session,repo,issue)) {
       const observed=await status({api,config,repo,issue});
-      if(observed.status!=='claimed') throw new Error('Claim exists but resource is inconsistent.');
-      return {result:'already-owned',claim:observed.claim};
+      if(observed.status!=='claimed'||observed.submitted)
+        throw new Error('Contended claim ownership or resource scope inconsistent; reconcile manually.');
+      let resumed;
+      try {
+        resumed=assertResumableOwnerClaim({
+          claim:observed.claim,task,session
+        });
+      } catch {
+        throw new Error('Contended claim ownership or resource scope inconsistent; reconcile manually.');
+      }
+      return {result:'already-owned',claim:resumed};
     }
     if(newResource) {
       const current=await api.getClaim(ledger,resourcePath,branch);

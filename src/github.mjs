@@ -112,6 +112,14 @@ export function makeGitHubClient({ token, fetchImpl = fetch, baseUrl = 'https://
         throw new Error('Invalid private destination branch request.');
       return request('GET','/repos/'+repo+'/git/ref/heads/'+branch);
     },
+    // Only the reviewed PRIVATE repository's main branch is an eligible
+    // owner-catalog approval source. No ref supplied by an agent is accepted.
+    async getOwnerCatalogRef(repo) {
+      if(typeof repo!=='string'||
+         !/^[A-Za-z0-9][A-Za-z0-9_.-]*\/[A-Za-z0-9][A-Za-z0-9_.-]*$/.test(repo))
+        throw new Error('Invalid owner catalog repository.');
+      return request('GET','/repos/'+repo+'/git/ref/heads/main');
+    },
     async getGitCommit(repo,sha) {
       if(typeof repo!=='string'|| !/^[A-Za-z0-9][A-Za-z0-9_.-]*\/[A-Za-z0-9][A-Za-z0-9_.-]*$/.test(repo)||
          !/^[a-f0-9]{40}$/i.test(sha))

@@ -9,6 +9,10 @@ const MAX_BYTES=131072;
 const SHA256=/^[a-f0-9]{64}$/;
 const LEGACY_PATH=new URL('../config/pilot-tasks.json',import.meta.url);
 const ROOT=fileURLToPath(new URL('..',import.meta.url));
+// Owner agents may develop the orchestrator itself, but ONLY through the verified
+// separate PRIVATE ledger and an explicitly SHA-approved, disjoint new task.
+export const OWNER_SELF_REPOSITORY='Cesare-ml/virgostars-development-orchestrator';
+
 const ALLOWED_TASK_FIELDS=new Set([
   'repository','issue','status','role','access','pilot_wave','title',
   'scope','resource_scope','upstream_pr','upstream_branch','instructions'
@@ -37,7 +41,10 @@ export function validateOwnerTaskCatalog(catalog,legacyTasks=[]) {
 
   const historical=new Set(legacyTasks.map(task=>
     task.repository.toLowerCase()+'#'+task.issue));
-  const permittedRepositories=new Set(legacyTasks.map(task=>task.repository.toLowerCase()));
+  const permittedRepositories=new Set([
+    ...legacyTasks.map(task=>task.repository.toLowerCase()),
+    OWNER_SELF_REPOSITORY.toLowerCase()
+  ]);
   for(const task of catalog.tasks) {
     if(!exactKeys(task,ALLOWED_TASK_FIELDS) ||
        task.status!=='ready' ||
@@ -54,6 +61,11 @@ export function validateOwnerTaskCatalog(catalog,legacyTasks=[]) {
     if(typeof task.repository!=='string'||!Number.isSafeInteger(task.issue)||
        task.issue<1||!permittedRepositories.has(task.repository.toLowerCase()))
       blocked('the new task targets a repository outside the approved first fleet.');
+    // Never allow case-only aliases of the public source repository to
+    // manufacture different Git Contents claim/resource lock paths.
+    if(task.repository.toLowerCase()===OWNER_SELF_REPOSITORY.toLowerCase()&&
+       task.repository!==OWNER_SELF_REPOSITORY)
+      blocked('orchestrator self tasks require canonical repository spelling.');
     if(historical.has(task.repository.toLowerCase()+'#'+task.issue))
       blocked('new tasks may not reuse the original seven submitted issues.');
     // A new write task must have a reviewed base dependency; never assume
