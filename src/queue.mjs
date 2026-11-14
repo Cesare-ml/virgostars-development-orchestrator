@@ -18,23 +18,30 @@ export async function claimNext({ api, config, tasks, session, role, repository 
     r => r.full_name === t.repository && r.pilot_enabled));
 
   const submitted = new Set();
-  // Resume a previously acquired task before considering new claims; even
-  // tasks removed from READY remain owned until explicitly released.
+  const owned = [];
+  // Inspect the full curated fleet before resuming or assigning anything:
+  // returning the first owned claim can conceal a second active assignment
+  // using the same session ID. Submitted-but-not-released claims also count.
   for (const task of inFleet) {
     const current = await status({ api, config, repo: task.repository, issue: task.issue });
-    if (current.status === 'submitted' || current.submitted) {
-      submitted.add(task.repository+'#'+task.issue);
-      continue;
-    }
     if (current.status === 'inconsistent')
       throw new Error('Inconsistent active task claim; manual recovery required.');
+    if (current.status === 'submitted' || current.submitted)
+      submitted.add(task.repository+'#'+task.issue);
     if (current.status === 'claimed' && current.claim.session_id === session) {
       if (current.claim.access !== task.access ||
         (task.access === 'write' && (current.claim.resource_scope_id !== task.resource_scope.id ||
           JSON.stringify(current.claim.resource_roots) !== JSON.stringify([...task.resource_scope.roots].sort()))))
         throw new Error('Curated task resource scope changed; manual reconciliation required.');
-      return { result: 'already-owned', claim: current.claim };
+      owned.push({ claim:current.claim,submitted:!!current.submitted });
     }
+  }
+  if (owned.length > 1)
+    throw new Error('Session has multiple active task claims; manual reconciliation required.');
+  if (owned.length === 1) {
+    if (owned[0].submitted)
+      throw new Error('Submitted task still has an active claim; original owner must finish release or request manual recovery.');
+    return { result:'already-owned',claim:owned[0].claim };
   }
 
   let contended = 0;
