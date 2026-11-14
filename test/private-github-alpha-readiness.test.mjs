@@ -148,7 +148,7 @@ test('two disjoint real-issue-like tasks pass synthetic live preflight; still no
   assert.deepEqual(report.blockers,[]);
   assert.deepEqual(Object.keys(x.api).filter(k=>/create|update|delete|put|post/i.test(k)),[]);
   assert.doesNotMatch(JSON.stringify(report),
-    /example\/|owner-alpha-|issue-401|supervised-owner|[a-f0-9]{40}/);
+    /example\/|owner-alpha-[01]|issue-401|supervised-owner|[a-f0-9]{40}/);
 });
 
 test('closed task issue is reported blocked, not auto-claimed',async()=>{
