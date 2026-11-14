@@ -1,19 +1,22 @@
 # VirgoStars Development Orchestrator
 
-## Operational MVP activation (14 November 2026)
+## Owner-operated alpha: source integrated, private ledger still required (2026-11-14)
 
-### Integration checkpoint — 14 November 2026
+Selected merged PRs: **#1, #23, #25, #27, #30, #33, #35, #90, #80, #96, #114, #77, #59, #60, #62, #115, #116 and #117**. The Node CLI, scoped task locks, duplicate-session detection, pinned ledger integrity, read-only alpha doctor and owner-local verified backup/copy planner are now on `main`. Individual integration heads passed Node 20/22 tests. **No deployed scheduler or live multi-chat coordination is asserted.**
 
-**Ten selected PRs have been merged to `main`:** #1, #23, #25, #27, #30, #33, #35, #90, #80 and #96. The base CLI, private-destination validation, owner activation gates, local curated task queue, read-only alpha doctor, offline two-agent rehearsal, submission-evidence guards, tokenless smoke, and independent local-process race test are present in the default branch.
+### Run the safe commands now
 
-**Not yet active:** a new PRIVATE ledger has not been verified, the seven historical markers have not been reconciled into it, and two real independent ChatGPT sessions have not completed a claim-to-release pilot. Test success on individual merged PR heads does not prove the full composed `main` tree. Run `npm run check` on a fresh checkout and review the private-ledger cutover before enabling live tasks.
+```sh
+npm run check
+node bin/vs-agent.mjs public-discover
+node bin/vs-agent.mjs rehearse-two-agents
+```
 
-**Do not merge competing recovery variants (#91/#94/#95) together.** Their synthetic behavior is optional for the first supervised two-agent pilot; no auto-dispatch or auto-merge is enabled.
+### Owner-only migration preparation
 
+Create a **separate PRIVATE GitHub repository** first, never the old public `coordination/claims` branch. With a least-privilege GitHub token configured privately and the destination approved locally, the owner can run `check-private-destination`, `export-verified-ledger` to a protected local JSON outside this checkout and `plan-ledger-copy` to review the missing/conflicting seven historical submissions. These commands do **not** transfer any submissions. Follow [MVP activation](docs/MVP_ACTIVATION.md), [verified local export](docs/VERIFIED_LOCAL_LEDGER_EXPORT.md), [offline copy-only plan](docs/OFFLINE_LEDGER_COPY_PLAN.md) and [first owner alpha](docs/FIRST_OWNER_ALPHA.md).
 
-The immediate release target is a **supervised two-chat pilot**, not a deployed 40-agent scheduler. The repository is public, and the legacy private claim operations deliberately fail closed until the owner validates a separate PRIVATE ledger. **Do not write owner-only claims to the historical public coordination branch.**
-
-Read the [MVP activation and PR integration guide](docs/MVP_ACTIVATION.md). After integration, safe local entry points are `npm run check`, `node bin/vs-agent.mjs --help`, and tokenless `node bin/vs-agent.mjs public-discover`.
+**Remaining hard gates:** provision/verify private ledger; independently backup, reconcile and copy the historical seven submissions; approve a fresh private task queue; supervise two *real* independent ChatGPT chats through claim → scoped draft PR → submission → release. Do not merge competing snapshot variants #91/#94/#95 together. No autonomous browser chat start, auto-merge or deployment.
 
 **Status: PUBLIC repository, owner-operated pilot.** GitHub visibility changed on 2026-11-12; external write-task enrollment remains disabled. Legacy private-pilot records are still present and require owner-controlled review/migration before broad public onboarding. See [public transition and CI safety](docs/PUBLIC_TRANSITION.md).
 
@@ -29,7 +32,7 @@ The initial objective is to let many independent ChatGPT and Codex conversations
 **New: [two-agent launch readiness doctor](docs/ALPHA_READINESS.md)** — after setting a reviewed PRIVATE ledger and a SHA-approved local task file, run `node bin/vs-agent.mjs alpha-doctor`. This is a read-only aggregate audit of historical submission preservation, available new tasks, open issues, upstream PRs and competing changed paths. It does not assign tasks, merge PRs or authorize an unattended fleet. A private ledger is still required for real use.
 
 
-A guarded first-alpha CLI path and a locally SHA-approved task queue are now proposed in a **stacked draft**, not merged into main. See [FIRST_OWNER_ALPHA.md](docs/FIRST_OWNER_ALPHA.md) for the owner-only Windows quickstart: prepare a separate PRIVATE GitHub ledger, preserve the seven original submitted records byte-for-byte, run the read-only `verify-private-activation` check and only then select the private repository through two matching local environment variables. The old public claim store remains blocked. No automatic migration, hosted scheduler or authorization for public agent writes is provided. Do not reassign already-submitted historic tasks. **New work can be curated in an owner-held local JSON outside the public repository**, approved by SHA-256 via the offline `fingerprint-tasks` command. See [OWNER_TASK_QUEUE.md](docs/OWNER_TASK_QUEUE.md); no automatic task enrollment or permission grants.
+The guarded first-alpha CLI path and the locally SHA-approved task queue are **already on main**, but must remain blocked until the owner approves a separate PRIVATE ledger. See [FIRST_OWNER_ALPHA.md](docs/FIRST_OWNER_ALPHA.md) for the owner-only Windows quickstart: prepare a separate PRIVATE GitHub ledger, preserve the seven original submitted records byte-for-byte, run the read-only `verify-private-activation` check and only then select the private repository through two matching local environment variables. The old public claim store remains blocked. No automatic migration, hosted scheduler or authorization for public agent writes is provided. Do not reassign already-submitted historic tasks. **New work can be curated in an owner-held local JSON outside the public repository**, approved by SHA-256 via the offline `fingerprint-tasks` command. See [OWNER_TASK_QUEUE.md](docs/OWNER_TASK_QUEUE.md); no automatic task enrollment or permission grants.
 
 ## Future design
 

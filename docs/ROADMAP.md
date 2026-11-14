@@ -1,22 +1,22 @@
 # Roadmap
 
-## Immediate MVP: integrate and run two real chats (14 November 2026)
+## Release checkpoint: use the owner MVP (14 November 2026)
 
-### Ten-PR integration checkpoint
-Merged to main: #1, #23, #25, #27, #30, #33, #35, #90, #80, #96. Operational readiness is **not yet confirmed**: private ledger migration and two independent live chats are outstanding.
+**18 PRs merged into `main`** through #117, including exclusive-task safety, private-readiness controls, duplicate session audits, Git blob integrity, an owner-local verified historical submission backup and an SHA-bound offline copy-only planner. Exact integration PR-head Node 20/22 checks succeeded; no real two-chat workload has been verified. See [MVP activation](MVP_ACTIVATION.md).
 
+### P0 remaining — unblock actual users
 
-**Current priority:** stop feature proliferation and make the owner-operated alpha usable. See [MVP activation](MVP_ACTIVATION.md). The existing public historical claim ledger is not authorized for private operations; do not bypass the private visibility gate.
+- [x] Integrate the first GitHub-backed owner CLI and a supervised two-agent synthetic rehearsal.
+- [x] Reject multiple active session ownership, malformed/case-aliased resource claims and corrupt ledger snapshots.
+- [x] Supply read-only private destination checks, historical local backup export and offline copy-only comparison tools.
+- [ ] Owner creates an independently verified **PRIVATE** coordination repository and a `coordination/claims` branch; never put private records in public history.
+- [ ] Owner takes full repository backups, reviews and performs a safe copy-only transfer of seven historic submission markers, then runs `verify-private-activation`.
+- [ ] Owner approves two new disjoint local developer tasks with an exact SHA-256 and passes `alpha-doctor`.
+- [ ] Run two distinct actual GitHub-connected chats (different session IDs) through a verified claim/handoff/submit/release; inspect and reconcile every lock.
+- [ ] Only after that, test waves of 5–10, 20 and 40 **real** sessions; measure rate limits, interruptions, lock leaks and conflicts.
+- [ ] Resolve redundant draft PR alternatives individually; do not merge all overlapping implementations.
 
-- [x] Merge a reviewed, passing base MVP PR #1 into `main` (merge `1b31b62503c5`; Node 20/22 CI succeeded on the exact PR head). Default-branch local smoke is still an operator check.
-- [x] Integrate the selected non-overlapping MVP chain #23, #25, #27, #30, #33, #35, plus #90, #80, #96, with passing exact PR-head Node 20/22 checks. Full composed `main` test evidence remains to be verified.
-- [ ] Resolve duplicate alternatives (notably #91/#94/#95) by selecting a single canonical change, not merging all.
-- [ ] Establish a separately confirmed PRIVATE ledger, reconcile historical submissions privately and update only reviewed private operator configuration.
-- [ ] Complete two live independent ChatGPT sessions with unique IDs, exclusive task/resource ownership, scoped draft PRs, evidence, handoff, submitted markers and release.
-- [ ] Review results independently, then validate 5–10 sessions, 20 sessions and 40 sessions in measured waves.
-- [ ] Defer hosted scheduler, PostgreSQL, auto-restart and external agent enrollment until the above passes.
-
-**Do not claim operational status solely from synthetic 40-session tests or merges.**
+**Out of scope now:** automated browser tab launch, unattended agent dispatch, public agent onboarding, database-backed TTL/fencing and automatic merges. They are not prerequisites for the two-chat owner alpha, and green synthetic tests do not prove them.
 
 ---
 
