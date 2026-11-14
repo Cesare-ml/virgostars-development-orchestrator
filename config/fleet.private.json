@@ -70,6 +70,14 @@
       "entry_point": "AGENTS.md",
       "pilot_enabled": true,
       "priority": "P0"
+    },
+    {
+      "full_name": "Cesare-ml/virgostars-development-orchestrator",
+      "visibility": "public",
+      "domain": "Owner-operated orchestrator source and regression tests",
+      "entry_point": "AGENTS.md",
+      "pilot_enabled": true,
+      "priority": "P0"
     }
   ],
   "future_public_registry": "config/fleet.json (not used for this private pilot)"
