@@ -5,6 +5,7 @@
 - [x] One public runbook ([AGENT_START.md](../AGENT_START.md)) and a ≤18-word start prompt for any ChatGPT/Codex chat.
 - [x] Work ladder resume → integrate → review → triage → develop → plan → audit, executable and tested in `src/agent-work.mjs`.
 - [x] Create-only claims on `agent-ledger` with per-step TTL takeover; WIP limits per repository; integrator merge gate.
+- [x] Published work queue (`agent-queue/queue.json`), random top-10 picks, claim archival, rate-limit stop rule.
 - [ ] Shrink the PR backlogs below each repository's `wip_limit` (triage + review).
 - [ ] Read-only CI for `astrological-charts` and `astrological-assets`, then switch them to `ci+review` merges.
 - [ ] Measure real throughput with 2 → 10 → 40 chats using `fleet-board`; tune TTLs and limits.

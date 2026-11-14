@@ -27,13 +27,16 @@ import { auditTaskPullRequest } from '../src/pr-audit.mjs';
 import { auditOpenPullRequestCollisions } from '../src/pr-collisions.mjs';
 import {assertLiveWriteTaskAdmission} from '../src/live-write-admission.mjs';
 import { readFile } from 'node:fs/promises';
-import { nextWork, fleetBoard, SESSION_RE } from '../src/agent-work.mjs';
-import { makeGet, loadSnapshot } from '../src/agent-github.mjs';
+import { nextWork, fleetBoard, workQueue, SESSION_RE } from '../src/agent-work.mjs';
+import { makeGet, loadSnapshot, loadClaimsFromDir } from '../src/agent-github.mjs';
+import { writeFile } from 'node:fs/promises';
 import { loadReport, boardMarkdown, reportMarkdown } from '../src/agent-report.mjs';
 
 const usage = [
   'VirgoStars agent fleet — Node.js 20+ (agents follow AGENT_START.md)',
   'node bin/vs-agent.mjs fleet-board  # GET-only overview of all registered repos (GITHUB_TOKEN recommended)',
+  'node bin/vs-agent.mjs fleet-queue [--output FILE]  # GET-only: build queue.json (what the fleet workflow publishes)',
+  'Add --ledger-dir DIR (local checkout of agent-ledger) to read claims without API calls.',
   'node bin/vs-agent.mjs fleet-report [--hours 2]  # GET-only: what agents did recently + rule violations',
   'Add --markdown to fleet-board / fleet-report for a Markdown summary.',
   'node bin/vs-agent.mjs next-work [--session chat-xxxxxxxx]  # GET-only: what AGENT_START.md says this chat should do now',
@@ -69,7 +72,7 @@ function parse(tokens) {
     const item=tokens[i];
     if (!item.startsWith('--')) {positionals.push(item);continue;}
     const name=item.slice(2);
-    if(!['kind','session','role','branch','summary','head-sha','confirm','repo','pr','output','hours','markdown'].includes(name))
+    if(!['kind','session','role','branch','summary','head-sha','confirm','repo','pr','output','hours','markdown','ledger-dir'].includes(name))
       throw new Error('Unknown option ' + item);
     if(name==='confirm') {flags.confirm=true;continue;}
     if(name==='markdown') {flags.markdown=true;continue;}
@@ -83,17 +86,24 @@ async function main() {
   const [command,...rest]=process.argv.slice(2);
   if(!command || command==='--help' || command==='help') {process.stdout.write(usage);return;}
   const {positionals,flags}=parse(rest);
-  if(command==='fleet-board' || command==='next-work' || command==='fleet-report') {
+  if(['fleet-board','next-work','fleet-report','fleet-queue'].includes(command)) {
     if(positionals.length) throw new Error(command+' takes no positional arguments.');
     if(flags.session && !SESSION_RE.test(flags.session)) throw new Error('Session must look like chat-xxxxxxxx (8 hex).');
     const fleet=JSON.parse(await readFile(new URL('../config/agent-fleet.json',import.meta.url),'utf8'));
+    const claims=flags['ledger-dir'] ? await loadClaimsFromDir(flags['ledger-dir'],fleet.ledger.root) : null;
+    if(command==='fleet-queue') {
+      const queue=workQueue(await loadSnapshot({fleet,get:makeGet(),claims}));
+      const text=JSON.stringify(queue,null,1)+'\n';
+      if(flags.output) await writeFile(flags.output,text); else process.stdout.write(text);
+      return;
+    }
     if(command==='fleet-report') {
       const hours=Number(flags.hours ?? 2);
       if(!(hours>0 && hours<=168)) throw new Error('--hours must be between 0 and 168.');
-      const report=await loadReport({fleet,get:makeGet(),hours});
+      const report=await loadReport({fleet,get:makeGet(),hours,claims});
       process.stdout.write(flags.markdown?reportMarkdown(report):JSON.stringify(report,null,2)+'\n');return;
     }
-    const snapshot=await loadSnapshot({fleet,get:makeGet(),session:flags.session||'chat-00000000'});
+    const snapshot=await loadSnapshot({fleet,get:makeGet(),session:flags.session||'chat-00000000',claims});
     const result=command==='fleet-board'
       ? {generated_at:new Date(snapshot.now).toISOString(),repos:fleetBoard(snapshot),
          live_claims:Object.values(snapshot.claims).filter(l=>{const c=l.slice().sort((a,b)=>a.attempt-b.attempt).at(-1);

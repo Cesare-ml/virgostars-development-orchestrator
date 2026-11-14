@@ -64,7 +64,7 @@ export function buildReport({ fleet, since, until, repos, claims }) {
   return { since, until, active_sessions: Object.keys(sessions).length, claims: claimCount, repos: perRepo, sessions, violations };
 }
 
-export async function loadReport({ fleet, get, hours = 2, now = Date.now() }) {
+export async function loadReport({ fleet, get, hours = 2, now = Date.now(), claims = null }) {
   const since = new Date(now - hours * 3600_000).toISOString();
   const until = new Date(now).toISOString();
   const repos = [];
@@ -83,7 +83,7 @@ export async function loadReport({ fleet, get, hours = 2, now = Date.now() }) {
       .filter(i => !i.pull_request && i.created_at >= since).map(i => ({ number: i.number, body: i.body ?? '' }));
     repos.push({ config, comments, prs, closedPrs, newIssues });
   }
-  const claims = await loadClaims(get, fleet.ledger);
+  claims ??= await loadClaims(get, fleet.ledger);
   return buildReport({ fleet, since, until, repos, claims });
 }
 

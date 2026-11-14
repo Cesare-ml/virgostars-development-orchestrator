@@ -103,37 +103,35 @@ export function eligibleIssues(repo, ctx) {
 }
 
 /**
+ * All open work, per ladder step, in priority order, excluding items with a live claim of another session.
+ * Session-specific filtering (own PRs) applies when snapshot.session is set.
  * snapshot: { fleet, now(ms), session, claims: {"owner__repo/key":[{session,attempt,claimed_at}]},
  *             repos: [{ config, prs:[{number,draft,base,head_sha,body,ci,mergeable,files,comments,updated_at}], issues:[{number,title,labels}] }] }
  */
-export function nextWork(snapshot) {
+export function workCandidates(snapshot) {
   const ctx = snapshot;
   const repos = [...snapshot.repos].sort((a, b) => a.config.priority - b.config.priority);
-
-  // A. resume own live develop claims whose issue is still open
-  for (const r of repos) for (const issue of r.issues) {
-    const key = claimKey('develop', issue.number);
-    const st = claimState(ctx.claims, r.config.name, key, ctx.fleet.limits.claim_ttl_minutes.develop, ctx.now);
-    if (st.live && st.current.session === ctx.session)
-      return { step: 'A', action: 'resume', repo: r.config.name, issue: issue.number, key };
-  }
   const byOldest = (a, b) => a.number - b.number;
+  const steps = { B: [], C: [], D: [], E: [], F: [] };
 
-  // B. integrate
   for (const r of repos) for (const pr of [...r.prs].sort(byOldest)) {
     const g = mergeGate(pr, r.config, ctx.session);
     if (!g.ok) continue;
-    if (g.ownerMerge) { if (!readyMarked(pr)) return { step: 'B', action: 'mark-ready-to-merge', repo: r.config.name, pr: pr.number }; continue; }
+    const author = authorSession(pr.body);
+    if (g.ownerMerge) {
+      if (!readyMarked(pr)) steps.B.push({ step: 'B', action: 'mark-ready-to-merge', repo: r.config.name, pr: pr.number, head: pr.head_sha, author });
+      continue;
+    }
     if (available(ctx, r.config.name, claimKey('merge', pr.number), 'merge'))
-      return { step: 'B', action: 'merge', repo: r.config.name, pr: pr.number, key: claimKey('merge', pr.number) };
+      steps.B.push({ step: 'B', action: 'merge', repo: r.config.name, pr: pr.number, head: pr.head_sha, author, key: claimKey('merge', pr.number) });
   }
-  // C. review
   for (const r of repos) for (const pr of [...r.prs].sort(byOldest)) {
-    if (pr.draft || authorSession(pr.body) === ctx.session || reviewsAtHead(pr).length) continue;
+    const author = authorSession(pr.body);
+    if (pr.draft || (ctx.session && author === ctx.session) || reviewsAtHead(pr).length) continue;
     const key = claimKey('review', pr.number, pr.head_sha);
-    if (available(ctx, r.config.name, key, 'review')) return { step: 'C', action: 'review', repo: r.config.name, pr: pr.number, key };
+    if (available(ctx, r.config.name, key, 'review'))
+      steps.C.push({ step: 'C', action: 'review', repo: r.config.name, pr: pr.number, head: pr.head_sha, author, key });
   }
-  // D. triage over-WIP repos
   for (const r of repos) {
     if (r.prs.length <= r.config.wip_limit) continue;
     const recent = ctx.now - 3 * 3600_000;
@@ -142,25 +140,60 @@ export function nextWork(snapshot) {
       .sort((a, b) => (a.base === integrationBranch(r.config) ? 0 : 1) - (b.base === integrationBranch(r.config) ? 0 : 1) || byOldest(a, b));
     for (const pr of drafts) {
       const key = claimKey('triage', pr.number);
-      if (available(ctx, r.config.name, key, 'triage')) return { step: 'D', action: 'triage', repo: r.config.name, pr: pr.number, key };
+      if (available(ctx, r.config.name, key, 'triage'))
+        steps.D.push({ step: 'D', action: 'triage', repo: r.config.name, pr: pr.number, author: authorSession(pr.body), key });
     }
   }
-  // E. develop
   for (const r of repos) {
     if (r.prs.length >= r.config.wip_limit) continue;
-    const [issue] = eligibleIssues(r, ctx);
-    if (issue) return { step: 'E', action: 'develop', repo: r.config.name, issue: issue.number, key: claimKey('develop', issue.number) };
+    for (const issue of eligibleIssues(r, ctx))
+      steps.E.push({ step: 'E', action: 'develop', repo: r.config.name, issue: issue.number, priority: issuePriority(issue), key: claimKey('develop', issue.number) });
   }
-  // F. plan
   const hour = new Date(ctx.now).toISOString().slice(0, 13).replace(/[-T]/g, '');
   for (const r of repos) {
     if (r.config.only_labels || r.prs.length >= r.config.wip_limit) continue;
     if (eligibleIssues(r, ctx).length >= ctx.fleet.limits.min_ready_tasks_per_repo) continue;
     const key = claimKey('plan', hour);
-    if (available(ctx, r.config.name, key, 'plan')) return { step: 'F', action: 'plan', repo: r.config.name, key };
+    if (available(ctx, r.config.name, key, 'plan')) steps.F.push({ step: 'F', action: 'plan', repo: r.config.name, key });
   }
-  // G. audit
+  return steps;
+}
+
+export const PICK_TOP = 10;
+
+/** Next action for one session: resume first, else a random pick among the top PICK_TOP of the first non-empty step. */
+export function nextWork(snapshot, { rng = Math.random, top = PICK_TOP } = {}) {
+  const ctx = snapshot;
+  const repos = [...snapshot.repos].sort((a, b) => a.config.priority - b.config.priority);
+  for (const r of repos) for (const issue of r.issues) {
+    const key = claimKey('develop', issue.number);
+    const st = claimState(ctx.claims, r.config.name, key, ctx.fleet.limits.claim_ttl_minutes.develop, ctx.now);
+    if (st.live && st.current.session === ctx.session)
+      return { step: 'A', action: 'resume', repo: r.config.name, issue: issue.number, key };
+  }
+  const steps = workCandidates(snapshot);
+  for (const s of ['B', 'C', 'D', 'E', 'F']) {
+    const list = steps[s].filter(i => !(ctx.session && i.author === ctx.session)).slice(0, top);
+    if (list.length) {
+      const { author, head, priority, ...item } = list[Math.min(list.length - 1, Math.floor(rng() * list.length))];
+      return item;
+    }
+  }
   return { step: 'G', action: 'audit', repo: repos[0]?.config.name ?? null };
+}
+
+/** Session-agnostic queue published for chats (queue.json on branch agent-queue). */
+export function workQueue(snapshot, { perStep = 100 } = {}) {
+  const steps = workCandidates({ ...snapshot, session: null });
+  const out = {};
+  for (const [k, v] of Object.entries(steps)) out[k] = v.slice(0, perStep);
+  return {
+    schema: 'virgostars-agent-queue/1',
+    generated_at: new Date(snapshot.now).toISOString(),
+    pick: `Take the first step with items; choose one at random among its first ${PICK_TOP}; skip PRs whose author is your session; verify live state and claim before working.`,
+    counts: Object.fromEntries(Object.entries(steps).map(([k, v]) => [k, v.length])),
+    steps: out,
+  };
 }
 
 /** Aggregate board for the owner. */

@@ -26,6 +26,12 @@ Repeat until your turn runs out of budget. In each cycle, take the **first** ste
 
 There is always something to do: F and G always apply.
 
+**Finding work cheaply (do this instead of scanning repositories).** After step A, read `queue.json` on branch **`agent-queue`** of this repository. A workflow rebuilds it every ~20 minutes with all open work per step (`B`, `C`, `D`, `E`, `F`), in the right order, without items that were already claimed.
+1. Take the first step that has an item you may do. Skip PRs whose `author` is your session.
+2. Choose **one item at random among the first 10** of that step. Never systematically take the first one: hundreds of chats read the same queue.
+3. Check that the item is still valid (same head SHA, not yet reviewed, merged or closed), then claim it (§2). If it is no longer valid or the claim fails, pick another random item. Make at most 3 claim attempts per cycle, then go to the next step.
+4. If `queue.json` is missing or its `generated_at` is more than 60 minutes old, find work yourself as described in §3–§6.
+
 ## 2. Claims (exclusive locks)
 
 Every step except G starts with a claim. A claim is a file created on branch **`agent-ledger`** of `Cesare-ml/virgostars-development-orchestrator`:
@@ -50,7 +56,7 @@ How to claim:
 3. Otherwise **create** the next number (`1.json` if none). Use *create file* only and never update or delete. If the create fails because the file now exists, someone else won: pick another item.
 4. To extend your own claim on resume, create the next attempt number with your own session.
 
-Claims are never deleted. Work counts as finished when its result exists on GitHub: a merged or closed PR, a closed issue, or an `AGENT-REVIEW`/`AGENT-TRIAGE` comment.
+Agents never delete claims. The queue workflow archives claim folders whose latest claim is more than 6 hours old (Git history keeps them), so numbering may start again at `1.json`. Work counts as finished when its result exists on GitHub: a merged or closed PR, a closed issue, or an `AGENT-REVIEW`/`AGENT-TRIAGE` comment.
 
 ## 3. Develop (step E)
 
@@ -133,6 +139,7 @@ Prefer, in order: fixes for failing or missing tests, small roadmap items, docs 
 - Never write to the legacy `coordination/claims` branch, and never reassign its seven historical submissions.
 - Do not invent results: state exactly what you ran, read or could not do.
 - If a tool is missing (e.g. you cannot merge, label or close), use the comment alternative given above and continue.
+- **GitHub limits are shared by all chats** (one account: about 5,000 calls and 500 writes per hour). If GitHub answers with a rate-limit or abuse error (HTTP 403/429, "rate limit", "secondary rate limit"), **stop the turn at once**: do not retry. Say «Limite GitHub raggiunto» in your end-of-turn message. Never list every PR or every comment of a repository when the queue already gives you the item.
 
 ## 8. Trust model
 
@@ -143,4 +150,4 @@ All fleet chats run on the owner's single GitHub account. GitHub therefore canno
 
 ## 9. End of every turn
 
-Reply to the user in Italian, in ≤6 lines: your session ID, what you claimed and finished (with links), and what you will do next. End with: **Scrivi «ok avanti» per il prossimo ciclo.**
+Reply to the user in Italian, in ≤6 lines: your session ID, what you claimed and finished (with links), any GitHub limit you hit, and what you will do next. End with: **Scrivi «ok avanti» per il prossimo ciclo.**
