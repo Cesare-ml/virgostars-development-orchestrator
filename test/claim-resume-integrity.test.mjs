@@ -68,7 +68,7 @@ test('valid same-session claimed and handed-off states resume without another lo
   x.mutate(writeTask.issue,c=>{
     c.state='in_progress';
     c.branch='feat/supervised-review';
-    c.last_handoff={at:'2026-11-14T12:00:00.000Z',summary:'Work handed off',head_sha:null};
+    c.last_handoff={at:c.claimed_at,summary:'Work handed off',head_sha:null};
   });
   const resumed=await claim(args(x,writeTask,session));
   assert.equal(resumed.result,'already-owned');
