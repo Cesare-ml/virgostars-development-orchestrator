@@ -105,3 +105,9 @@ test('direct lease calculator rejects missing or invalid TTL/now',()=>{
   assert.throws(()=>claimState({},TARGET,'issue-178',0,NOW),/Invalid agent-ledger lease/);
   assert.throws(()=>claimState({},TARGET,'issue-178',180,NaN),/Invalid agent-ledger lease/);
 });
+
+test('valid second-precision UTC timestamps remain supported',async()=>{
+  const record=validRecord({claimed_at:'2026-11-14T18:49:50Z'});
+  const claims=await read(synthetic({record}));
+  assert.equal(claimState(claims,TARGET,'issue-178',180,NOW).live,true);
+});
