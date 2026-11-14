@@ -4,6 +4,8 @@
 
 This guide addresses the practical gap between a successful synthetic rehearsal and **two genuinely independent GitHub-connected ChatGPT sessions**. The historical seven tasks are terminal submissions, not an available queue.
 
+**Choose one approval path; do not combine their evidence.** This document covers the *implemented, locally SHA-approved Node CLI path*. An owner-proposed **GitHub-connector-only / no-local-CLI alternative** is tracked in [draft PR #137](https://github.com/Cesare-ml/virgostars-development-orchestrator/pull/137). That separate proposal has different private manifest/policy gates, is **not yet an implemented CLI feature**, and must not be treated as live simply because the two tasks exist. In particular, a GitHub-only agent cannot assert that it ran the local `alpha-doctor` or SHA-approved file loader; owner review, pinned manifest approval and a separate trustworthy live ledger check are required before any connector-only claim.
+
 ## Gate 0 — before opening the two chats
 
 Use Node.js 20+ from the reviewed Orchestrator checkout on the owner's trusted computer. Keep a minimum-scope `GITHUB_TOKEN`, the private repository selection and a SHA-approved task JSON **outside this public checkout and outside public chat messages**.
