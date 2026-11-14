@@ -163,7 +163,7 @@ test('merge gate fails closed on forged current-head markers and incomplete GitH
   const noAuthor = pr(21, { comments: [approve()], body: '' });
   assert.ok(mergeGate(noAuthor, eph, ME).reasons.includes('author-session-unverified'));
   const unknownMergeability = pr(21, { comments: [approve()], mergeable: null });
-  assert.ok(mergeGate(unknownMergeability, eph, ME).reasons.includes('mergeability-unverified'));
+  assert.ok(mergeGate(unknownMergeability, eph, ME).reasons.includes('mergeable-unknown'));
   const missingFiles = pr(21, { comments: [approve()], files: undefined });
   assert.ok(mergeGate(missingFiles, eph, ME).reasons.includes('incomplete-changed-files'));
   const shortFiles = pr(21, { comments: [approve()], changed_files: 2 });
