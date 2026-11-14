@@ -77,6 +77,20 @@ test('existing private records are counted without emitting sensitive paths or b
   assert.doesNotMatch(JSON.stringify(x),/owner__private|issue-10|sensitive|example-org/);
   assert.deepEqual(c.calls,['repository','branch','commit','tree','branch','repository']);
 });
+test('README-only bootstrap is empty, while foreign private files block the clean-branch status',async()=>{
+  const clean=await inspectPrivateDestination({api:api({records:[record('README.md')]}) ,destination:D});
+  assert.equal(clean.status,'empty_branch_needs_owner_approval');
+  assert.equal(clean.unclassified_blobs,0);
+  const dirty=await inspectPrivateDestination({api:api({records:[
+    record('README.md'),directory('backups'),record('backups/private-sessions.json')
+  ]}),destination:D});
+  assert.equal(dirty.status,'existing_records_need_reconciliation');
+  assert.equal(dirty.unclassified_blobs,1);
+  assert.deepEqual(dirty.records,{claims:0,resources:0,submissions:0});
+  assert.equal(dirty.ready_to_migrate,false);
+  assert.equal(dirty.write_enabled,false);
+  assert.doesNotMatch(JSON.stringify(dirty),/backups\\/|private-sessions|example-org/);
+});
 test('existing empty private branch still requires explicit owner approval',async()=>{
   const x=await inspectPrivateDestination({api:api(),destination:D});
   assert.equal(x.branch_exists,true);
