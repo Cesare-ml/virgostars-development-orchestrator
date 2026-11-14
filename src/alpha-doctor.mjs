@@ -12,6 +12,27 @@ function invalid(reason) {
   throw new Error('Alpha launch readiness blocked: '+reason);
 }
 
+function assertActiveTaskFleet(config,tasks) {
+  if(!Array.isArray(config?.active_repositories) ||
+     config.active_repositories.length<1 ||
+     config.active_repositories.length>40)
+    invalid('approved first-alpha repository fleet is missing or malformed.');
+  const seen=new Set(),enabled=new Set();
+  for(const entry of config.active_repositories) {
+    if(!entry||typeof entry.full_name!=='string'||
+       !/^[a-z\d][a-z\d_.-]*\/[a-z\d][a-z\d_.-]*$/i.test(entry.full_name)||
+       typeof entry.pilot_enabled!=='boolean')
+      invalid('approved first-alpha repository fleet is malformed.');
+    const key=entry.full_name.toLowerCase();
+    if(seen.has(key))
+      invalid('approved first-alpha repository fleet has duplicate entries.');
+    seen.add(key);
+    if(entry.pilot_enabled===true)enabled.add(key);
+  }
+  if(tasks.some(task=>!enabled.has(task.repository.toLowerCase())))
+    invalid('curated task targets a repository not enabled in the approved pilot.');
+}
+
 function validHead(ref) {
   if(ref?.object?.type!=='commit'||!SHA.test(ref?.object?.sha||''))
     invalid('private ledger branch reference is missing or malformed.');
@@ -79,6 +100,9 @@ export async function inspectAlphaLaunch({api,config,tasks}) {
   // must be selected by the CLI BEFORE this function is invoked.
   if(tasks.length<2||tasks.length>40)
     invalid('two or more independently curated tasks are required.');
+  if(tasks.some(task=>task.status!=='ready'))
+    invalid('all curated first-alpha tasks must be ready.');
+  assertActiveTaskFleet(config,tasks);
 
   const preservation=await assertPrivateLedgerActivation({api,config});
   if(preservation.status!=='readiness_verified'||
@@ -96,6 +120,8 @@ export async function inspectAlphaLaunch({api,config,tasks}) {
 
   let openIssues=0,writeTasks=0,writeTasksEligible=0,occupiedWriteScopes=0;
   const independentWriterPartitions=new Set();
+  const independentDeveloperPartitions=new Set();
+  let eligibleDeveloperTasks=0;
   for(const task of tasks) {
     const issue=await api.getIssue(task.repository,task.issue);
     if(!issue||issue.pull_request||
@@ -132,14 +158,21 @@ export async function inspectAlphaLaunch({api,config,tasks}) {
       continue;
     }
     writeTasksEligible++;
-    independentWriterPartitions.add(task.repository.toLowerCase()+'#'+
-      task.resource_scope.id.toLowerCase());
+    const partition=task.repository.toLowerCase()+'#'+
+      task.resource_scope.id.toLowerCase();
+    independentWriterPartitions.add(partition);
+    if(task.role==='developer') {
+      eligibleDeveloperTasks++;
+      independentDeveloperPartitions.add(partition);
+    }
   }
 
   // An alpha should not claim "ready" with one developer or any competing
   // draft. Read-only reviewer tasks can supplement, not replace, two writers.
   if(independentWriterPartitions.size<2)
     blockers.add('TWO_DISJOINT_WRITE_TASKS_REQUIRED');
+  if(independentDeveloperPartitions.size<2)
+    blockers.add('TWO_ELIGIBLE_DEVELOPER_TASKS_REQUIRED');
   if(openIssues<2)blockers.add('TWO_OPEN_ISSUES_REQUIRED');
   if(ledger.pending_new_tasks<2)
     blockers.add('TWO_UNSUBMITTED_TASKS_REQUIRED');
@@ -159,6 +192,8 @@ export async function inspectAlphaLaunch({api,config,tasks}) {
     open_issues:openIssues,
     write_tasks_without_pr_overlap:writeTasksEligible,
     independent_writer_partitions:independentWriterPartitions.size,
+    eligible_developer_tasks:eligibleDeveloperTasks,
+    independent_developer_partitions:independentDeveloperPartitions.size,
     overlapping_write_scopes:occupiedWriteScopes,
     ...ledger,
     blockers:[...blockers].sort(),

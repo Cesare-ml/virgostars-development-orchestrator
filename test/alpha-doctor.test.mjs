@@ -14,7 +14,11 @@ const PRIVATE_TREE='c'.repeat(40),BLOB='d'.repeat(40);
 const repoChart='Cesare-ml/astrological-charts';
 const repoFunctions='Cesare-ml/astrological-functions';
 const config={repository_visibility_required:'private',
-  claim_store:{repo:PRIVATE,branch:'coordination/claims'}};
+  claim_store:{repo:PRIVATE,branch:'coordination/claims'},
+  active_repositories:[
+    {full_name:repoChart,pilot_enabled:true},
+    {full_name:repoFunctions,pilot_enabled:true}
+  ]};
 const tasks=[
   {
     repository:repoChart,issue:401,status:'ready',role:'developer',
@@ -116,6 +120,8 @@ test('owner alpha doctor allows two distinct unclaimed write tasks after histori
   assert.equal(report.historical_submissions_preserved,7);
   assert.equal(report.new_write_tasks,2);
   assert.equal(report.write_tasks_without_pr_overlap,2);
+  assert.equal(report.eligible_developer_tasks,2);
+  assert.equal(report.independent_developer_partitions,2);
   assert.equal(report.recorded_submissions,7);
   assert.equal(report.work_claimed,false);
   assert.equal(report.merge_authorized,false);
@@ -172,6 +178,57 @@ test('two task issues sharing the same resource partition are NOT two simultaneo
   assert.equal(report.independent_writer_partitions,1);
   assert.equal(report.ready_for_manual_pilot,false);
   assert.ok(report.blockers.includes('TWO_DISJOINT_WRITE_TASKS_REQUIRED'));
+});
+
+test('first-alpha readiness needs two developers, not only tester writers',async()=>{
+  for(const roles of [['tester','tester'],['developer','tester']]) {
+    const x=fixture();
+    const candidate=clone(tasks);
+    roles.forEach((role,i)=>{candidate[i].role=role;});
+    const report=await inspectAlphaLaunch({api:x.api,config,tasks:candidate});
+    assert.equal(report.ready_for_manual_pilot,false);
+    assert.equal(report.write_tasks_without_pr_overlap,2);
+    assert.equal(report.independent_writer_partitions,2);
+    assert.equal(report.eligible_developer_tasks,roles.filter(r=>r==='developer').length);
+    assert.equal(report.independent_developer_partitions,
+      roles.filter(r=>r==='developer').length);
+    assert.ok(report.blockers.includes('TWO_ELIGIBLE_DEVELOPER_TASKS_REQUIRED'));
+    assert.doesNotMatch(JSON.stringify(report),/owner\/|doctor-chart-test|feature\//);
+  }
+});
+
+test('first-alpha readiness rejects non-ready tasks before contacting GitHub',async()=>{
+  const x=fixture();
+  const candidate=clone(tasks);
+  candidate[0].status='planned';
+  await assert.rejects(()=>inspectAlphaLaunch({api:x.api,config,tasks:candidate}),
+    /all curated first-alpha tasks must be ready/);
+  assert.deepEqual(x.calls,[]);
+});
+
+test('first-alpha readiness refuses disabled and outside-fleet tasks before any API reads',async()=>{
+  for(const variant of ['disabled','unlisted','missing-fleet','duplicate']) {
+    const x=fixture(),candidate=clone(tasks),pilot=clone(config);
+    if(variant==='disabled') pilot.active_repositories[0].pilot_enabled=false;
+    if(variant==='unlisted') candidate[0].repository='owner/unapproved-synthetic';
+    if(variant==='missing-fleet') delete pilot.active_repositories;
+    if(variant==='duplicate') pilot.active_repositories.push({
+      full_name:repoChart.toUpperCase(),pilot_enabled:true
+    });
+    await assert.rejects(
+      ()=>inspectAlphaLaunch({api:x.api,config:pilot,tasks:candidate}),
+      /Alpha launch readiness blocked:/
+    );
+    assert.deepEqual(x.calls,[]);
+  }
+});
+
+test('first-alpha readiness refuses malformed fleet enablement flags',async()=>{
+  const x=fixture(),pilot=clone(config);
+  pilot.active_repositories[0].pilot_enabled='true';
+  await assert.rejects(()=>inspectAlphaLaunch({api:x.api,config:pilot,tasks}),
+    /approved first-alpha repository fleet is malformed/);
+  assert.deepEqual(x.calls,[]);
 });
 
 test('open competing PR touching exact task root blocks launch',async()=>{

@@ -7,7 +7,7 @@ For a tokenless, synthetic two-agent claim→submit→release regression check b
 ## Preflight steps on Windows
 
 1. Follow [FIRST_OWNER_ALPHA.md](FIRST_OWNER_ALPHA.md). Independently provision and review a PRIVATE GitHub coordination repository, reconcile the historical seven submitted markers **byte-for-byte**, and verify the frozen public ledger no longer has active claims.
-2. Keep new owner tasks outside the public checkout, following [OWNER_TASK_QUEUE.md](OWNER_TASK_QUEUE.md). For the first two-developer pilot, curate at least **two distinct open development issues**, with exact nonoverlapping file scopes and actively open upstream PRs. Never reuse the original seven completed issue identities.
+2. Keep new owner tasks outside the public checkout, following [OWNER_TASK_QUEUE.md](OWNER_TASK_QUEUE.md). For the first two-developer pilot, curate at least **two distinct open development issues**, each explicitly `status: ready`, `role: developer`, `access: write`, with exact nonoverlapping file scopes and actively open upstream PRs. Never reuse the original seven completed issue identities.
 3. Use a trusted local terminal, privately configure a minimum-scope GITHUB_TOKEN and the following environment variables (replace all placeholders with values from your own controlled environment):
 
 ~~~powershell
@@ -20,8 +20,10 @@ node bin/vs-agent.mjs alpha-doctor
 
 The command does not print task names, private repository identities, session IDs, record paths or commit hashes. It reports an aggregate count and neutral blocker codes with status:
 
-- ready_for_manual_pilot: true only if the private ledger has been independently verified, the seven historical submissions are preserved, there are no active claims/resource locks, there are at least two open issues, two nonoverlapping eligible developer scopes, no competing open PRs touching those scopes, and no completed new task is being silently re-offered.
+- ready_for_manual_pilot: true only if the private ledger has been independently verified, the seven historical submissions are preserved, there are no active claims/resource locks, there are at least two open issues, two nonoverlapping eligible **developer** scopes (two tester tasks, or one tester and one developer, are insufficient), no competing open PRs touching those scopes, and no completed new task is being silently re-offered. Every curated repository must also exist exactly once in the approved private-pilot fleet and have `pilot_enabled: true`.
 - ready_for_manual_pilot: false with blockers when a reviewed requirement is missing. Exit status is 2. A malformed or unauthorized GitHub response fails closed with status 1.
+- `TWO_ELIGIBLE_DEVELOPER_TASKS_REQUIRED` means fewer than two distinct developer write partitions passed the live issue/PR/head checks; `write_tasks_without_pr_overlap` may still count eligible tester write tasks. Use `eligible_developer_tasks` and `independent_developer_partitions` to distinguish them. A task that is not `ready` is rejected before GitHub access.
+- The doctor rejects missing, malformed, duplicated, disabled or unlisted fleet repository entries **before making a GitHub request**. These checks use the locally reviewed `active_repositories` configuration, not user-supplied issue text; they do not change permissions or enable any repository.
 - The local queue must be approved with an exact SHA-256. A changed or missing catalog is blocked *before* any GitHub API access; an absent or public owner-only ledger is always rejected.
 
 Example aggregate fields (not a real current fleet result):
