@@ -57,7 +57,9 @@ function parseAgentClaim(raw, directory, key, attempt) {
       typeof record.repo !== 'string' ||
       !/^[a-z\d][a-z\d._-]*\/[a-z\d][a-z\d._-]*$/i.test(record.repo) ||
       record.repo.replace('/', '__') !== directory ||
-      !Number.isFinite(millis) || new Date(millis).toISOString() !== record.claimed_at)
+      !Number.isFinite(millis) || typeof record.claimed_at !== 'string' ||
+      !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/.test(record.claimed_at) ||
+      new Date(millis).toISOString().slice(0, 19) !== record.claimed_at.slice(0, 19))
     throw new Error('Malformed agent-ledger claim identity, time, or generation.');
   return record;
 }
