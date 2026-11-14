@@ -20,7 +20,7 @@ const SOURCE_TREE='a'.repeat(40),LEDGER_TREE='d'.repeat(40);
 const MAIN_TREE='e'.repeat(40),ENTRY_SHA='f'.repeat(40);
 const REF=sha=>({object:{type:'commit',sha}});
 const localSha='1'.repeat(64);
-const remoteSha='2'.repeat(64);
+const remoteSha='a'.repeat(64);
 const remoteEnv={
   VS_PRIVATE_LEDGER_REPO:PRIVATE,VS_PRIVATE_LEDGER_APPROVED_REPO:PRIVATE,
   VS_OWNER_CATALOG_APPROVED_MAIN_SHA:HEAD,
