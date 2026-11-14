@@ -33,6 +33,31 @@ function store(config) {
 function isOwner(current,session,repo,issue) {
   return current?.data?.session_id===session && current.data.target_repository===repo && current.data.issue_number===issue;
 }
+
+/**
+ * GitHub acknowledging a Contents PUT is not proof that this agent owns a
+ * usable task/resource pair. Read both records back from the current PRIVATE
+ * branch and demand the exact just-written receipt. A lagging or ambiguous
+ * GitHub read must leave a lock for owner reconciliation, not authorize edits.
+ */
+async function verifyNewClaimReceipt({api,config,repo,issue,data}) {
+  let observed;
+  try { observed=await status({api,config,repo,issue}); }
+  catch { throw new Error('New claim cannot be independently verified; stop and reconcile private locks.'); }
+  const saved=observed?.claim;
+  const rootsMatch=JSON.stringify(saved?.resource_roots)===
+    JSON.stringify(data.resource_roots);
+  if(observed?.status!=='claimed'||observed.submitted||
+     !observed.blob_sha||!saved||
+     saved.session_id!==data.session_id ||
+     saved.target_repository!==repo || saved.issue_number!==issue ||
+     saved.role!==data.role || saved.access!==data.access ||
+     saved.resource_scope_id!==data.resource_scope_id || !rootsMatch ||
+     saved.claimed_at!==data.claimed_at || saved.state!=='claimed' ||
+     saved.branch!==data.branch || saved.last_handoff!==null)
+    throw new Error('New claim readback inconsistent; do not work or automatically release locks.');
+  return saved;
+}
 export async function status({api,config,repo,issue}) {
   const {ledger,branch}=store(config);
   const [current,submission]=await Promise.all([
@@ -126,7 +151,10 @@ export async function claim({api,config,tasks,repo,issue,session,role='developer
   }
   try {
     await api.createClaim(ledger,path,branch,data);
-    return {result:'acquired',claim:data};
+    // Failure is intentionally NOT followed by automatic lock deletion:
+    // the PUT may have succeeded while GitHub reads are stale/ambiguous.
+    const verified=await verifyNewClaimReceipt({api,config,repo,issue,data});
+    return {result:'acquired',claim:verified};
   } catch(error) {
     // Ambiguous network errors deliberately leave the resource reserved.
     if(!(error instanceof GitHubError) || ![409,422].includes(error.status))
@@ -134,7 +162,13 @@ export async function claim({api,config,tasks,repo,issue,session,role='developer
     const saved=await api.getClaim(ledger,path,branch);
     if(isOwner(saved,session,repo,issue)) {
       const observed=await status({api,config,repo,issue});
-      if(observed.status!=='claimed') throw new Error('Claim exists but resource is inconsistent.');
+      if(observed.status!=='claimed'||observed.submitted||
+         observed.claim.role!==role || observed.claim.access!==task.access ||
+         (task.access==='write' &&
+           (observed.claim.resource_scope_id!==task.resource_scope.id ||
+            JSON.stringify(observed.claim.resource_roots)!==
+              JSON.stringify([...task.resource_scope.roots].sort()))))
+        throw new Error('Contended claim ownership or resource scope inconsistent; reconcile manually.');
       return {result:'already-owned',claim:observed.claim};
     }
     if(newResource) {
