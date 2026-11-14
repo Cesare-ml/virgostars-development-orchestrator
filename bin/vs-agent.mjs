@@ -11,6 +11,7 @@ import {assertPrivateLedgerActivation} from '../src/private-ledger-activation.mj
 import {inspectAlphaLaunch} from '../src/alpha-doctor.mjs';
 import {runOfflineTwoAgentRehearsal} from '../src/offline-two-agent-rehearsal.mjs';
 import {exportVerifiedLocalLedgerBackup} from '../src/verified-local-ledger-export.mjs';
+import {planLocalCopyOnlyImport} from '../src/offline-ledger-copy-plan.mjs';
 import { newSession, claim, status, release, handoff, discover } from '../src/claims.mjs';
 import { claimNext } from '../src/queue.mjs';
 import { submit } from '../src/submissions.mjs';
@@ -30,6 +31,7 @@ const usage = [
   'node bin/vs-agent.mjs alpha-doctor  # GET-only owner preflight; no claims, no merge',
   'node bin/vs-agent.mjs rehearse-two-agents  # offline synthetic claim→handoff→submit→release',
   'node bin/vs-agent.mjs export-verified-ledger OWNER/PRIVATE-REPO --output ABSOLUTE_BACKUP.json --confirm  # GitHub GET-only; private LOCAL file',
+  'node bin/vs-agent.mjs plan-ledger-copy ABSOLUTE_BACKUP.json  # offline copy-only comparison, never writes',
   'node bin/vs-agent.mjs discover',
   'node bin/vs-agent.mjs fleet-status  # read-only, all five repositories',
   'node bin/vs-agent.mjs audit-pr OWNER/REPO ISSUE PR_NUMBER  # read-only scope audit',
@@ -88,6 +90,14 @@ async function main() {
       approved:false,
       private_file_uploaded:false
     },null,2)+'\n');
+    return;
+  }
+  if(command==='plan-ledger-copy') {
+    if(positionals.length!==1||Object.keys(flags).length)
+      throw new Error('plan-ledger-copy requires one absolute local JSON manifest path.');
+    const report=await planLocalCopyOnlyImport(positionals[0]);
+    process.stdout.write(JSON.stringify(report,null,2)+'\n');
+    if(!report.eligible_for_independent_owner_review)process.exitCode=2;
     return;
   }
   if(command==='export-verified-ledger') {
