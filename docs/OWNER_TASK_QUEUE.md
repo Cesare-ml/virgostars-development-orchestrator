@@ -6,7 +6,7 @@ The committed config/pilot-tasks.json contains seven historic submitted pilot ta
 
 ## New catalog schema
 
-Create a separate local JSON file, e.g. C:\VirgoStarsPrivate\owner-tasks.json. The example below is **synthetic**: replace the issue and upstream PR with real, reviewed, open issues/PRs from your authorized first-five-repository fleet; do not try claiming fictitious issue #99999.
+Create a separate local JSON file, e.g. C:\VirgoStarsPrivate\owner-tasks.json. The example below is **synthetic**: replace the issue and upstream PR with real, reviewed, open issues/PRs from the explicitly enabled owner-pilot fleet; do not try claiming fictitious issue #99999.
 
 ~~~json
 {
@@ -34,7 +34,7 @@ Create a separate local JSON file, e.g. C:\VirgoStarsPrivate\owner-tasks.json. T
 }
 ~~~
 
-The local schema supports at most 40 reviewed tasks and only the five repositories from the original owner pilot. Each task must be ready, use explicit read/write access and valid role/scope, and **must not reuse any of the original seven submitted issues**. Write tasks require an explicit upstream PR/branch and exactly one nonoverlapping resource partition. The runtime still checks live target issues, claims and concurrent PRs; a fingerprint is not proof that an issue is safely available.
+The local schema supports at most 40 reviewed tasks, restricted to the original five enabled targets plus the explicitly enabled PUBLIC orchestrator source repository as a sixth development target. The orchestrator as a target is **not** authorization to use its historical PUBLIC claim branch: all owner coordination records still belong exclusively in the independently verified PRIVATE ledger. Each task must be ready, use explicit read/write access and valid role/scope, and **must not reuse any of the original seven submitted issues**. Write tasks require an explicit upstream PR/branch and exactly one nonoverlapping resource partition. The runtime still checks live target issues, claims and concurrent PRs; a fingerprint is not proof that an issue is safely available.
 
 ## Offline review and approval (PowerShell)
 
