@@ -15,9 +15,14 @@ export function resourceKey(repository, scopeId) {
 }
 
 function validRoot(root) {
-  return typeof root === 'string' && root.length <= 200 && PATH.test(root)
-    && !root.split('/').some(segment => segment === '.' || segment === '..')
-    && !root.startsWith('.git/');
+  if (typeof root !== 'string' || root.length > 200 || !PATH.test(root))
+    return false;
+  // Normalize an optional trailing slash; a root must be portable to both
+  // Git checkouts and Windows worktrees before a write resource is reserved.
+  return !root.replace(/\/$/, '').split('/').some(segment =>
+    segment === '.' || segment === '..' || segment.endsWith('.') ||
+    segment.toLowerCase() === '.git' ||
+    /^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(segment));
 }
 
 function rootsOverlap(a, b) {
