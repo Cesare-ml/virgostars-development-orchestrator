@@ -291,3 +291,11 @@ No deploy, production mutation, release, automatic merge, or license change is i
 - [x] Add deterministic Node tests for duplicate session ownership, pending-release blocking, valid released rescheduling, and a later inconsistent lock that must not be hidden by early return.
 - [ ] Validate Node 20/22 CI and obtain independent review of this small stacked draft PR.
 - [ ] A catalog scan is not transactional enforcement against simultaneous calls sharing one session ID; the owner must assign unique IDs to independently active chats. Real private-ledger pilot remains separately gated.
+
+## Owner offline first-run gate (2026-11-14)
+
+- [x] Add `npm run smoke:owner-local` combining strict public-only discovery/two-agent smoke and independent local OS-process contention.
+- [x] Enforce no-token child environments, fixed subcommands, bounded JSON output, fail-closed evidence contracts and aggregate-only results.
+- [x] Add native regressions for fabricated live-readiness and ownership evidence, rejected arguments and secret-safe subprocesses.
+- [ ] Require a fresh exact-head Node 20/22 CI pass before integrating this feature.
+- [ ] Owner: independently provision/reconcile a PRIVATE coordination ledger, preserve seven historical submissions, SHA-approve a local queue, then supervise two real chats.

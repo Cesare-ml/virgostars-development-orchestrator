@@ -10,7 +10,11 @@ Selected merged PRs: **#1, #23, #25, #27, #30, #33, #35, #90, #80, #96, #114, #7
 npm run check
 node bin/vs-agent.mjs public-discover
 node bin/vs-agent.mjs rehearse-two-agents
+npm run smoke:owner-local  # 3 offline checks; no private credentials
 ```
+
+The [owner offline first-run gate](docs/OWNER_OFFLINE_FIRST_RUN.md) checks tokenless discovery, the synthetic two-agent flow, and two independent local Node processes competing for an isolated file claim. A pass still reports `live_pilot_ready:false`: a real private ledger and live multi-chat sessions are not verified.
+
 
 ### Owner-only migration preparation
 
