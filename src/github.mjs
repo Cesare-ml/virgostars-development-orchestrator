@@ -124,6 +124,13 @@ export function makeGitHubClient({ token, fetchImpl = fetch, baseUrl = 'https://
         throw new Error('Invalid private destination tree request.');
       return request('GET','/repos/'+repo+'/git/trees/'+sha+'?recursive=1');
     },
+    async getGitBlob(repo,sha) {
+      if(typeof repo!=='string'||
+         !/^[A-Za-z0-9][A-Za-z0-9_.-]*\/[A-Za-z0-9][A-Za-z0-9_.-]*$/.test(repo)||
+         !/^[a-f0-9]{40}$/i.test(sha))
+        throw new Error('Invalid pinned Git blob request.');
+      return request('GET','/repos/'+repo+'/git/blobs/'+sha);
+    },
     async getLedgerSnapshot(repo, branch) {
       // Pin every file to ONE Git tree; separate Contents branch reads can be stale.
       const ref=await request('GET','/repos/'+repo+'/git/ref/heads/'+branch);
