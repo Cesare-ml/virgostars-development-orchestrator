@@ -86,3 +86,7 @@ External readers can run `node bin/vs-agent.mjs public-discover` **without GitHu
 ## Security gate: legacy owner-only coordination is paused
 
 The historical `coordination/claims` branch lives in this now-**public** repository. The Node CLI therefore **refuses legacy owner-only commands by default**, using live GitHub private-visibility verification and a fresh preflight for every ledger read/write. The old claim store must be migrated to a private repository/backend with owner approval before these commands can safely be re-enabled. Do not put new private task records into the public branch via ChatGPT connectors either: the CLI guard cannot stop direct API writes. `public-discover`, `session` and `--help` remain tokenless and usable. See [PUBLIC_TRANSITION.md](docs/PUBLIC_TRANSITION.md).
+
+## Read-only private ledger destination check
+
+For the owner-controlled migration, `node bin/vs-agent.mjs check-private-destination OWNER/PRIVATE-REPO` validates an independently selected private GitHub repository through read-only metadata **without** reading claim contents or enabling any writes. It always reports `ready_to_migrate:false`; the legacy public claim store remains blocked. See [private destination preflight](docs/PRIVATE_LEDGER_PREFLIGHT.md).

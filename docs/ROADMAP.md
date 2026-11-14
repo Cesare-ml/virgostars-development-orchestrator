@@ -211,3 +211,11 @@ No deploy, production mutation, release, automatic merge, or license change is i
 - [x] Add `test/ledger-visibility.test.mjs` for public/private/403/404/metadata mismatch, per-operation visibility drift and CLI wiring; validate via public GitHub Actions.
 - [ ] Migrate existing owner-only ledgers to a separately provisioned **private** store and reconcile history, claims and clients under issue #19, with explicit maintainer approval. The public historical branch remains public; no automatic migration or deletion.
 - [ ] Independently review PR #1 and choose LICENSE/contributor terms. Green CI does not authorize merge or public write access.
+
+## Read-only private destination preflight — issue #22 (2026-11-12)
+
+- [x] Add isolated `check-private-destination OWNER/REPO` CLI command independent of the legacy blocked claim store.
+- [x] Validate actual private GitHub visibility, pinned branch/tree and conflict counts with read-only requests, without displaying claim values/paths or writing.
+- [x] Add mock-based Node test coverage and public CI syntax validation.
+- [ ] Owner must select/provision a private store and approve migration; old public records remain publicly visible and must not receive new confidential claims.
+- [ ] Independently test a real private destination using locally controlled GitHub read access; do not put that result into public logs.
