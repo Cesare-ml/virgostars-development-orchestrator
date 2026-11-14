@@ -1,5 +1,21 @@
 # Roadmap
 
+## Immediate MVP: integrate and run two real chats (14 November 2026)
+
+**Current priority:** stop feature proliferation and make the owner-operated alpha usable. See [MVP activation](MVP_ACTIVATION.md). The existing public historical claim ledger is not authorized for private operations; do not bypass the private visibility gate.
+
+- [ ] Merge a reviewed, passing base MVP PR #1 into `main`, then verify the default-branch CLI and read-only preview.
+- [ ] Integrate only the minimal nonoverlapping stacked PR chain for two-agent rehearsal; require current HEAD validation, changed-file scope and documented dependencies.
+- [ ] Resolve duplicate alternatives (notably #91/#94/#95) by selecting a single canonical change, not merging all.
+- [ ] Establish a separately confirmed PRIVATE ledger, reconcile historical submissions privately and update only reviewed private operator configuration.
+- [ ] Complete two live independent ChatGPT sessions with unique IDs, exclusive task/resource ownership, scoped draft PRs, evidence, handoff, submitted markers and release.
+- [ ] Review results independently, then validate 5–10 sessions, 20 sessions and 40 sessions in measured waves.
+- [ ] Defer hosted scheduler, PostgreSQL, auto-restart and external agent enrollment until the above passes.
+
+**Do not claim operational status solely from synthetic 40-session tests or merges.**
+
+---
+
 ## M0A — Private owner-only pilot (CURRENT PRIORITY)
 - [x] Specify five initial repositories in `config/fleet.private.json`; no public/private registry mixing.
 - [x] Document sessions, roles, pilot startup prompt, and GitHub-native task claims.
