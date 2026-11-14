@@ -71,5 +71,21 @@ export async function recoverSubmittedResourceRelease({
   } catch(error) {
     throw new Error('Resource release outcome uncertain; inspect private ledger and retry with the same owner.',{cause:error});
   }
+  // A successful DELETE acknowledgement alone cannot certify completion.
+  // Re-read both owner-lock paths and the immutable submission marker.
+  // Unknown reads or a competing claim must not return recovered=true.
+  let finalResource,finalClaim,finalSubmission;
+  try {
+    [finalResource,finalClaim,finalSubmission]=await Promise.all([
+      api.getClaim(ledger,path,branch),
+      api.getClaim(ledger,taskKey(repo,issue),branch),
+      api.getClaim(ledger,submissionKey(repo,issue),branch)
+    ]);
+  } catch(error) {
+    throw new Error('Recovered resource deletion readback unavailable; manual reconciliation required.',{cause:error});
+  }
+  if(finalResource!==null || finalClaim!==null ||
+     !finalSubmission || finalSubmission.sha!==prior.sha)
+    throw new Error('Recovered resource deletion not confirmed; manual reconciliation required.');
   return true;
 }
