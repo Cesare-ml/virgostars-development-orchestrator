@@ -73,6 +73,8 @@ Exit status: **0** means all **owner-entered declarations** are consistent, **1*
 }
 ```
 
+All JSON object keys must be unique within their own object, including when differently escaped spellings decode to the same key. A duplicate such as an earlier `false` followed by `true` is rejected before normal JSON parsing; the later value cannot override the earlier one. This applies equally to owner checks, fleet counters, and nested chat records. The CLI reports `INVALID_EVIDENCE` without echoing the suspect input.
+
 All keys are mandatory, all unknown keys rejected. UUIDs must be valid UUIDv4 values. Task IDs and resource scopes are **opaque synthetic labels** (not repository paths). Both session IDs, task IDs, resource IDs, PR numbers and PR commit SHAs must be distinct (case-insensitively where applicable). No secrets or private repo names should be stored in the file. Each `true` is an *owner-entered observation* that the maintainer must substantiate separately with current private ledger and actual PR review/test evidence. Never mechanically turn an unreviewed agent's self-attestation into a checked `true`.
 
 ## What is and is not proven
