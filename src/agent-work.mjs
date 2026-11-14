@@ -57,8 +57,9 @@ export function claimState(claims, repo, key, ttlMinutes, now) {
     const c = list[i], millis = Date.parse(c?.claimed_at);
     if (!c || !Number.isSafeInteger(c.attempt) || c.attempt !== i + 1 ||
         typeof c.session !== 'string' || !SESSION_RE.test(c.session) ||
-        !Number.isFinite(millis) ||
-        new Date(millis).toISOString() !== c.claimed_at)
+        !Number.isFinite(millis) || typeof c.claimed_at !== 'string' ||
+        !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/.test(c.claimed_at) ||
+        new Date(millis).toISOString().slice(0, 19) !== c.claimed_at.slice(0, 19))
       throw new Error('Malformed agent-ledger lease; manual reconciliation required.');
   }
   const current = list.at(-1);
