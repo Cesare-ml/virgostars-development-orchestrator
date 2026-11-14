@@ -10,13 +10,17 @@ Read `README.md`, `docs/PRIVATE_PILOT.md`, `config/fleet.private.json`, `docs/SE
 
 Agents may be independent ChatGPT/Codex conversations but share authorized GitHub access. A unique session ID identifies each chat independently; different chats on the same GitHub account MUST NOT share a session ID.
 
+## Proposed Integrator merge policy — owner requested, not yet active on main
+
+The owner explicitly permits **conditional automatic PR merges performed by an independent, owner-authorized Integrator agent**. The current live alpha is not yet approved, and merely editing this branch or seeing an open PR does NOT authorize a merge. After owner review/integration of this policy and explicit Integrator task authorization, eligible integrators may perform a GitHub merge or enable native auto-merge **only** after independent current-HEAD review, required green tests/status checks, resolved discussions, correct stacked-PR dependency order, no conflicting changes, protected-branch compliance and SHA-pinned verification. An Integrator must not merge code it authored, bypass branch protections, use stale checks, deploy production or alter permissions/licensing. See [docs/INTEGRATOR_AUTOMERGE_POLICY.md](docs/INTEGRATOR_AUTOMERGE_POLICY.md) and [issue #152](https://github.com/Cesare-ml/virgostars-development-orchestrator/issues/152). The existing CLI does not yet implement automatic integration; until the role/task/catalog and checks are approved, old no-auto-merge rules remain in force.
+
 ## Dynamic roles
 - Planner: split and triage tasks, identify dependencies and file conflicts; no self-approval.
 - Developer: acquire an exclusive **issue claim** before coding, use a feature branch, draft PR and tests.
 - Tester: independently run/report test evidence and scoped fixes only after claiming if writing code.
 - Reviewer: independently inspect existing work; no self-approval or unauthorized merge.
 - Auditor: read-only check of architecture, provenance, safety, licenses and backlog consistency.
-- Integrator: assess dependencies/conflicts and prepare integration decisions; no automatic merge to main.
+- Integrator: independently review and validate dependencies/conflicts/status checks, then **may merge automatically** only with an owner-approved Integrator task, exact PR/HEAD scope and all protection gates passing; never integrate its own authored work.
 
 ## Critical task-claim rules
 1. Read `docs/PRIVATE_PILOT.md`. Only work on explicitly triaged, non-overlapping issues.
@@ -29,7 +33,7 @@ Agents may be independent ChatGPT/Codex conversations but share authorized GitHu
 8. Planner roles may propose tasks without claims but cannot bypass code-write rules. No eligible safe tasks -> stop and propose one.
 
 ## Repository safeguards
-Target-repository rules always apply. No direct push to main, automatic merge, production change, release, access change, unapproved publication or license alteration. **Read-only test GitHub Actions are authorized on public VirgoStars repositories**; private-repository workflows still require explicit authorization. No shared token in prompts/issues, no private information in public repository issues or PRs. Do not overwrite another agent's branch or uncommitted local work. Cross-repository work requires explicit dependency management and independent scoped PRs.
+Target-repository rules always apply. No direct push to main, **unreviewed or unauthorized merge**, production change, release, access change, unapproved publication or license alteration. A separately approved Integrator task can perform a protected automatic merge only after the gates in `docs/INTEGRATOR_AUTOMERGE_POLICY.md` pass; this does not authorize deploying, releasing, or bypassing repository rules. **Read-only test GitHub Actions are authorized on public VirgoStars repositories**; private-repository workflows still require explicit authorization. No shared token in prompts/issues, no private information in public repository issues or PRs. Do not overwrite another agent's branch or uncommitted local work. Cross-repository work requires explicit dependency management and independent scoped PRs.
 
 ## Future work
 `docs/START_HERE.md`, `docs/PROTOCOL.md`, and `docs/API.md` specify a **future public and 1,000-agent architecture**. They do not authorize public volunteers in the current pilot and no scheduler/API is yet deployed.
