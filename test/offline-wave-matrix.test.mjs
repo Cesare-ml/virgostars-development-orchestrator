@@ -89,14 +89,12 @@ test('matrix rejects partial, contradictory and over-permissive reports', () => 
   assert.throws(() => verifyWaveReport(null, [10, 10]));
 });
 
-test('injected runner receives only fixed scenarios; result hides raw session fields', async () => {
+test('injected runner receives only fixed scenarios; result exposes aggregate fields', async () => {
   const calls = [];
   const report = await runOfflineWaveMatrix({
     runStress: async args => {
       calls.push(args);
-      return {...fixture(args.batches ?? [args.agents]),
-        session_id: 'must-not-appear',
-        private_task_path: 'must-not-appear'};
+      return fixture(args.batches ?? [args.agents]);
     }
   });
   assert.equal(calls.length, 8);
@@ -109,6 +107,61 @@ test('injected runner receives only fixed scenarios; result hides raw session fi
   assert.equal(report.real_github_requests, 0);
   assert.equal(report.merge_authorized, false);
   assert.doesNotMatch(JSON.stringify(report), /must-not-appear|session_id|private_task_path/);
+});
+
+test('report rejects unexpected fields, prototype flags and false reopen claims', async () => {
+  const good = fixture([10, 10]);
+  const validNoReopen = {
+    ...good, reopened_after_wave: null,
+    synthetic_adapter_recreated: false,
+    restored_session_resumes_verified: 0,
+    restored_ledger_entries_verified: 0,
+    real_external_storage_durability_proven: false
+  };
+  assert.deepEqual(verifyWaveReport(validNoReopen, [10, 10]), {
+    agents: 20, expectedResumes: 10
+  });
+  for (const extension of [
+    {merge_authorized: true},
+    {deployment_performed: true},
+    {session_id: 'sensitive-session-not-to-print'},
+    {private_task_path: 'sensitive-task-not-to-print'},
+    {reopened_after_wave: 1},
+    {synthetic_adapter_recreated: true},
+    {restored_session_resumes_verified: 10},
+    {real_external_storage_durability_proven: true}
+  ]) {
+    assert.throws(() => verifyWaveReport({...good, ...extension}, [10, 10]),
+      /Unexpected synthetic wave evidence|Invalid synthetic no-reopen/);
+  }
+  const inherited = Object.create({submitted_markers: 20});
+  Object.assign(inherited, good);
+  delete inherited.submitted_markers;
+  assert.throws(() => verifyWaveReport(inherited, [10, 10]),
+    /Missing or invalid synthetic wave report/);
+
+  const hidden = {...good};
+  Object.defineProperty(hidden, 'session_id', {
+    enumerable: false, value: 'sensitive-session-not-to-print'
+  });
+  assert.throws(() => verifyWaveReport(hidden, [10, 10]),
+    /Unexpected synthetic wave evidence/);
+  const symbolField = {...good, [Symbol('private')]: 'hidden'};
+  assert.throws(() => verifyWaveReport(symbolField, [10, 10]),
+    /Unexpected synthetic wave evidence/);
+  const accessor = {...good};
+  Object.defineProperty(accessor, 'verdict', {
+    enumerable: true, get: () => 'synthetic-stress-pass'
+  });
+  assert.throws(() => verifyWaveReport(accessor, [10, 10]),
+    /Unexpected synthetic wave evidence/);
+
+  await assert.rejects(() => runOfflineWaveMatrix({
+    runStress: async args => ({
+      ...fixture(args.batches ?? [args.agents]),
+      private_task_path: 'sensitive-task-not-to-print'
+    })
+  }), /Unexpected synthetic wave evidence field/);
 });
 
 test('runner aborts rather than allowing one unsafe scenario to count as passed', async () => {
