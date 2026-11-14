@@ -233,7 +233,11 @@ if(process.argv[2]==='--worker' && process.argv.length===4) {
   worker(process.argv[3]).catch(()=>{process.stderr.write('Offline worker rejected.\n');process.exitCode=1;});
 } else if(process.argv.length===2) {
   try {process.stdout.write(JSON.stringify(await rehearse(),null,2)+'\n');}
-  catch {process.stderr.write('ERROR: Offline queue process rehearsal failed.\n');process.exitCode=1;}
+  catch(error) {
+    const safe=error?.message?.startsWith('Queue process rehearsal failed: ')
+      ? error.message : 'Offline queue process rehearsal failed.';
+    process.stderr.write('ERROR: '+safe+'\n');process.exitCode=1;
+  }
 } else {
   process.stderr.write('ERROR: Unexpected arguments for offline queue process rehearsal.\n');
   process.exitCode=1;
