@@ -38,6 +38,10 @@ export function validateOwnerTaskCatalog(catalog,legacyTasks=[]) {
   const historical=new Set(legacyTasks.map(task=>
     task.repository.toLowerCase()+'#'+task.issue));
   const permittedRepositories=new Set(legacyTasks.map(task=>task.repository.toLowerCase()));
+  // The PUBLIC coordinator may itself be a task target, but its old PUBLIC
+  // coordination branch must never become the owner-only claim ledger.
+  // This is a bounded addition to the curated fleet, not an open repo wildcard.
+  permittedRepositories.add('cesare-ml/virgostars-development-orchestrator');
   for(const task of catalog.tasks) {
     if(!exactKeys(task,ALLOWED_TASK_FIELDS) ||
        task.status!=='ready' ||
