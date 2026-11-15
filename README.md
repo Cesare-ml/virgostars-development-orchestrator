@@ -18,7 +18,7 @@ Every chat gets the same prompt. It picks its own work, and when a turn ends you
 | Agent runbook (the rules every chat follows) | [`AGENT_START.md`](AGENT_START.md) |
 | Registered repositories, priorities, WIP and merge policy | [`config/agent-fleet.json`](config/agent-fleet.json) |
 | Exclusive claims (create-only JSON files) | branch `agent-ledger`, folder `claims/` (folders expired > 6 h are archived automatically) |
-| Work queue for chats (rebuilt every ~20 min) | branch `agent-queue`, file `queue.json` |
+| Work queue for chats (rebuilt after every new claim, at most every 5 min; scheduled fallback) | branch `agent-queue`, file `queue.json` |
 | Tasks | open issues in the registered repositories (`P0`/`P1`/`P2` title prefix = priority) |
 | Reviews / triage / merge requests | PR comments starting with `AGENT-REVIEW`, `AGENT-TRIAGE`, `AGENT-READY-TO-MERGE` |
 

@@ -61,3 +61,9 @@ test('CLI parses --markdown as a boolean flag and validates --hours before any n
   assert.match(await run(['fleet-report', '--markdown', '--hours', '0']), /--hours must be between/);
   assert.match(await run(['next-work', '--session', 'chat-XYZ']), /Session must look like chat-xxxxxxxx/);
 });
+
+test('claims archived from the ledger tip are still counted from ledger commits', () => {
+  const rep = buildReport({ fleet, since: SINCE, until: UNTIL, repos: [], claims: {}, claimCommits: 42 });
+  assert.equal(rep.claims, 42);
+  assert.equal(buildReport({ fleet, since: SINCE, until: UNTIL, repos: [], claims: {} }).claims, 0);
+});
