@@ -70,6 +70,18 @@
       "note": "Never add, publish or relicense artwork; rights decisions are owner-only."
     },
     {
+      "name": "Cesare-ml/virgostars-desktop",
+      "priority": 5,
+      "default_branch": "main",
+      "integration_branch": "main",
+      "domain": "Tauri Rust / Angular offline-first desktop client",
+      "ci": false,
+      "ci_allowed": false,
+      "merge": "docs-only",
+      "wip_limit": 25,
+      "note": "Public repository. No GitHub Actions, automatic code merges, releases, deployments, or repository visibility changes; owner integrates code PRs. Preserve CPAL-1.0 attribution, synthetic fixture and offline-privacy boundaries."
+    },
+    {
       "name": "Cesare-ml/virgostars-development-orchestrator",
       "priority": 9,
       "default_branch": "main",
