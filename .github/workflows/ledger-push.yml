@@ -1,0 +1,27 @@
+name: Ledger push
+
+# Lives on branch agent-ledger as .github/workflows/ledger-push.yml (reference copy: config/ledger-branch/ on main).
+# Every new claim pushed by a fleet chat asks the Fleet queue workflow on main to rebuild queue.json.
+# Archive commits by the queue workflow use GITHUB_TOKEN and therefore never trigger this (no loop).
+on:
+  push:
+    branches:
+      - agent-ledger
+
+permissions:
+  actions: write
+
+concurrency:
+  group: ledger-push
+  cancel-in-progress: true
+
+jobs:
+  kick:
+    name: Request queue rebuild
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Dispatch Fleet queue on main (debounced there)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run fleet-queue.yml --repo "$GITHUB_REPOSITORY" --ref main -f reason=ledger
