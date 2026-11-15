@@ -43,6 +43,7 @@ Set `GITHUB_TOKEN` (read-only is enough) to avoid GitHub's anonymous rate limit.
 
 **To steer the fleet:**
 - Change priorities and limits in `config/agent-fleet.json`.
+- Follow the [current delivery priorities and acceptance gates](docs/DELIVERY_PRIORITIES_2026-11-15.md): **PR backlog → Ephemeris backend parity → Astrological Functions backend parity → Charts frontend parity → Desktop integration and menus/settings**. These are sequential product milestones, not completed features.
 - Label an issue `owner-only` or `agent-skip` to keep agents away from it.
 - Merge the PRs labelled `ready-to-merge`.
 

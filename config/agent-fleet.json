@@ -35,8 +35,20 @@
       "note": "Agents integrate into dev/ephemeris; promoting dev/ephemeris to the protected main branch is owner-only."
     },
     {
-      "name": "Cesare-ml/astrological-charts",
+      "name": "Cesare-ml/astrological-functions",
       "priority": 2,
+      "default_branch": "main",
+      "integration_branch": "main",
+      "domain": "Experimental framework-independent JS/TS astrological functions and provider contracts",
+      "ci": false,
+      "ci_allowed": false,
+      "merge": "docs-only",
+      "wip_limit": 20,
+      "note": "Public repository but README/AGENTS.md still claim private status and no outbound open-source license is granted. Existing code/PRs remain owner-merged; never change licenses, provenance, publication or visibility. No GitHub Actions, releases, npm publish or production modifications. Use synthetic fixtures and avoid sensitive data; reconcile outdated public-facing docs through owner review."
+    },
+    {
+      "name": "Cesare-ml/astrological-charts",
+      "priority": 3,
       "default_branch": "main",
       "integration_branch": "main",
       "domain": "Angular/Three.js chart rendering",
@@ -46,8 +58,20 @@
       "wip_limit": 20
     },
     {
+      "name": "Cesare-ml/virgostars-desktop",
+      "priority": 4,
+      "default_branch": "main",
+      "integration_branch": "main",
+      "domain": "Tauri Rust / Angular offline-first desktop client",
+      "ci": false,
+      "ci_allowed": false,
+      "merge": "docs-only",
+      "wip_limit": 25,
+      "note": "Public repository. No GitHub Actions, automatic code merges, releases, deployments, or repository visibility changes; owner integrates code PRs. Preserve CPAL-1.0 attribution, synthetic fixture and offline-privacy boundaries."
+    },
+    {
       "name": "Cesare-ml/VirgoStars-Event-Ephemeris",
-      "priority": 3,
+      "priority": 5,
       "default_branch": "main",
       "integration_branch": "main",
       "domain": "Astrological event ephemerides (VSEPH format)",
@@ -59,7 +83,7 @@
     },
     {
       "name": "Cesare-ml/astrological-assets",
-      "priority": 4,
+      "priority": 6,
       "default_branch": "main",
       "integration_branch": "main",
       "domain": "Vetted astrological artwork and asset tooling",
@@ -68,30 +92,6 @@
       "merge": "docs-only",
       "wip_limit": 15,
       "note": "Never add, publish or relicense artwork; rights decisions are owner-only."
-    },
-    {
-      "name": "Cesare-ml/virgostars-desktop",
-      "priority": 5,
-      "default_branch": "main",
-      "integration_branch": "main",
-      "domain": "Tauri Rust / Angular offline-first desktop client",
-      "ci": false,
-      "ci_allowed": false,
-      "merge": "docs-only",
-      "wip_limit": 25,
-      "note": "Public repository. No GitHub Actions, automatic code merges, releases, deployments, or repository visibility changes; owner integrates code PRs. Preserve CPAL-1.0 attribution, synthetic fixture and offline-privacy boundaries."
-    },
-    {
-      "name": "Cesare-ml/astrological-functions",
-      "priority": 6,
-      "default_branch": "main",
-      "integration_branch": "main",
-      "domain": "Experimental framework-independent JS/TS astrological functions and provider contracts",
-      "ci": false,
-      "ci_allowed": false,
-      "merge": "docs-only",
-      "wip_limit": 20,
-      "note": "Public repository but README/AGENTS.md still claim private status and no outbound open-source license is granted. Existing code/PRs remain owner-merged; never change licenses, provenance, publication or visibility. No GitHub Actions, releases, npm publish or production modifications. Use synthetic fixtures and avoid sensitive data; reconcile outdated public-facing docs through owner review."
     },
     {
       "name": "Cesare-ml/virgostars-development-orchestrator",
