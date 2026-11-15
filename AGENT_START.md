@@ -10,6 +10,18 @@ The owner authorized this workflow on 2026-11-14 (`config/agent-fleet.json` → 
 2. Read `config/agent-fleet.json` in `Cesare-ml/virgostars-development-orchestrator` (branch `main`). It lists the **registered repositories** (sorted by `priority`, 1 = most important), their `integration_branch` (where agent PRs go; e.g. `dev/ephemeris` for VirgoStars-Ephemeris), merge mode, WIP limit and claim TTLs.
 3. Before you edit a repository, read its `AGENTS.md`. Its rules apply, except where `agent-fleet.json` explicitly overrides them (merge and CI permissions only).
 
+## Owner delivery focus — 15 November 2026
+
+This is the **current owner-directed order**, not a grant to bypass the merge gate. Read [the acceptance and dependency plan](docs/DELIVERY_PRIORITIES_2026-11-15.md) before selecting or planning feature work.
+
+1. **PR backlog first, across product repositories.** Integrate only genuinely merge-ready PRs; review unreviewed heads; triage stale, overlapping and stacked drafts; flag conflicts, missing tests and owner-only merges. Prefer finishing/closing existing PRs to opening unrelated new ones. Step A retains its safety-first resume semantics; steps B–D continue to precede E–G.
+2. **VirgoStars-Ephemeris** — finish the clean-room Rust-based, test-validated MVP sufficient for the astronomical calls actually made by VirgoStars backend, using an owner-verified API inventory; do not assume a Swiss-compatible name proves numerical equivalence.
+3. **astrological-functions** — cover the application's existing *astrological* calculations through the astronomical provider, with documented behavioral contracts and tests. No duplicate ephemeris computations.
+4. **astrological-charts** — implement the interaction, options, rendering modes and exports of the existing VirgoStars frontend renderer, verified with a feature matrix and visual regressions.
+5. **virgostars-desktop** — integrate the validated libraries, then implement the owner-approved menus and settings of the legacy application and VirgoStars frontend, preserving offline-first, privacy and licensing boundaries.
+
+The repository `priority` values in `config/agent-fleet.json` order work **within each ladder step**; the step order prioritizes clearing PRs. Event Ephemeris, assets and coordinator work remain support work unless they unblock these milestones. Agents must not claim completion from proposed APIs, experimental branches or synthetic-only tests. Keep owner-only decisions and any private-source comparison out of public issues/PRs.
+
 ## 1. The work cycle
 
 Repeat until your turn runs out of budget. In each cycle, take the **first** step below that has something to do. Within a step, prefer the repository with the lowest `priority` number, then the oldest item. A step never "fails" into idleness: if you cannot complete one, record why (comment or issue) and move to the next.
