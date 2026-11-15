@@ -82,6 +82,18 @@
       "note": "Public repository. No GitHub Actions, automatic code merges, releases, deployments, or repository visibility changes; owner integrates code PRs. Preserve CPAL-1.0 attribution, synthetic fixture and offline-privacy boundaries."
     },
     {
+      "name": "Cesare-ml/astrological-functions",
+      "priority": 6,
+      "default_branch": "main",
+      "integration_branch": "main",
+      "domain": "Experimental framework-independent JS/TS astrological functions and provider contracts",
+      "ci": false,
+      "ci_allowed": false,
+      "merge": "docs-only",
+      "wip_limit": 20,
+      "note": "Public repository but README/AGENTS.md still claim private status and no outbound open-source license is granted. Existing code/PRs remain owner-merged; never change licenses, provenance, publication or visibility. No GitHub Actions, releases, npm publish or production modifications. Use synthetic fixtures and avoid sensitive data; reconcile outdated public-facing docs through owner review."
+    },
+    {
       "name": "Cesare-ml/virgostars-development-orchestrator",
       "priority": 9,
       "default_branch": "main",
