@@ -15,7 +15,7 @@ async function pages(get, path, max = 10) {
 }
 
 /** Pure part: classify raw GitHub records into a report. */
-export function buildReport({ fleet, since, until, repos, claims }) {
+export function buildReport({ fleet, since, until, repos, claims, claimCommits = null }) {
   const sessions = {};
   const bump = (s, k) => { const e = (sessions[s] ??= { reviews: 0, triage: 0, ready_to_merge: 0, prs: 0, issues: 0, claims: 0 }); e[k]++; };
   const violations = [];
@@ -61,6 +61,8 @@ export function buildReport({ fleet, since, until, repos, claims }) {
   for (const list of Object.values(claims)) for (const c of list) {
     if (c.claimed_at >= since && c.claimed_at <= until) { claimCount++; if (SESSION_RE.test(c.session ?? '')) bump(c.session, 'claims'); }
   }
+  // Archived claims leave the ledger tip after 6h; commits on the ledger branch still count them.
+  if (claimCommits !== null) claimCount = Math.max(claimCount, claimCommits);
   return { since, until, active_sessions: Object.keys(sessions).length, claims: claimCount, repos: perRepo, sessions, violations };
 }
 
@@ -84,7 +86,13 @@ export async function loadReport({ fleet, get, hours = 2, now = Date.now(), clai
     repos.push({ config, comments, prs, closedPrs, newIssues });
   }
   claims ??= await loadClaims(get, fleet.ledger);
-  return buildReport({ fleet, since, until, repos, claims });
+  let claimCommits = 0;
+  for (let page = 1; page <= 10; page++) {
+    const batch = await get(`repos/${fleet.ledger.repo}/commits?sha=${encodeURIComponent(fleet.ledger.branch)}&since=${since}&per_page=100&page=${page}`);
+    claimCommits += batch.filter(c => !/^(?:ledger|agent-ledger): /.test(c.commit?.message ?? '')).length;
+    if (batch.length < 100) break;
+  }
+  return buildReport({ fleet, since, until, repos, claims, claimCommits });
 }
 
 export function boardMarkdown(board) {

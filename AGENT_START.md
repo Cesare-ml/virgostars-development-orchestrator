@@ -26,7 +26,7 @@ Repeat until your turn runs out of budget. In each cycle, take the **first** ste
 
 There is always something to do: F and G always apply.
 
-**Finding work cheaply (do this instead of scanning repositories).** After step A, read `queue.json` on branch **`agent-queue`** of this repository. A workflow rebuilds it every ~20 minutes with all open work per step (`B`, `C`, `D`, `E`, `F`), in the right order, without items that were already claimed.
+**Finding work cheaply (do this instead of scanning repositories).** After step A, read `queue.json` on branch **`agent-queue`** of this repository. A workflow rebuilds it after new claims (at most every 5 minutes) with all open work per step (`B`, `C`, `D`, `E`, `F`), in the right order, without items that were already claimed.
 1. Take the first step that has an item you may do. Skip PRs whose `author` is your session.
 2. Choose **one item at random among the first 10** of that step. Never systematically take the first one: hundreds of chats read the same queue.
 3. Check that the item is still valid (same head SHA, not yet reviewed, merged or closed), then claim it (§2). If it is no longer valid or the claim fails, pick another random item. Make at most 3 claim attempts per cycle, then go to the next step.
@@ -137,6 +137,8 @@ Prefer, in order: fixes for failing or missing tests, small roadmap items, docs 
 - Never: push or force-push to a default branch, merge your own PR, bypass branch protection, deploy, publish packages or releases, change visibility, licenses, permissions or secrets, add artwork or third-party data without a stated license.
 - Never put credentials, private-repo content or personal data in issues, PRs, comments or claims. All registered repos are public.
 - Never write to the legacy `coordination/claims` branch, and never reassign its seven historical submissions.
+- On branch `agent-ledger`, only create claim files under `claims/`; never touch `.github/` or anything else there. Never write to branch `agent-queue`.
+- In `virgostars-development-orchestrator`, only the owner applies the labels `bug` and `fleet-blocker`. You may open issues there without them; never label your own issue to make it eligible. Theoretical hardening of the orchestrator is not a fleet blocker; an observed failure with evidence (e.g. from `fleet-report`) is.
 - Do not invent results: state exactly what you ran, read or could not do.
 - If a tool is missing (e.g. you cannot merge, label or close), use the comment alternative given above and continue.
 - **GitHub limits are shared by all chats** (one account: about 5,000 calls and 500 writes per hour). If GitHub answers with a rate-limit or abuse error (HTTP 403/429, "rate limit", "secondary rate limit"), **stop the turn at once**: do not retry. Say «Limite GitHub raggiunto» in your end-of-turn message. Never list every PR or every comment of a repository when the queue already gives you the item.

@@ -96,12 +96,35 @@ test('fleet-queue workflow writes only through the publish script and pins actio
   assert.match(y, /^\s+persist-credentials: false$/m);
   for (const a of [...y.matchAll(/^\s+uses:\s+(\S+)/gm)].map(x => x[1])) assert.match(a, /^actions\/(?:checkout|setup-node)@[0-9a-f]{40}$/);
   const runs = [...y.matchAll(/^\s+run:\s+(.+)$/gm)].map(x => x[1]);
-  assert.equal(runs.length, 4);
-  assert.match(runs[0], /^git clone --quiet --depth 1 --branch agent-ledger /);
-  assert.match(runs[1], /^node bin\/vs-agent\.mjs fleet-queue --ledger-dir /);
-  assert.match(runs[2], /^scripts\/fleet-publish\.sh queue /);
-  assert.match(runs[3], /^scripts\/fleet-publish\.sh archive /);
+  assert.equal(runs.length, 5);
+  assert.equal(runs[0], 'sleep "$(node scripts/queue-age.mjs --min-seconds 300)"');
+  assert.match(y, /if: inputs\.reason == 'ledger'\n/);
+  assert.match(runs[1], /^git clone --quiet --depth 1 --branch agent-ledger /);
+  assert.match(runs[2], /^node bin\/vs-agent\.mjs fleet-queue --ledger-dir /);
+  assert.match(runs[3], /^scripts\/fleet-publish\.sh queue /);
+  assert.match(runs[4], /^scripts\/fleet-publish\.sh archive /);
+  assert.match(y, /^  workflow_dispatch:\n    inputs:\n      reason:/m);
+  assert.match(y, /^concurrency:\n  group: fleet-queue\n  cancel-in-progress: false$/m, 'one running + one pending run keeps the trailing rebuild');
   const script = await readFile(new URL('../scripts/fleet-publish.sh', import.meta.url), 'utf8');
   const pushes = [...script.matchAll(/push[^\n]*/g)].map(m => m[0]).filter(l => /\bpush -q/.test(l));
   assert.deepEqual(pushes.map(l => l.match(/(agent-\w+)/)[1]), ['agent-queue', 'agent-ledger']);
+});
+
+test('debounce: wait until 5 minutes have passed since the last queue', async () => {
+  const { waitSeconds } = await import('../scripts/queue-age.mjs');
+  const t = Date.parse('2026-11-15T10:00:00Z');
+  assert.equal(waitSeconds('2026-11-15T09:58:00Z', t, 300), 180);
+  assert.equal(waitSeconds('2026-11-15T09:55:00Z', t, 300), 0);
+  assert.equal(waitSeconds('2026-11-15T09:00:00Z', t, 300), 0);
+  assert.equal(waitSeconds('garbage', t, 300), 0);
+  assert.equal(waitSeconds('2026-11-15T10:10:00Z', t, 300), 0, 'clock skew never blocks');
+});
+
+test('ledger-push workflow (lives on agent-ledger) only dispatches the queue workflow', async () => {
+  const y = await readFile(new URL('../config/ledger-branch/ledger-push.yml', import.meta.url), 'utf8');
+  assert.match(y, /^on:\n  push:\n    branches:\n      - agent-ledger$/m);
+  assert.match(y, /^permissions:\n  actions: write$/m);
+  assert.doesNotMatch(y, /contents: write|\$\{\{\s*(?:secrets|vars)\.|uses:/);
+  const runs = [...y.matchAll(/^\s+run:\s+(.+)$/gm)].map(x => x[1]);
+  assert.deepEqual(runs, ['gh workflow run fleet-queue.yml --repo "$GITHUB_REPOSITORY" --ref main -f reason=ledger']);
 });
