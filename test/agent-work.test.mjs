@@ -28,6 +28,12 @@ test('fleet config is well formed', () => {
     if (r.ci) assert.ok(r.ci_allowed);
   }
   assert.equal(new Set(fleet.repos.map(r => r.priority)).size, fleet.repos.length);
+  assert.deepEqual(fleet.repos.filter(r => r.priority <= 4).map(r => r.name), [
+    'Cesare-ml/VirgoStars-Ephemeris',
+    'Cesare-ml/astrological-functions',
+    'Cesare-ml/astrological-charts',
+    'Cesare-ml/virgostars-desktop',
+  ], 'owner delivery pipeline is priority-ordered');
 });
 
 test('markers and sessions parse', () => {
