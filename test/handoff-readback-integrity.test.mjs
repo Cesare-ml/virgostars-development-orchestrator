@@ -161,8 +161,10 @@ test('a vanished or foreign write-resource blocks verifying a completed handoff'
 
 test('two conflicting pre-update reads never permit writing a stale claim',async()=>{
   const x=fixture('prewrite-drift'),session=await start(x);
+  // The stricter status guard may detect a malformed second read before
+  // the handoff's compare-and-swap check. Both paths must block the PUT.
   await assert.rejects(()=>doHandoff(x,session),
-    /Claim changed between handoff reads/);
+    /Claim changed between handoff reads|Resource lock invalid; handoff blocked/);
   assert.ok(!x.calls.includes('update:'+path));
   assert.equal(x.files.get(path).data.state,'claimed');
 });

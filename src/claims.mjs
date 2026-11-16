@@ -3,6 +3,7 @@ import { isDeepStrictEqual } from 'node:util';
 import { GitHubError } from './github.mjs';
 import { resourceKey, resourceMatches, validateTaskCatalog } from './resources.mjs';
 import { assertResumableOwnerClaim } from './claim-resume-integrity.mjs';
+import { isStructurallyValidActiveClaim } from './claim-record-integrity.mjs';
 
 const VALID_REPO = /^[a-z\d][a-z\d_.-]*\/[a-z\d][a-z\d_.-]*$/i;
 const VALID_SESSION = /^(chat|codex)-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -73,16 +74,10 @@ export async function status({api,config,repo,issue}) {
     ? {status:'submitted',submission:submission.data}
     : {status:'unclaimed'};
   const data=current.data;
-  // A Git Contents path is not proof that the JSON inside it identifies the
-  // same issue. Corrupt or case/identity-conflicting records must block ALL
-  // same-session resume and queue scans, not be classified as a normal busy
-  // assignment to an unrelated agent.
-  if(!data||typeof data!=='object'||Array.isArray(data)||
-     data.schema_version!==2 ||
-     data.target_repository!==repo || data.issue_number!==issue ||
-     typeof data.session_id!=='string'||!VALID_SESSION.test(data.session_id)||
-     !['claimed','in_progress'].includes(data.state))
-    return {status:'inconsistent',reason:'invalid-claim-identity-or-state'};
+  // Check the complete parsed v2 record BEFORE treating any session as owned.
+  // A malformed foreign-session claim must block the whole queue scan, too.
+  if(!isStructurallyValidActiveClaim(data,repo,issue))
+    return {status:'inconsistent',reason:'invalid-active-claim-record'};
   if(data.access==='write') {
     if(typeof data.resource_scope_id!=='string')
       return {status:'inconsistent',reason:'missing-resource-key'};
