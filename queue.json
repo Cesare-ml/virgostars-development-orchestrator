@@ -1,0 +1,899 @@
+{
+ "schema": "virgostars-agent-queue/1",
+ "generated_at": "2026-11-21T14:16:52.793Z",
+ "pick": "Take the first step with items; choose one at random among its first 10; skip PRs whose author is your session; verify live state and claim before working.",
+ "counts": {
+  "B": 0,
+  "C": 5,
+  "D": 90,
+  "E": 14,
+  "F": 0
+ },
+ "steps": {
+  "B": [],
+  "C": [
+   {
+    "step": "C",
+    "action": "review",
+    "repo": "Cesare-ml/VirgoStars-Ephemeris",
+    "pr": 312,
+    "head": "5455b13cf28003a895c872f44344f7b9c4f1f9aa",
+    "author": "chat-313dfe4e",
+    "key": "review-pr-312-5455b13"
+   },
+   {
+    "step": "C",
+    "action": "review",
+    "repo": "Cesare-ml/VirgoStars-Ephemeris",
+    "pr": 520,
+    "head": "c4a6d953489a9f1a5a5fdb195ea249f92a8c1035",
+    "author": null,
+    "key": "review-pr-520-c4a6d95"
+   },
+   {
+    "step": "C",
+    "action": "review",
+    "repo": "Cesare-ml/VirgoStars-Ephemeris",
+    "pr": 544,
+    "head": "e8650f522f3512218bf709246d58550a3b692e10",
+    "author": "chat-4d93b7e1",
+    "key": "review-pr-544-e8650f5"
+   },
+   {
+    "step": "C",
+    "action": "review",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 347,
+    "head": "892c10e6c38aed729afb03a785fe9978e278962a",
+    "author": null,
+    "key": "review-pr-347-892c10e"
+   },
+   {
+    "step": "C",
+    "action": "review",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 396,
+    "head": "f391771dbc171cb77e447f8f58539bc67deaa6a6",
+    "author": null,
+    "key": "review-pr-396-f391771"
+   }
+  ],
+  "D": [
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/VirgoStars-Ephemeris",
+    "pr": 567,
+    "author": "chat-c9e14a6d",
+    "key": "triage-pr-567"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/VirgoStars-Ephemeris",
+    "pr": 570,
+    "author": "chat-7c41e9ad",
+    "key": "triage-pr-570"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/VirgoStars-Ephemeris",
+    "pr": 601,
+    "author": null,
+    "key": "triage-pr-601"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/VirgoStars-Ephemeris",
+    "pr": 596,
+    "author": null,
+    "key": "triage-pr-596"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/VirgoStars-Ephemeris",
+    "pr": 608,
+    "author": null,
+    "key": "triage-pr-608"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/VirgoStars-Ephemeris",
+    "pr": 610,
+    "author": null,
+    "key": "triage-pr-610"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/VirgoStars-Ephemeris",
+    "pr": 615,
+    "author": null,
+    "key": "triage-pr-615"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/VirgoStars-Ephemeris",
+    "pr": 616,
+    "author": null,
+    "key": "triage-pr-616"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/VirgoStars-Ephemeris",
+    "pr": 618,
+    "author": null,
+    "key": "triage-pr-618"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/VirgoStars-Ephemeris",
+    "pr": 620,
+    "author": null,
+    "key": "triage-pr-620"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/VirgoStars-Ephemeris",
+    "pr": 623,
+    "author": null,
+    "key": "triage-pr-623"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/VirgoStars-Ephemeris",
+    "pr": 626,
+    "author": null,
+    "key": "triage-pr-626"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/VirgoStars-Ephemeris",
+    "pr": 628,
+    "author": null,
+    "key": "triage-pr-628"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/VirgoStars-Ephemeris",
+    "pr": 630,
+    "author": null,
+    "key": "triage-pr-630"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/VirgoStars-Ephemeris",
+    "pr": 631,
+    "author": null,
+    "key": "triage-pr-631"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/VirgoStars-Ephemeris",
+    "pr": 633,
+    "author": null,
+    "key": "triage-pr-633"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/VirgoStars-Ephemeris",
+    "pr": 634,
+    "author": null,
+    "key": "triage-pr-634"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/VirgoStars-Ephemeris",
+    "pr": 635,
+    "author": null,
+    "key": "triage-pr-635"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/VirgoStars-Ephemeris",
+    "pr": 637,
+    "author": null,
+    "key": "triage-pr-637"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/VirgoStars-Ephemeris",
+    "pr": 639,
+    "author": null,
+    "key": "triage-pr-639"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/VirgoStars-Ephemeris",
+    "pr": 641,
+    "author": null,
+    "key": "triage-pr-641"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/VirgoStars-Ephemeris",
+    "pr": 649,
+    "author": null,
+    "key": "triage-pr-649"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/VirgoStars-Ephemeris",
+    "pr": 650,
+    "author": null,
+    "key": "triage-pr-650"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/astrological-functions",
+    "pr": 187,
+    "author": null,
+    "key": "triage-pr-187"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/astrological-functions",
+    "pr": 188,
+    "author": null,
+    "key": "triage-pr-188"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/astrological-functions",
+    "pr": 189,
+    "author": null,
+    "key": "triage-pr-189"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/astrological-functions",
+    "pr": 191,
+    "author": null,
+    "key": "triage-pr-191"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/astrological-functions",
+    "pr": 192,
+    "author": null,
+    "key": "triage-pr-192"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/astrological-functions",
+    "pr": 193,
+    "author": null,
+    "key": "triage-pr-193"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/astrological-functions",
+    "pr": 194,
+    "author": null,
+    "key": "triage-pr-194"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/astrological-functions",
+    "pr": 195,
+    "author": null,
+    "key": "triage-pr-195"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/astrological-functions",
+    "pr": 197,
+    "author": null,
+    "key": "triage-pr-197"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/astrological-functions",
+    "pr": 198,
+    "author": null,
+    "key": "triage-pr-198"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/astrological-functions",
+    "pr": 199,
+    "author": null,
+    "key": "triage-pr-199"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/astrological-functions",
+    "pr": 200,
+    "author": null,
+    "key": "triage-pr-200"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/astrological-functions",
+    "pr": 201,
+    "author": null,
+    "key": "triage-pr-201"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/astrological-functions",
+    "pr": 202,
+    "author": null,
+    "key": "triage-pr-202"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/astrological-functions",
+    "pr": 203,
+    "author": null,
+    "key": "triage-pr-203"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/astrological-functions",
+    "pr": 219,
+    "author": null,
+    "key": "triage-pr-219"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/astrological-functions",
+    "pr": 226,
+    "author": null,
+    "key": "triage-pr-226"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/astrological-functions",
+    "pr": 227,
+    "author": null,
+    "key": "triage-pr-227"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/astrological-functions",
+    "pr": 220,
+    "author": null,
+    "key": "triage-pr-220"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/astrological-functions",
+    "pr": 221,
+    "author": null,
+    "key": "triage-pr-221"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/astrological-functions",
+    "pr": 222,
+    "author": null,
+    "key": "triage-pr-222"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/astrological-functions",
+    "pr": 224,
+    "author": null,
+    "key": "triage-pr-224"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/astrological-functions",
+    "pr": 225,
+    "author": null,
+    "key": "triage-pr-225"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/astrological-charts",
+    "pr": 149,
+    "author": null,
+    "key": "triage-pr-149"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/astrological-charts",
+    "pr": 150,
+    "author": null,
+    "key": "triage-pr-150"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/astrological-charts",
+    "pr": 146,
+    "author": null,
+    "key": "triage-pr-146"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 319,
+    "author": null,
+    "key": "triage-pr-319"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 320,
+    "author": null,
+    "key": "triage-pr-320"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 321,
+    "author": null,
+    "key": "triage-pr-321"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 322,
+    "author": null,
+    "key": "triage-pr-322"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 323,
+    "author": null,
+    "key": "triage-pr-323"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 324,
+    "author": null,
+    "key": "triage-pr-324"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 325,
+    "author": null,
+    "key": "triage-pr-325"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 326,
+    "author": null,
+    "key": "triage-pr-326"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 328,
+    "author": null,
+    "key": "triage-pr-328"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 329,
+    "author": null,
+    "key": "triage-pr-329"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 330,
+    "author": null,
+    "key": "triage-pr-330"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 332,
+    "author": null,
+    "key": "triage-pr-332"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 333,
+    "author": null,
+    "key": "triage-pr-333"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 334,
+    "author": null,
+    "key": "triage-pr-334"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 335,
+    "author": null,
+    "key": "triage-pr-335"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 336,
+    "author": null,
+    "key": "triage-pr-336"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 337,
+    "author": null,
+    "key": "triage-pr-337"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 338,
+    "author": null,
+    "key": "triage-pr-338"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 339,
+    "author": null,
+    "key": "triage-pr-339"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 340,
+    "author": null,
+    "key": "triage-pr-340"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 341,
+    "author": null,
+    "key": "triage-pr-341"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 342,
+    "author": null,
+    "key": "triage-pr-342"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 343,
+    "author": null,
+    "key": "triage-pr-343"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 344,
+    "author": null,
+    "key": "triage-pr-344"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 345,
+    "author": null,
+    "key": "triage-pr-345"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 350,
+    "author": null,
+    "key": "triage-pr-350"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 359,
+    "author": null,
+    "key": "triage-pr-359"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 376,
+    "author": null,
+    "key": "triage-pr-376"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 394,
+    "author": null,
+    "key": "triage-pr-394"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 327,
+    "author": null,
+    "key": "triage-pr-327"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 354,
+    "author": null,
+    "key": "triage-pr-354"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 355,
+    "author": null,
+    "key": "triage-pr-355"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 356,
+    "author": null,
+    "key": "triage-pr-356"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 357,
+    "author": null,
+    "key": "triage-pr-357"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 358,
+    "author": null,
+    "key": "triage-pr-358"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 360,
+    "author": null,
+    "key": "triage-pr-360"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 361,
+    "author": null,
+    "key": "triage-pr-361"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 362,
+    "author": null,
+    "key": "triage-pr-362"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 363,
+    "author": null,
+    "key": "triage-pr-363"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 364,
+    "author": null,
+    "key": "triage-pr-364"
+   },
+   {
+    "step": "D",
+    "action": "triage",
+    "repo": "Cesare-ml/virgostars-desktop",
+    "pr": 365,
+    "author": null,
+    "key": "triage-pr-365"
+   }
+  ],
+  "E": [
+   {
+    "step": "E",
+    "action": "develop",
+    "repo": "Cesare-ml/VirgoStars-Event-Ephemeris",
+    "issue": 1,
+    "priority": 0,
+    "key": "issue-1"
+   },
+   {
+    "step": "E",
+    "action": "develop",
+    "repo": "Cesare-ml/VirgoStars-Event-Ephemeris",
+    "issue": 2,
+    "priority": 0,
+    "key": "issue-2"
+   },
+   {
+    "step": "E",
+    "action": "develop",
+    "repo": "Cesare-ml/VirgoStars-Event-Ephemeris",
+    "issue": 3,
+    "priority": 0,
+    "key": "issue-3"
+   },
+   {
+    "step": "E",
+    "action": "develop",
+    "repo": "Cesare-ml/VirgoStars-Event-Ephemeris",
+    "issue": 24,
+    "priority": 1,
+    "key": "issue-24"
+   },
+   {
+    "step": "E",
+    "action": "develop",
+    "repo": "Cesare-ml/VirgoStars-Event-Ephemeris",
+    "issue": 28,
+    "priority": 1,
+    "key": "issue-28"
+   },
+   {
+    "step": "E",
+    "action": "develop",
+    "repo": "Cesare-ml/VirgoStars-Event-Ephemeris",
+    "issue": 29,
+    "priority": 1,
+    "key": "issue-29"
+   },
+   {
+    "step": "E",
+    "action": "develop",
+    "repo": "Cesare-ml/VirgoStars-Event-Ephemeris",
+    "issue": 30,
+    "priority": 1,
+    "key": "issue-30"
+   },
+   {
+    "step": "E",
+    "action": "develop",
+    "repo": "Cesare-ml/VirgoStars-Event-Ephemeris",
+    "issue": 10,
+    "priority": 3,
+    "key": "issue-10"
+   },
+   {
+    "step": "E",
+    "action": "develop",
+    "repo": "Cesare-ml/VirgoStars-Event-Ephemeris",
+    "issue": 11,
+    "priority": 3,
+    "key": "issue-11"
+   },
+   {
+    "step": "E",
+    "action": "develop",
+    "repo": "Cesare-ml/VirgoStars-Event-Ephemeris",
+    "issue": 12,
+    "priority": 3,
+    "key": "issue-12"
+   },
+   {
+    "step": "E",
+    "action": "develop",
+    "repo": "Cesare-ml/VirgoStars-Event-Ephemeris",
+    "issue": 13,
+    "priority": 3,
+    "key": "issue-13"
+   },
+   {
+    "step": "E",
+    "action": "develop",
+    "repo": "Cesare-ml/VirgoStars-Event-Ephemeris",
+    "issue": 34,
+    "priority": 3,
+    "key": "issue-34"
+   },
+   {
+    "step": "E",
+    "action": "develop",
+    "repo": "Cesare-ml/VirgoStars-Event-Ephemeris",
+    "issue": 35,
+    "priority": 3,
+    "key": "issue-35"
+   },
+   {
+    "step": "E",
+    "action": "develop",
+    "repo": "Cesare-ml/VirgoStars-Event-Ephemeris",
+    "issue": 38,
+    "priority": 3,
+    "key": "issue-38"
+   }
+  ],
+  "F": []
+ }
+}
